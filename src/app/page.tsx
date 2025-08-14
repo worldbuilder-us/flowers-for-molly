@@ -1,15 +1,48 @@
-import Image from "next/image";
+// src/app/page.tsx
+'use client';
 
-export default function Home() {
+import React, { useEffect, useRef } from "react";
+import { sketch } from "@/p5/sketch";
+
+export default function Page() {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const p5InstanceRef = useRef<any>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const mod = await import("p5");
+      const P5 = (mod as any).default ?? mod;
+
+      if (!cancelled && hostRef.current) {
+        p5InstanceRef.current = new P5(sketch, hostRef.current);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (p5InstanceRef.current) {
+        try { p5InstanceRef.current.remove(); } catch { }
+        p5InstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Full-viewport host; fixed avoids body margin scrollbars
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <h1 className="text-4xl font-bold">Flowers For Molly</h1>
-        <p className="text-lg text-gray-700">
-          A generative art piece serving to commemorate the life of Molly Bird.
-        </p>
-      </main>
-
-    </div>
+    <>
+      <div
+        ref={hostRef}
+        style={{
+          position: "fixed",
+          inset: 0,
+          overflow: "hidden",
+        }}
+      />
+      <h1 style={{ position: "absolute", top: 50, left: 50, zIndex: 1000, fontSize: "10rem" }}>
+        Flowers For Molly
+      </h1>
+    </>
   );
 }
