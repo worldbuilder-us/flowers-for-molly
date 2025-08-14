@@ -2,18 +2,18 @@
 'use client';
 
 import React, { useEffect, useRef } from "react";
+import type p5 from "p5";
 import { sketch } from "@/p5/sketch";
 
 export default function Page() {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const p5InstanceRef = useRef<any>(null);
+  const p5InstanceRef = useRef<p5 | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      const mod = await import("p5");
-      const P5 = (mod as any).default ?? mod;
+      const { default: P5 } = await import("p5");
 
       if (!cancelled && hostRef.current) {
         p5InstanceRef.current = new P5(sketch, hostRef.current);
@@ -22,10 +22,8 @@ export default function Page() {
 
     return () => {
       cancelled = true;
-      if (p5InstanceRef.current) {
-        try { p5InstanceRef.current.remove(); } catch { }
-        p5InstanceRef.current = null;
-      }
+      p5InstanceRef.current?.remove();
+      p5InstanceRef.current = null;
     };
   }, []);
 

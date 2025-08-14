@@ -1,5 +1,8 @@
 // src/p5/sketch.ts
-export const sketch = (p: any) => {
+
+import type p5 from "p5";
+
+export const sketch = (p: p5) => {
   let webglOk = false;
   const SHOW_DEBUG = true; // flip to false to hide the banner
 
@@ -7,10 +10,17 @@ export const sketch = (p: any) => {
     p.pixelDensity(1); // avoids Safari/HiDPI quirks
     p.createCanvas(p.windowWidth, p.windowHeight);
 
-    const Ctx =
-      (window as any).WebGL2RenderingContext ??
-      (window as any).WebGLRenderingContext;
-    webglOk = !!(p.drawingContext && Ctx && p.drawingContext instanceof Ctx);
+       const ctx =
+      p.drawingContext as
+        | WebGLRenderingContext
+        | WebGL2RenderingContext
+        | CanvasRenderingContext2D;
+
+    webglOk =
+      (typeof WebGL2RenderingContext !== "undefined" &&
+        ctx instanceof WebGL2RenderingContext) ||
+      (typeof WebGLRenderingContext !== "undefined" &&
+        ctx instanceof WebGLRenderingContext);
   };
 
   p.windowResized = () => {
