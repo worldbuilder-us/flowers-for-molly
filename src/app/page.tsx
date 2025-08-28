@@ -3,6 +3,7 @@
 
 import React from 'react';
 import Header from './components/Header';
+import GardenArc from './components/GardenArc';
 
 const POEM_LINES = [
   'The trees will remember your name.',
@@ -85,6 +86,20 @@ export default function Page() {
               </p>
             ))}
           </section>
+
+          {/* Garden arc, positioned to embrace the poem’s lower lines */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              bottom: '-1.25rem',
+              transform: 'translateX(-50%)',
+              zIndex: 0,
+              opacity: 0.98,
+            }}
+          >
+            <GardenArc width={760} seed={9183} count={58} offsetY={0} />
+          </div>
         </div>
       </main>
     </>
