@@ -17,7 +17,7 @@ export default function ViewIndex() {
                 style={{
                     width: '100%',
                     minHeight: 'calc(100vh - 80px)',
-                    paddingTop: '10%',
+                    paddingTop: '5%',
                     boxSizing: 'border-box',
                     display: 'flex',
                     alignItems: 'flex-start',
