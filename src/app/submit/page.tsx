@@ -25,7 +25,7 @@ export default function SubmitPage() {
                     display: 'flex',
                     alignItems: 'flex-start',
                     justifyContent: 'center',
-                    paddingTop: '20%', // breathing room below header
+                    paddingTop: '10%',
                     paddingBottom: '4rem',
                     boxSizing: 'border-box',
                     zIndex: 1000,
@@ -55,7 +55,6 @@ export default function SubmitPage() {
                     </p>
 
                     <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-                        {/* two-column row for name + email */}
                         <div
                             style={{
                                 display: 'grid',
@@ -110,8 +109,9 @@ export default function SubmitPage() {
                                 />
                             </div>
                         </div>
-
-                        {/* story textarea spanning both columns */}
+                        /*
+                        * Story textarea
+                        */
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '1rem' }}>
                             <label htmlFor="story" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
                                 Your story
