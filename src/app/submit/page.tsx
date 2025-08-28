@@ -109,9 +109,9 @@ export default function SubmitPage() {
                                 />
                             </div>
                         </div>
-                        /*
+                        {/*
                         * Story textarea
-                        */
+                        */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '1rem' }}>
                             <label htmlFor="story" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
                                 Your story
