@@ -1,9 +1,7 @@
 // src/app/page.tsx
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import type p5 from 'p5';
-import { sketch } from '@/p5/sketch';
+import React from 'react';
 import Header from './components/Header';
 
 const POEM_LINES = [
@@ -19,44 +17,14 @@ const POEM_LINES = [
 ];
 
 export default function Page() {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const p5InstanceRef = useRef<p5 | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      const { default: P5 } = await import('p5');
-
-      if (!cancelled && hostRef.current) {
-        p5InstanceRef.current = new P5(sketch, hostRef.current);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      p5InstanceRef.current?.remove();
-      p5InstanceRef.current = null;
-    };
-  }, []);
-
   return (
     <>
       <Header />
 
-      <div
-        ref={hostRef}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          overflow: 'hidden',
-        }}
-      />
-
       <main
         style={{
           width: '100%',
-          height: 'calc(100vh - 150px)',
+          height: 'calc(100vh - 80px)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -71,7 +39,7 @@ export default function Page() {
           background: 'transparent',
         }}
       >
-        <div style={{ marginTop: '5rem' }}>
+        <div style={{ marginTop: '8rem' }}>
           <h1
             style={{
               margin: 0,
@@ -81,7 +49,7 @@ export default function Page() {
               textAlign: 'center',
               lineHeight: 1.05,
               fontWeight: 700,
-              letterSpacing: '20%',
+              letterSpacing: '0.02em',
             }}
           >
             flowers for molly.
@@ -90,7 +58,7 @@ export default function Page() {
           <section
             aria-label="Poem"
             style={{
-              marginTop: '0.75rem',
+              marginTop: '1rem',
               maxWidth: '60ch',
               width: '100%',
               textAlign: 'center',
@@ -105,13 +73,12 @@ export default function Page() {
                 key={i}
                 style={{
                   margin: 0,
-                  fontSize: '1.5rem',
-                  lineHeight: 1.6,
+                  fontSize: '1.25rem',
+                  lineHeight: 2.6,
                   color: 'rgba(255, 243, 212, 0.95)',
                   textShadow: '0 2px 8px rgba(106,115,116,0.85)',
                   opacity: 0.95,
                   whiteSpace: 'pre-wrap',
-                  letterSpacing: '10%',
                 }}
               >
                 {line}

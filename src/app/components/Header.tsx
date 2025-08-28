@@ -7,14 +7,24 @@ import Link from 'next/link';
 const linkStyle: React.CSSProperties = {
     color: 'black',
     textDecoration: 'none',
-    fontSize: '1.5rem',
+    fontSize: '1.1rem',
     fontWeight: 600,
     padding: '6px 12px',
-    letterSpacing: '20%',
+    letterSpacing: '0.04em',
 };
 
+const homeStyle: React.CSSProperties = {
+    color: 'black',
+    textDecoration: 'none',
+    fontSize: '1.1rem',
+    fontWeight: 600,
+    letterSpacing: '0.04em',
+    display: 'fixed',
+    left: '10%',
+    transform: 'translateX(-50%)',
+}
+
 function Divider() {
-    // SVG with top/bottom padding so the line is shorter than the header
     return (
         <svg
             width="18"
@@ -44,13 +54,13 @@ export default function Header() {
                 top: 0,
                 left: 0,
                 right: 0,
-                height: 80, // header height
+                height: 80,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 zIndex: 1100,
                 pointerEvents: 'auto',
-                background: 'rgba(255,255,255,0.8)',
+                background: 'rgba(255,255,255,0.9)',
                 color: 'black',
                 backdropFilter: 'blur(6px)',
             }}
@@ -62,16 +72,21 @@ export default function Header() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-
                 }}
             >
+                <Link href="/" style={linkStyle}>
+                    home
+                </Link>
+
+                <Divider />
+
                 <Link href="/submit" style={linkStyle}>
                     submit
                 </Link>
 
                 <Divider />
 
-                <Link href="/" style={linkStyle}>
+                <Link href="/view" style={linkStyle}>
                     view
                 </Link>
 
