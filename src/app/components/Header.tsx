@@ -13,16 +13,18 @@ const linkStyle: React.CSSProperties = {
     letterSpacing: '0.04em',
 };
 
-const homeStyle: React.CSSProperties = {
-    color: 'black',
-    textDecoration: 'none',
-    fontSize: '1.1rem',
-    fontWeight: 600,
-    letterSpacing: '0.04em',
-    display: 'fixed',
-    left: '10%',
-    transform: 'translateX(-50%)',
-}
+// TODO: MAKE HOME BUTTON FIXED LEFT ON HEADER
+
+// const homeStyle: React.CSSProperties = {
+//     color: 'black',
+//     textDecoration: 'none',
+//     fontSize: '1.1rem',
+//     fontWeight: 600,
+//     letterSpacing: '0.04em',
+//     display: 'fixed',
+//     left: '10%',
+//     transform: 'translateX(-50%)',
+// }
 
 function Divider() {
     return (
