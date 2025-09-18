@@ -66,7 +66,7 @@ export default function SubmitPage() {
                         maxWidth: '800px',
                         padding: '2rem',
                         margin: '0 1rem',
-                        color: 'rgba(255, 243, 212, 0.95)',
+                        color: 'rgba(0, 0, 0, 0.95)',
                         textAlign: 'left',
                         background: 'transparent',
                     }}
