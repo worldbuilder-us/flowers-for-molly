@@ -6,8 +6,15 @@ if (!MONGODB_URI) {
 }
 
 // Ensure we reuse the connection in dev (Next hot reload)
-let cached = (global as any)._mongoose as { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
-if (!cached) cached = (global as any)._mongoose = { conn: null, promise: null };
+type MongooseCache = { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
+
+declare global {
+    // eslint-disable-next-line no-var
+    var _mongoose: MongooseCache | undefined;
+}
+
+let cached: MongooseCache = global._mongoose ?? { conn: null, promise: null };
+if (!global._mongoose) global._mongoose = cached;
 
 export async function dbConnect(): Promise<typeof mongoose> {
   if (cached.conn) return cached.conn;

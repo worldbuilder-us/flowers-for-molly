@@ -38,8 +38,8 @@ export default function SubmitPage() {
 
             // Go straight to the story view
             router.push(`/view/${json.id}`);
-        } catch (err: any) {
-            setError(err?.message || 'Something went wrong while submitting.');
+        } catch (err) {
+            setError((err as Error)?.message || 'Something went wrong while submitting.');
         } finally {
             setSubmitting(false);
         }

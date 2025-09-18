@@ -135,9 +135,9 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { error: e?.message || "Failed to save story." },
+      { error: (e as Error)?.message || "Failed to save story." },
       { status: 500 }
     );
   }
