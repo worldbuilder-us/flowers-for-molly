@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/mongoose";
 import { Story } from "@/models/Story";
 
-type Params = { params: { id: string } };
+import { NextRequest } from "next/server";
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(_req: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
-  const story = await Story.findById(params.id).lean();
+  const story = await Story.findById(context.params.id).lean();
   if (!story) {
     return new NextResponse("Not found", { status: 404 });
   }
