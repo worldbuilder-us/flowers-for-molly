@@ -26,7 +26,7 @@ export default function RootLayout({
   // pick a random gradient 1..5 during render
   const idx = Math.floor(Math.random() * 5) + 1;
   // filenames like bg-gradient-01.png ... bg-gradient-05.png
-  const bgFilename = `/gradients/bg-gradient-${String(idx).padStart(2, "0")}.png`;
+  // const bgFilename = `/gradients/bg-gradient-${String(idx).padStart(2, "0")}.png`;
 
   return (
     <html lang="en">
@@ -34,12 +34,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{
           margin: 0,
-          minHeight: "100vh",
-          backgroundImage: `url('${bgFilename}')`,
+          minHeight: "100%",
+          // backgroundImage: `url('${bgFilename}')`,
           backgroundSize: "cover",
           backgroundPosition: "center center",
           backgroundRepeat: "no-repeat",
-          backgroundColor: "rgba(0,0,0,0.12)",
+          backgroundColor: "rgba(255,255,255,0.82)",
+          opacity: 1,
         }}
       >
         {children}
