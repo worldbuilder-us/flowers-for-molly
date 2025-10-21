@@ -1,0 +1,8 @@
+.gardenContainer {
+  position: relative;
+  height: 100vh;                /* or: calc(100vh - 80px) if header is fixed */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  z-index: 0;
+}
