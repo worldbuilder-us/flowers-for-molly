@@ -169,7 +169,8 @@ export default function InfiniteParallaxGarden({
         };
 
         el.addEventListener("wheel", onWheel, { passive: false });
-        return () => el.removeEventListener("wheel", onWheel as any);
+        el.addEventListener("wheel", onWheel, { passive: false });
+        return () => el.removeEventListener("wheel", onWheel);
     }, [wheelToHorizontal]);
 
     // Compute parallax offsets for each layer given current scrollLeft.
@@ -266,20 +267,22 @@ export default function InfiniteParallaxGarden({
         );
     };
 
+    const containerStyle: React.CSSProperties & { scrollbarWidth?: string } = {
+        position: "relative",
+        width: "100%",
+        height: effectiveHeight,
+        overflowX: "scroll",
+        overflowY: "hidden",
+        overscrollBehavior: "none",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+    };
+
     return (
         <div
             ref={scrollRef}
             className={className}
-            style={{
-                position: "relative",
-                width: "100%",
-                height: effectiveHeight,
-                overflowX: "scroll",
-                overflowY: "hidden",
-                overscrollBehavior: "none",
-                WebkitOverflowScrolling: "touch",
-                scrollbarWidth: "none" as any,
-            }}
+            style={containerStyle}
             onScroll={handleScroll}
         >
             <div

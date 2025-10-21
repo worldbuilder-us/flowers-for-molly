@@ -1,5 +1,11 @@
-<main
-    style={{
+import React from 'react';
+
+export default function PoemPage() {
+
+
+  return (
+    <main
+      style={{
         // width: '100%',
         // height: 'calc(100vh - 80px)',
         // display: 'flex',
@@ -14,10 +20,10 @@
         // paddingLeft: '1.25rem',
         // paddingRight: '1.25rem',
         // background: 'transparent',
-    }}
->
+      }}
+    >
 
-    {/* <div className={styles.poemContainer} style={{ marginTop: '8rem' }}>
+      {/* <div className={styles.poemContainer} style={{ marginTop: '8rem' }}>
           <h1
             style={{
               margin: 0,
@@ -64,5 +70,7 @@
             ))}
           </section>
         </div> */}
+    </main>
 
-</main>
+  );
+}
