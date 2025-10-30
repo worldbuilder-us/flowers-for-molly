@@ -421,4 +421,78 @@ export const exampleLayers: LayerConfig[] = [
             { src: "/garden/grass_test.png", width: 1024, height: 1200, repeatX: true, scale: 0.8 },
         ],
     },
+    // Keep your existing layers above…
+
+    {
+        id: "flowers-far",
+        // Slightly behind your existing "flowers" but in front of hills
+        parallax: 0.95,
+        zIndex: 28,
+        opacity: 0.5,
+        baseY: HEIGHT_ANCHOR * 0.8,
+        sprites: [
+            // smaller silhouettes to read as farther away
+            {
+                src: "/garden/flower_0.png",
+                width: 520, height: 520,
+                anchorY: 1, yOffset: -18, scale: 0.38,
+                xPositions: [120, 520, 940, 1320, 1680, 2060, 2440, 2820, 3200, 3600],
+            },
+            {
+                src: "/garden/flower_1.png",
+                width: 520, height: 520,
+                anchorY: 1, yOffset: -8, scale: 0.34,
+                xPositions: [300, 700, 1110, 1500, 1860, 2240, 2620, 3000, 3380, 3800],
+            },
+            {
+                src: "/garden/flower_2.png",
+                width: 520, height: 520,
+                anchorY: 1, yOffset: -24, scale: 0.36,
+                xPositions: [180, 600, 980, 1400, 1760, 2140, 2520, 2900, 3280, 3660],
+            },
+        ],
+    },
+
+    {
+        id: "flowers-near",
+        // Closer than "flowers-far"; moves a tad more with the camera
+        parallax: 0.78,
+        zIndex: 38,
+        opacity: 0.95,
+        baseY: HEIGHT_ANCHOR,
+        sprites: [
+            // larger, a touch of vertical variation so heads aren’t in a flat line
+            {
+                src: "/garden/flower_3.png",
+                width: 270, height: 270,
+                anchorY: 1, yOffset: 6, scale: 0.62,
+                xPositions: [180, 560, 920, 1300, 1750, 2100, 2580, 3000, 3460],
+            },
+            {
+                src: "/garden/flower_4.png",
+                width: 270, height: 270,
+                anchorY: 1, yOffset: -10, scale: 0.58,
+                xPositions: [360, 760, 1100, 1480, 1920, 2280, 2700, 3140, 3540],
+            },
+            // Keep a couple thistles to tie into your existing motif
+            {
+                src: "/garden/thistle_test.png",
+                width: 270, height: 270,
+                anchorY: 1, yOffset: 0, scale: 0.5,
+                xPositions: [160, 560, 920, 1300, 1750, 2100, 2580, 3000, 3460],
+            },
+        ],
+    },
+
+    // Your existing "foreground" (grass) stays after these two:
+    {
+        id: "foreground",
+        parallax: 0.95,
+        zIndex: 10,
+        baseY: HEIGHT_ANCHOR * 0.9,
+        sprites: [
+            { src: "/garden/grass_test.png", width: 1024, height: 1200, repeatX: true, scale: 0.8 },
+        ],
+    },
+
 ];
