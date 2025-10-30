@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 
 /**
  * InfiniteParallaxGarden
@@ -71,6 +71,9 @@ export type LayerConfig = {
     sprites: SpriteSpec[];
 };
 
+export type GardenViewport = { offsetX: number; viewportW: number; viewportH: number };
+
+
 export type GardenProps = {
     /** Logical width of a single repeating segment in CSS px. */
     segmentWidth?: number;
@@ -84,6 +87,8 @@ export type GardenProps = {
     wheelToHorizontal?: boolean; // default true
     /** Optional className for outer wrapper. */
     className?: string;
+    /** Optional callback when viewport changes (passes scrollLeft). */
+    onViewportChange?: (v: GardenViewport) => void;
 };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -96,10 +101,17 @@ export default function InfiniteParallaxGarden({
     initialOffsetX = 0,
     wheelToHorizontal = true,
     className,
+    onViewportChange,
 }: GardenProps) {
     const scrollRef = useRef<HTMLDivElement | null>(null);
     const contentRef = useRef<HTMLDivElement | null>(null);
     const [measuredH, setMeasuredH] = useState<number | null>(null);
+    const hostRef = useRef<HTMLDivElement | null>(null);
+    const [viewport, setViewport] = useState<GardenViewport>({
+        offsetX: initialOffsetX % segmentWidth,
+        viewportW: 0,
+        viewportH: 0,
+    });
 
     // We'll keep the viewport anchored to the middle segment (B)
     const middleStart = segmentWidth; // [A][B][C] each = segmentWidth
@@ -160,18 +172,32 @@ export default function InfiniteParallaxGarden({
         if (!el) return;
 
         const onWheel = (e: WheelEvent) => {
-            // Allow shift+wheel to behave normally (native horizontal)
+            // Allow native horizontal (Shift+Wheel) behavior
             if (e.shiftKey) return;
-            // Prevent vertical scrolling of the page
+
+            // Only intercept if this element is visible on screen
+            // (so we don’t hijack scrolls while scrolled away)
+            if (!el) return;
+
+            // Prevent vertical page scrolling
             e.preventDefault();
-            el.scrollLeft += e.deltaY + e.deltaX * 0.5;
+
+            // Translate vertical wheel → horizontal scroll
+            const delta = e.deltaY + e.deltaX * 0.5;
+            el.scrollLeft += delta;
+
+            // Trigger your existing scroll update logic
             handleScroll();
         };
 
-        el.addEventListener("wheel", onWheel, { passive: false });
-        el.addEventListener("wheel", onWheel, { passive: false });
-        return () => el.removeEventListener("wheel", onWheel);
-    }, [wheelToHorizontal]);
+        // Attach to window so it fires even when overlay is on top
+        window.addEventListener("wheel", onWheel, { passive: false });
+
+        return () => {
+            window.removeEventListener("wheel", onWheel);
+        };
+    }, [wheelToHorizontal, handleScroll]);
+
 
     // Compute parallax offsets for each layer given current scrollLeft.
     // We want a stable 0..segmentWidth range for the middle segment.
@@ -202,8 +228,32 @@ export default function InfiniteParallaxGarden({
             pointerEvents: "none",
         };
 
+        // Call this anytime scroll/resize repositions the world
+        const notify = useCallback(() => {
+            const el = hostRef.current;
+            if (!el) return;
+            const w = el.clientWidth;
+            const h = el.clientHeight;
+            const logicalOffsetX = (scrollLeft - middleStart + localX) % segmentWidth;
+
+            const next = { offsetX: logicalOffsetX, viewportW: w, viewportH: h };
+            setViewport(next);
+            onViewportChange?.(next);    // ← NEW
+        }, [onViewportChange, segmentWidth]);
+
+        useEffect(() => {
+            notify();
+            const ro = new ResizeObserver(notify);
+            if (hostRef.current) ro.observe(hostRef.current);
+            return () => ro.disconnect();
+        }, [notify]);
+
+
         return (
-            <div key={`seg-${layer.id}-${segmentIndex}`} style={style}>
+            <div
+
+                key={`seg-${layer.id}-${segmentIndex}`}
+                style={style}>
                 {sprites.map((s, i) => {
                     const anchorY = s.anchorY ?? 1;
                     const yOffset = s.yOffset ?? 0;
