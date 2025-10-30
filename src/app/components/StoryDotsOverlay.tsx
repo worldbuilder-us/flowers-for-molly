@@ -56,7 +56,7 @@ export default function StoryDotsOverlay({
             const rnd = rng01(h);
             const x = Math.floor(rnd() * segmentWidth);
             const y = topPad + Math.floor(rnd() * usableH);
-            const r = 3 + Math.floor(rnd() * 6); // 3..9 px
+            const r = 8 + Math.floor(rnd() * 6); // 3..9 px
 
             // Map y→parallax: top of band = pMin (farther), bottom = pMax (nearer)
             const t = (y - topPad) / Math.max(1, usableH); // 0..1
