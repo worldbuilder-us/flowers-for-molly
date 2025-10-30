@@ -306,28 +306,29 @@ export default function InfiniteParallaxGarden({
 export const exampleLayers: LayerConfig[] = [
     {
         id: "background",
-        parallax: 0.02,
+        parallax: 0.9,
         zIndex: -100,
-        baseY: HEIGHT_ANCHOR + 1580,
+        baseY: HEIGHT_ANCHOR,
         opacity: 1,
         sprites: [
-            { src: "/garden/bg_test.png", width: 2048, height: 720, repeatX: true, scale: 4 },
+            { src: "/garden/bg_test.png", width: 2048, height: 720, repeatX: true, scale: 2 },
         ],
     },
-    {
-        id: "sky",
-        parallax: 0.03,
-        zIndex: 0,
-        baseY: HEIGHT_ANCHOR,
-        opacity: 0.51,
-        sprites: [
-            { src: "/garden/sky_test.png", width: 1024, height: 720, repeatX: true, scale: 1.2 },
-        ],
-    },
+    // {
+    //     id: "sky",
+    //     parallax: 0.6,
+    //     zIndex: 0,
+    //     baseY: HEIGHT_ANCHOR,
+    //     opacity: 0.51,
+    //     sprites: [
+    //         { src: "/garden/sky_test.png", width: 1024, height: 720, repeatX: true, scale: 1.2 },
+    //     ],
+    // },
     {
         id: "far-hills",
-        parallax: 0.1,
+        parallax: 0.7,
         zIndex: 10,
+        opacity: 0.5,
         baseY: HEIGHT_ANCHOR,
         sprites: [
             { src: "/garden/hills_test.png", width: 1480, height: 720, repeatX: true, scale: 1 },
@@ -336,7 +337,8 @@ export const exampleLayers: LayerConfig[] = [
     {
         id: "mid-grass",
         parallax: 0.25,
-        zIndex: 20,
+        zIndex: 100,
+        opacity: 0.75,
         baseY: HEIGHT_ANCHOR,
         sprites: [
             { src: "/garden/thistle_test.png", width: 512, height: 1020, repeatX: true, scale: 0.51 },
@@ -344,8 +346,9 @@ export const exampleLayers: LayerConfig[] = [
     },
     {
         id: "flowers",
-        parallax: 0.5,
+        parallax: 0.75,
         zIndex: 30,
+        opacity: 0.8,
         baseY: HEIGHT_ANCHOR,
         sprites: [
             {
@@ -362,7 +365,7 @@ export const exampleLayers: LayerConfig[] = [
     {
         id: "foreground",
         parallax: 0.75,
-        zIndex: 40,
+        zIndex: 10,
         baseY: HEIGHT_ANCHOR,
         sprites: [
             { src: "/garden/grass_test.png", width: 1024, height: 1200, repeatX: true, scale: 0.8 },
