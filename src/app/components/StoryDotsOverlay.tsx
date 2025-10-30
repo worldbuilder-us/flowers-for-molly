@@ -106,7 +106,7 @@ export default function StoryDotsOverlay({
                         const parallaxShift = offsetMod * d.parallax;
 
                         const left = d.x + tile * segmentWidth - d.r - parallaxShift;
-                        const top = d.y - d.r + 120;
+                        const top = d.y - d.r;
                         const key = `${tile}:${d.id}`;
                         const isHover = hoverId === key;
 

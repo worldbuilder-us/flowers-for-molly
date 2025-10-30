@@ -1,6 +1,15 @@
+// ./src/app/components/InfiniteParallaxGarden.tsx
 "use client";
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, {
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+    useCallback,
+} from "react";
+import Image from "next/image";
 
 /**
  * InfiniteParallaxGarden
@@ -8,22 +17,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallba
  * A horizontally scrollable, seamless (wrap-around) panorama with
  * multi-layer parallax. Designed as the homepage "garden" scene.
  *
- * How it works
- * - The world is a single logical segment of fixed width (segmentWidth).
- * - We render THREE segments side-by-side: [A][B][C].
- * - The viewport starts centered on [B]. When the user scrolls beyond
- *   half a segment to the left or right, we jump the scroll position
- *   by exactly one segment back to the center. Because every segment
- *   is visually identical, the jump is imperceptible → infinite wrap.
- * - Each visual layer applies a parallax factor (0..1). Foreground
- *   layers use higher factors; distant backgrounds use smaller factors.
- * - Assets are configured via a declarative template (LayerConfig),
- *   so designers can keep dropping in new images without changing code.
- *
- * Notes
- * - This is DOM/CSS based (no WebGL) for simplicity and accessibility.
- * - Images can be tiled repeat-x or placed as single sprites.
- * - Wheel (vertical) movement is mapped to horizontal scroll for ease.
+ * See original header comments for details.
  */
 
 // -----------------------------
@@ -73,7 +67,6 @@ export type LayerConfig = {
 
 export type GardenViewport = { offsetX: number; viewportW: number; viewportH: number };
 
-
 export type GardenProps = {
     /** Logical width of a single repeating segment in CSS px. */
     segmentWidth?: number;
@@ -104,16 +97,9 @@ export default function InfiniteParallaxGarden({
     onViewportChange,
 }: GardenProps) {
     const scrollRef = useRef<HTMLDivElement | null>(null);
-    const contentRef = useRef<HTMLDivElement | null>(null);
     const [measuredH, setMeasuredH] = useState<number | null>(null);
-    const hostRef = useRef<HTMLDivElement | null>(null);
-    const [viewport, setViewport] = useState<GardenViewport>({
-        offsetX: initialOffsetX % segmentWidth,
-        viewportW: 0,
-        viewportH: 0,
-    });
 
-    // We'll keep the viewport anchored to the middle segment (B)
+    // Keep the viewport anchored to the middle segment (B)
     const middleStart = segmentWidth; // [A][B][C] each = segmentWidth
 
     // Keep a reactive copy so we can style transforms cheaply.
@@ -125,7 +111,7 @@ export default function InfiniteParallaxGarden({
         const el = scrollRef.current;
         if (!el) return;
 
-        const ro = new ResizeObserver(entries => {
+        const ro = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 const h = Math.round(entry.contentRect.height);
                 if (h > 0) setMeasuredH(h);
@@ -141,13 +127,13 @@ export default function InfiniteParallaxGarden({
     useLayoutEffect(() => {
         const el = scrollRef.current;
         if (!el) return;
-        const target = middleStart + initialOffsetX;
+        const target = middleStart + (initialOffsetX % segmentWidth);
         el.scrollLeft = target;
         setScrollLeft(target);
-    }, [middleStart, initialOffsetX]);
+    }, [middleStart, initialOffsetX, segmentWidth]);
 
     // Handle wrapping: if user scrolls too far to either side, jump by ±segmentWidth
-    const handleScroll = () => {
+    const handleScroll = useCallback(() => {
         const el = scrollRef.current;
         if (!el) return;
         let x = el.scrollLeft;
@@ -163,7 +149,7 @@ export default function InfiniteParallaxGarden({
             el.scrollLeft = x;
         }
         setScrollLeft(el.scrollLeft);
-    };
+    }, [middleStart, segmentWidth]);
 
     // Map vertical wheel to horizontal scroll for natural navigation
     useEffect(() => {
@@ -175,10 +161,6 @@ export default function InfiniteParallaxGarden({
             // Allow native horizontal (Shift+Wheel) behavior
             if (e.shiftKey) return;
 
-            // Only intercept if this element is visible on screen
-            // (so we don’t hijack scrolls while scrolled away)
-            if (!el) return;
-
             // Prevent vertical page scrolling
             e.preventDefault();
 
@@ -186,7 +168,7 @@ export default function InfiniteParallaxGarden({
             const delta = e.deltaY + e.deltaX * 0.5;
             el.scrollLeft += delta;
 
-            // Trigger your existing scroll update logic
+            // Trigger our scroll update logic
             handleScroll();
         };
 
@@ -198,14 +180,38 @@ export default function InfiniteParallaxGarden({
         };
     }, [wheelToHorizontal, handleScroll]);
 
-
     // Compute parallax offsets for each layer given current scrollLeft.
     // We want a stable 0..segmentWidth range for the middle segment.
     const localX = useMemo(() => {
-        // Normalize scrollLeft to the middle segment [0..segmentWidth)
         const x = (scrollLeft - middleStart) % segmentWidth;
         return x < 0 ? x + segmentWidth : x;
     }, [scrollLeft, middleStart, segmentWidth]);
+
+    // Notify consumer about viewport changes (offset + size) on scroll/resize
+    const notifyViewport = useCallback(() => {
+        if (!onViewportChange) return;
+        const el = scrollRef.current;
+        if (!el) return;
+        const w = el.clientWidth;
+        const h = el.clientHeight;
+        const logicalOffsetX = (scrollLeft - middleStart + localX) % segmentWidth;
+        onViewportChange({ offsetX: logicalOffsetX, viewportW: w, viewportH: h });
+    }, [onViewportChange, scrollLeft, middleStart, localX, segmentWidth]);
+
+    useEffect(() => {
+        // Notify whenever scroll-derived values change
+        notifyViewport();
+    }, [notifyViewport]);
+
+    useEffect(() => {
+        // Also notify on resize of the scroll container
+        if (!onViewportChange) return;
+        const el = scrollRef.current;
+        if (!el) return;
+        const ro = new ResizeObserver(() => notifyViewport());
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [onViewportChange, notifyViewport]);
 
     // Render a single segment worth of content for a layer
     const renderLayerSegment = (layer: LayerConfig, segmentIndex: number) => {
@@ -228,32 +234,8 @@ export default function InfiniteParallaxGarden({
             pointerEvents: "none",
         };
 
-        // Call this anytime scroll/resize repositions the world
-        const notify = useCallback(() => {
-            const el = hostRef.current;
-            if (!el) return;
-            const w = el.clientWidth;
-            const h = el.clientHeight;
-            const logicalOffsetX = (scrollLeft - middleStart + localX) % segmentWidth;
-
-            const next = { offsetX: logicalOffsetX, viewportW: w, viewportH: h };
-            setViewport(next);
-            onViewportChange?.(next);    // ← NEW
-        }, [onViewportChange, segmentWidth]);
-
-        useEffect(() => {
-            notify();
-            const ro = new ResizeObserver(notify);
-            if (hostRef.current) ro.observe(hostRef.current);
-            return () => ro.disconnect();
-        }, [notify]);
-
-
         return (
-            <div
-
-                key={`seg-${layer.id}-${segmentIndex}`}
-                style={style}>
+            <div key={`seg-${layer.id}-${segmentIndex}`} style={style}>
                 {sprites.map((s, i) => {
                     const anchorY = s.anchorY ?? 1;
                     const yOffset = s.yOffset ?? 0;
@@ -266,7 +248,7 @@ export default function InfiniteParallaxGarden({
                         const stripStyle: React.CSSProperties = {
                             position: "absolute",
                             left: 0,
-                            top: baseY - h * anchorY + yOffset,
+                            top: (baseY ?? segmentHeight) - h * anchorY + yOffset,
                             width: segmentWidth,
                             height: h,
                             backgroundImage: `url(${s.src})`,
@@ -285,11 +267,24 @@ export default function InfiniteParallaxGarden({
                         const spriteStyle: React.CSSProperties = {
                             position: "absolute",
                             left: x - w * 0.5,
-                            top: baseY - h * anchorY + yOffset,
+                            top: (baseY ?? segmentHeight) - h * anchorY + yOffset,
                             width: w,
                             height: h,
+                            pointerEvents: "none",
                         };
-                        return <img key={`spr-${i}-${j}`} src={s.src} alt="" style={spriteStyle} />;
+                        // Use next/image for better LCP/bandwidth
+                        return (
+                            <Image
+                                key={`spr-${i}-${j}`}
+                                src={s.src}
+                                alt=""
+                                width={Math.round(w)}
+                                height={Math.round(h)}
+                                style={spriteStyle}
+                                draggable={false}
+                                priority={false}
+                            />
+                        );
                     });
                 })}
             </div>
@@ -336,7 +331,6 @@ export default function InfiniteParallaxGarden({
             onScroll={handleScroll}
         >
             <div
-                ref={contentRef}
                 style={{
                     position: "relative",
                     width: segmentWidth * 3,
@@ -350,8 +344,7 @@ export default function InfiniteParallaxGarden({
 }
 
 // ------------------------------------------------------------
-// Example preset (optional): you can remove this from production
-// and define your own in the page that imports the component.
+// Example preset (optional)
 // ------------------------------------------------------------
 export const exampleLayers: LayerConfig[] = [
     {
@@ -365,14 +358,14 @@ export const exampleLayers: LayerConfig[] = [
         ],
     },
     // {
-    //     id: "sky",
-    //     parallax: 0.6,
-    //     zIndex: 0,
-    //     baseY: HEIGHT_ANCHOR,
-    //     opacity: 0.51,
-    //     sprites: [
-    //         { src: "/garden/sky_test.png", width: 1024, height: 720, repeatX: true, scale: 1.2 },
-    //     ],
+    //   id: "sky",
+    //   parallax: 0.6,
+    //   zIndex: 0,
+    //   baseY: HEIGHT_ANCHOR,
+    //   opacity: 0.51,
+    //   sprites: [
+    //     { src: "/garden/sky_test.png", width: 1024, height: 720, repeatX: true, scale: 1.2 },
+    //   ],
     // },
     {
         id: "far-hills",
@@ -421,17 +414,14 @@ export const exampleLayers: LayerConfig[] = [
             { src: "/garden/grass_test.png", width: 1024, height: 1200, repeatX: true, scale: 0.8 },
         ],
     },
-    // Keep your existing layers above…
-
+    // Additional depth layers
     {
         id: "flowers-far",
-        // Slightly behind your existing "flowers" but in front of hills
         parallax: 0.95,
         zIndex: 28,
         opacity: 0.5,
         baseY: HEIGHT_ANCHOR * 0.8,
         sprites: [
-            // smaller silhouettes to read as farther away
             {
                 src: "/garden/flower_0.png",
                 width: 520, height: 520,
@@ -452,16 +442,13 @@ export const exampleLayers: LayerConfig[] = [
             },
         ],
     },
-
     {
         id: "flowers-near",
-        // Closer than "flowers-far"; moves a tad more with the camera
         parallax: 0.78,
         zIndex: 38,
         opacity: 0.95,
         baseY: HEIGHT_ANCHOR,
         sprites: [
-            // larger, a touch of vertical variation so heads aren’t in a flat line
             {
                 src: "/garden/flower_3.png",
                 width: 270, height: 270,
@@ -474,7 +461,6 @@ export const exampleLayers: LayerConfig[] = [
                 anchorY: 1, yOffset: -10, scale: 0.58,
                 xPositions: [360, 760, 1100, 1480, 1920, 2280, 2700, 3140, 3540],
             },
-            // Keep a couple thistles to tie into your existing motif
             {
                 src: "/garden/thistle_test.png",
                 width: 270, height: 270,
@@ -483,10 +469,9 @@ export const exampleLayers: LayerConfig[] = [
             },
         ],
     },
-
-    // Your existing "foreground" (grass) stays after these two:
+    // Keep a distinct id to avoid key duplication
     {
-        id: "foreground",
+        id: "foreground-2",
         parallax: 0.95,
         zIndex: 10,
         baseY: HEIGHT_ANCHOR * 0.9,
@@ -494,5 +479,4 @@ export const exampleLayers: LayerConfig[] = [
             { src: "/garden/grass_test.png", width: 1024, height: 1200, repeatX: true, scale: 0.8 },
         ],
     },
-
 ];
