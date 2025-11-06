@@ -15,8 +15,6 @@ export default function Page() {
     offsetX: 0, viewportW: 0, viewportH: 0
   });
   const [active, setActive] = useState<StoryListItem | null>(null);
-
-  // NEW: debug state
   const [wireframeMode, setWireframeMode] = useState(false);
 
   useEffect(() => {
@@ -51,7 +49,6 @@ export default function Page() {
           <Header />
         }
         <div className={styles.gardenContainer} style={{ position: 'relative' }}>
-          {/* NEW: Debug panel */}
           <div
             style={{
               position: 'absolute',
