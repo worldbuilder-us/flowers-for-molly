@@ -82,6 +82,8 @@ export type GardenProps = {
     className?: string;
     /** Optional callback when viewport changes (passes scrollLeft). */
     onViewportChange?: (v: GardenViewport) => void;
+    /** When true, swap images for outlined boxes with labels */
+    debugWireframes?: boolean;
 };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -95,6 +97,7 @@ export default function InfiniteParallaxGarden({
     wheelToHorizontal = true,
     className,
     onViewportChange,
+    debugWireframes = false,
 }: GardenProps) {
     const scrollRef = useRef<HTMLDivElement | null>(null);
     const [measuredH, setMeasuredH] = useState<number | null>(null);
@@ -217,9 +220,6 @@ export default function InfiniteParallaxGarden({
     const renderLayerSegment = (layer: LayerConfig, segmentIndex: number) => {
         const { sprites, parallax, baseY = segmentHeight, opacity = 1 } = layer;
 
-        // Parallax shift: each layer offsets by localX * (parallax - 1)
-        // - If parallax = 1 → foreground, moves 1:1 with scroll
-        // - If parallax = 0 → skybox, fixed
         const parallaxShift = -localX * (1 - clamp(parallax, 0, 1));
 
         const style: React.CSSProperties = {
@@ -242,37 +242,99 @@ export default function InfiniteParallaxGarden({
                     const scale = s.scale ?? 1;
                     const h = s.height * scale;
                     const w = s.width * scale;
+                    const topY = (baseY ?? segmentHeight) - h * anchorY + yOffset;
+
+                    // Helper: common label bubble for wireframes
+                    const WireLabel = ({ text }: { text: string }) => (
+                        <div
+                            style={{
+                                position: "absolute",
+                                top: -18,
+                                left: 0,
+                                fontSize: 10,
+                                fontWeight: 600,
+                                padding: "2px 6px",
+                                borderRadius: 6,
+                                background: "rgba(0,0,0,0.95)",
+                                color: "#fff",
+                                pointerEvents: "none",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            {text}
+                        </div>
+                    );
 
                     if (s.repeatX) {
-                        // Use a single full-width strip with background-repeat: repeat-x
+                        if (debugWireframes) {
+                            const wfStyle: React.CSSProperties = {
+                                position: "absolute",
+                                left: 0,
+                                top: topY,
+                                width: segmentWidth,
+                                height: h,
+                                outline: "2px dashed rgba(0, 0, 200, 0.8)",
+                                background: "rgba(255,255,200,0.08)",
+                            };
+                            return (
+                                <div key={`repwf-${i}`} style={wfStyle}>
+                                    <WireLabel
+                                        text={`${layer.id} • ${s.width}×${s.height}px • scale: ${scale.toFixed(2)}x parallax: ${parallax}`}
+                                    />
+                                </div>
+                            );
+                        }
+
+
+                        // Image/strip version
                         const stripStyle: React.CSSProperties = {
                             position: "absolute",
                             left: 0,
-                            top: (baseY ?? segmentHeight) - h * anchorY + yOffset,
+                            top: topY,
                             width: segmentWidth,
                             height: h,
                             backgroundImage: `url(${s.src})`,
                             backgroundRepeat: "repeat-x",
                             backgroundSize: `${w}px ${h}px`,
-                            // lock the background to world coords by offsetting based on segmentIndex
                             backgroundPositionX: `${-segmentIndex * segmentWidth}px`,
                             imageRendering: "auto",
                         };
                         return <div key={`rep-${i}`} style={stripStyle} />;
                     }
 
-                    // Non-repeating: place at given x positions (within one segment)
+                    // Non-repeating sprites
                     const xs = s.xPositions ?? [];
                     return xs.map((x, j) => {
+                        const leftX = x - w * 0.5;
+
+                        if (debugWireframes) {
+                            const wfStyle: React.CSSProperties = {
+                                position: "absolute",
+                                left: leftX,
+                                top: topY,
+                                width: w,
+                                height: h,
+                                outline: "1px solid rgba(255, 180, 0, 0.9)",
+                                background: "rgba(255,180,0,0.08)",
+                            };
+                            return (
+                                <div key={`sprwf-${i}-${j}`} style={wfStyle}>
+                                    <WireLabel
+                                        text={`${layer.id} • ${s.width}×${s.height}px • scale: ${scale.toFixed(2)}x parallax: ${parallax}`}
+                                    />
+                                </div>
+                            );
+                        }
+
+                        // Normal image sprite
                         const spriteStyle: React.CSSProperties = {
                             position: "absolute",
-                            left: x - w * 0.5,
-                            top: (baseY ?? segmentHeight) - h * anchorY + yOffset,
+                            left: leftX,
+                            top: topY,
                             width: w,
                             height: h,
                             pointerEvents: "none",
                         };
-                        // Use next/image for better LCP/bandwidth
                         return (
                             <Image
                                 key={`spr-${i}-${j}`}
