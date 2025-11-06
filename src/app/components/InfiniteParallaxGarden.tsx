@@ -411,7 +411,7 @@ export default function InfiniteParallaxGarden({
 export const exampleLayers: LayerConfig[] = [
     {
         id: "background",
-        parallax: 0.9,
+        parallax: 0.99,
         zIndex: -100,
         baseY: HEIGHT_ANCHOR,
         opacity: 1,
@@ -431,7 +431,7 @@ export const exampleLayers: LayerConfig[] = [
     // },
     {
         id: "far-hills",
-        parallax: 0.7,
+        parallax: 0.8,
         zIndex: 10,
         opacity: 0.5,
         baseY: HEIGHT_ANCHOR,
@@ -451,7 +451,7 @@ export const exampleLayers: LayerConfig[] = [
     },
     {
         id: "flowers",
-        parallax: 0.75,
+        parallax: 0.15,
         zIndex: 30,
         opacity: 0.8,
         baseY: HEIGHT_ANCHOR,
@@ -469,7 +469,7 @@ export const exampleLayers: LayerConfig[] = [
     },
     {
         id: "foreground",
-        parallax: 0.75,
+        parallax: 0.5,
         zIndex: 10,
         baseY: HEIGHT_ANCHOR,
         sprites: [
@@ -479,7 +479,7 @@ export const exampleLayers: LayerConfig[] = [
     // Additional depth layers
     {
         id: "flowers-far",
-        parallax: 0.95,
+        parallax: 0.75,
         zIndex: 28,
         opacity: 0.5,
         baseY: HEIGHT_ANCHOR * 0.8,
@@ -506,7 +506,7 @@ export const exampleLayers: LayerConfig[] = [
     },
     {
         id: "flowers-near",
-        parallax: 0.78,
+        parallax: 0.05,
         zIndex: 38,
         opacity: 0.95,
         baseY: HEIGHT_ANCHOR,
@@ -534,7 +534,7 @@ export const exampleLayers: LayerConfig[] = [
     // Keep a distinct id to avoid key duplication
     {
         id: "foreground-2",
-        parallax: 0.95,
+        parallax: 0.25,
         zIndex: 10,
         baseY: HEIGHT_ANCHOR * 0.9,
         sprites: [
