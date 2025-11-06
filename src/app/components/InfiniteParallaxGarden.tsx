@@ -536,6 +536,7 @@ export const exampleLayers: LayerConfig[] = [
         id: "foreground-2",
         parallax: 0.25,
         zIndex: 10,
+        opacity: 0.6,
         baseY: HEIGHT_ANCHOR * 0.9,
         sprites: [
             { src: "/garden/grass_test.png", width: 1024, height: 1200, repeatX: true, scale: 0.8 },
