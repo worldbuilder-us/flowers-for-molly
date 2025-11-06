@@ -47,7 +47,9 @@ export default function Page() {
   return (
     <>
       <main>
-        <Header />
+        {!wireframeMode &&
+          <Header />
+        }
         <div className={styles.gardenContainer} style={{ position: 'relative' }}>
           {/* NEW: Debug panel */}
           <div
