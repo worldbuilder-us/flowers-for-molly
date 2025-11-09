@@ -9,7 +9,7 @@ const linkStyle: React.CSSProperties = {
     textDecoration: 'none',
     fontSize: '1.1rem',
     fontWeight: 600,
-    padding: '8%',
+    padding: '8% 5%',
     letterSpacing: '0.04em',
 };
 
