@@ -5,11 +5,11 @@ import React from 'react';
 import Link from 'next/link';
 
 const linkStyle: React.CSSProperties = {
-    color: 'black',
+    color: 'white',
     textDecoration: 'none',
     fontSize: '1.1rem',
     fontWeight: 600,
-    padding: '6px 12px',
+    padding: '8% 5%',
     letterSpacing: '0.04em',
 };
 
@@ -58,12 +58,12 @@ export default function Header() {
                 right: 0,
                 height: 80,
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: 'right',
+                justifyContent: 'right',
                 zIndex: 1100,
                 pointerEvents: 'auto',
-                background: 'rgba(255,255,255,0.9)',
-                color: 'black',
+                background: 'transparent',
+                color: 'white',
                 backdropFilter: 'blur(6px)',
             }}
         >
@@ -72,27 +72,28 @@ export default function Header() {
                 aria-label="Main"
                 style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    alignItems: 'right',
+                    justifyContent: 'right',
+                    color: 'white',
                 }}
             >
                 <Link href="/" style={linkStyle}>
                     home
                 </Link>
 
-                <Divider />
+
 
                 <Link href="/submit" style={linkStyle}>
                     submit
                 </Link>
 
-                <Divider />
+
 
                 <Link href="/view" style={linkStyle}>
                     view
                 </Link>
 
-                <Divider />
+
 
                 <Link href="/about" style={linkStyle}>
                     about
