@@ -3,10 +3,11 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Header from './components/Header';
-import InfiniteParallaxGarden, { exampleLayers } from './components/InfiniteParallaxGarden';
+import InfiniteParallaxGarden from './components/InfiniteParallaxGarden';
 import StoryDotsOverlay from './components/StoryDotsOverlay';
 import StoryModal, { StoryListItem } from './components/StoryModal';
 import styles from './Page.module.css';
+import { meadowBiome, buildLayersFromBiome } from './garden/biomes';
 
 export default function Page() {
   const [stories, setStories] = useState<StoryListItem[]>([]);
@@ -15,7 +16,13 @@ export default function Page() {
     offsetX: 0, viewportW: 0, viewportH: 0
   });
   const [active, setActive] = useState<StoryListItem | null>(null);
-  const [wireframeMode, setWireframeMode] = useState(false);
+  const [debugWireframes, setDebugWireframes] = useState(false);
+
+  const layers = useMemo(
+    () => buildLayersFromBiome(meadowBiome),
+    []
+  );
+
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +52,7 @@ export default function Page() {
   return (
     <>
       <main>
-        {!wireframeMode &&
+        {!debugWireframes &&
           <Header />
         }
         <div className={styles.gardenContainer} style={{ position: 'relative' }}>
@@ -71,20 +78,19 @@ export default function Page() {
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input
                 type="checkbox"
-                checked={wireframeMode}
-                onChange={(e) => setWireframeMode(e.target.checked)}
+                checked={debugWireframes}
+                onChange={(e) => setDebugWireframes(e.target.checked)}
               />
               Wireframe sprites
             </label>
           </div>
 
           <InfiniteParallaxGarden
-            segmentWidth={segmentWidth}
-            layers={exampleLayers}
-            initialOffsetX={1024}
-            wheelToHorizontal
+            segmentWidth={4096}
+            segmentHeight={4096}
+            layers={layers}
+            debugWireframes={debugWireframes}
             onViewportChange={onViewportChange}
-            debugWireframes={wireframeMode}
           />
 
           {/* dots overlay */}

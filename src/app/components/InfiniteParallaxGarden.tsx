@@ -16,8 +16,6 @@ import Image from "next/image";
  * ------------------------------------------------------------
  * A horizontally scrollable, seamless (wrap-around) panorama with
  * multi-layer parallax. Designed as the homepage "garden" scene.
- *
- * See original header comments for details.
  */
 
 // -----------------------------
@@ -87,7 +85,6 @@ export type GardenProps = {
 };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
-const HEIGHT_ANCHOR = 1024;
 
 export default function InfiniteParallaxGarden({
     segmentWidth = 4096,
@@ -102,13 +99,9 @@ export default function InfiniteParallaxGarden({
     const scrollRef = useRef<HTMLDivElement | null>(null);
     const [measuredH, setMeasuredH] = useState<number | null>(null);
 
-    // Keep the viewport anchored to the middle segment (B)
     const middleStart = segmentWidth; // [A][B][C] each = segmentWidth
-
-    // Keep a reactive copy so we can style transforms cheaply.
     const [scrollLeft, setScrollLeft] = useState(0);
 
-    // measure the parent height if segmentHeight is not provided
     useLayoutEffect(() => {
         if (segmentHeight) return;
         const el = scrollRef.current;
@@ -124,9 +117,8 @@ export default function InfiniteParallaxGarden({
         return () => ro.disconnect();
     }, [segmentHeight]);
 
-    const effectiveHeight = segmentHeight ?? measuredH ?? 720; // fallback
+    const effectiveHeight = segmentHeight ?? measuredH ?? 720;
 
-    // Initialize scroll position to center + initialOffsetX
     useLayoutEffect(() => {
         const el = scrollRef.current;
         if (!el) return;
@@ -135,62 +127,46 @@ export default function InfiniteParallaxGarden({
         setScrollLeft(target);
     }, [middleStart, initialOffsetX, segmentWidth]);
 
-    // Handle wrapping: if user scrolls too far to either side, jump by ±segmentWidth
     const handleScroll = useCallback(() => {
         const el = scrollRef.current;
         if (!el) return;
         let x = el.scrollLeft;
 
-        const leftBoundary = middleStart * 0.5; // halfway into A
-        const rightBoundary = middleStart * 1.5; // halfway into C
+        const leftBoundary = middleStart * 0.5;
+        const rightBoundary = middleStart * 1.5;
 
         if (x < leftBoundary) {
-            x += segmentWidth; // jump right by one segment (A→B)
+            x += segmentWidth;
             el.scrollLeft = x;
         } else if (x > rightBoundary) {
-            x -= segmentWidth; // jump left by one segment (C→B)
+            x -= segmentWidth;
             el.scrollLeft = x;
         }
         setScrollLeft(el.scrollLeft);
     }, [middleStart, segmentWidth]);
 
-    // Map vertical wheel to horizontal scroll for natural navigation
     useEffect(() => {
         if (!wheelToHorizontal) return;
         const el = scrollRef.current;
         if (!el) return;
 
         const onWheel = (e: WheelEvent) => {
-            // Allow native horizontal (Shift+Wheel) behavior
             if (e.shiftKey) return;
-
-            // Prevent vertical page scrolling
             e.preventDefault();
-
-            // Translate vertical wheel → horizontal scroll
             const delta = e.deltaY + e.deltaX * 0.5;
             el.scrollLeft += delta;
-
-            // Trigger our scroll update logic
             handleScroll();
         };
 
-        // Attach to window so it fires even when overlay is on top
         window.addEventListener("wheel", onWheel, { passive: false });
-
-        return () => {
-            window.removeEventListener("wheel", onWheel);
-        };
+        return () => window.removeEventListener("wheel", onWheel);
     }, [wheelToHorizontal, handleScroll]);
 
-    // Compute parallax offsets for each layer given current scrollLeft.
-    // We want a stable 0..segmentWidth range for the middle segment.
     const localX = useMemo(() => {
         const x = (scrollLeft - middleStart) % segmentWidth;
         return x < 0 ? x + segmentWidth : x;
     }, [scrollLeft, middleStart, segmentWidth]);
 
-    // Notify consumer about viewport changes (offset + size) on scroll/resize
     const notifyViewport = useCallback(() => {
         if (!onViewportChange) return;
         const el = scrollRef.current;
@@ -202,12 +178,10 @@ export default function InfiniteParallaxGarden({
     }, [onViewportChange, scrollLeft, middleStart, localX, segmentWidth]);
 
     useEffect(() => {
-        // Notify whenever scroll-derived values change
         notifyViewport();
     }, [notifyViewport]);
 
     useEffect(() => {
-        // Also notify on resize of the scroll container
         if (!onViewportChange) return;
         const el = scrollRef.current;
         if (!el) return;
@@ -216,10 +190,8 @@ export default function InfiniteParallaxGarden({
         return () => ro.disconnect();
     }, [onViewportChange, notifyViewport]);
 
-    // Render a single segment worth of content for a layer
     const renderLayerSegment = (layer: LayerConfig, segmentIndex: number) => {
         const { sprites, parallax, baseY = segmentHeight, opacity = 1 } = layer;
-
         const parallaxShift = -localX * (1 - clamp(parallax, 0, 1));
 
         const style: React.CSSProperties = {
@@ -244,7 +216,6 @@ export default function InfiniteParallaxGarden({
                     const w = s.width * scale;
                     const topY = (baseY ?? segmentHeight) - h * anchorY + yOffset;
 
-                    // Helper: common label bubble for wireframes
                     const WireLabel = ({ text }: { text: string }) => (
                         <div
                             style={{
@@ -279,14 +250,14 @@ export default function InfiniteParallaxGarden({
                             return (
                                 <div key={`repwf-${i}`} style={wfStyle}>
                                     <WireLabel
-                                        text={`${layer.id} • ${s.width}×${s.height}px • scale: ${scale.toFixed(2)}x parallax: ${parallax}`}
+                                        text={`${layer.id} • ${s.width}×${s.height}px • scale: ${scale.toFixed(
+                                            2
+                                        )}x parallax: ${parallax}`}
                                     />
                                 </div>
                             );
                         }
 
-
-                        // Image/strip version
                         const stripStyle: React.CSSProperties = {
                             position: "absolute",
                             left: 0,
@@ -302,7 +273,6 @@ export default function InfiniteParallaxGarden({
                         return <div key={`rep-${i}`} style={stripStyle} />;
                     }
 
-                    // Non-repeating sprites
                     const xs = s.xPositions ?? [];
                     return xs.map((x, j) => {
                         const leftX = x - w * 0.5;
@@ -320,13 +290,14 @@ export default function InfiniteParallaxGarden({
                             return (
                                 <div key={`sprwf-${i}-${j}`} style={wfStyle}>
                                     <WireLabel
-                                        text={`${layer.id} • ${s.width}×${s.height}px • scale: ${scale.toFixed(2)}x parallax: ${parallax}`}
+                                        text={`${layer.id} • ${s.width}×${s.height}px • scale: ${scale.toFixed(
+                                            2
+                                        )}x parallax: ${parallax}`}
                                     />
                                 </div>
                             );
                         }
 
-                        // Normal image sprite
                         const spriteStyle: React.CSSProperties = {
                             position: "absolute",
                             left: leftX,
@@ -353,7 +324,6 @@ export default function InfiniteParallaxGarden({
         );
     };
 
-    // Render THREE identical segments for each layer
     const renderLayer = (layer: LayerConfig) => {
         const z = layer.zIndex ?? 0;
         const layerStyle: React.CSSProperties = {
@@ -404,142 +374,3 @@ export default function InfiniteParallaxGarden({
         </div>
     );
 }
-
-// ------------------------------------------------------------
-// Example preset (optional)
-// ------------------------------------------------------------
-export const exampleLayers: LayerConfig[] = [
-    {
-        id: "background",
-        parallax: 0.99,
-        zIndex: -100,
-        baseY: HEIGHT_ANCHOR,
-        opacity: 1,
-        sprites: [
-            { src: "/garden/bg_test.png", width: 2048, height: 720, repeatX: true, scale: 2 },
-        ],
-    },
-    // {
-    //   id: "sky",
-    //   parallax: 0.6,
-    //   zIndex: 0,
-    //   baseY: HEIGHT_ANCHOR,
-    //   opacity: 0.51,
-    //   sprites: [
-    //     { src: "/garden/sky_test.png", width: 1024, height: 720, repeatX: true, scale: 1.2 },
-    //   ],
-    // },
-    {
-        id: "far-hills",
-        parallax: 0.8,
-        zIndex: 10,
-        opacity: 0.5,
-        baseY: HEIGHT_ANCHOR,
-        sprites: [
-            { src: "/garden/hills_test.png", width: 1480, height: 720, repeatX: true, scale: 1 },
-        ],
-    },
-    {
-        id: "mid-grass",
-        parallax: 0.25,
-        zIndex: 100,
-        opacity: 0.75,
-        baseY: HEIGHT_ANCHOR,
-        sprites: [
-            { src: "/garden/thistle_test.png", width: 512, height: 1020, repeatX: true, scale: 0.51 },
-        ],
-    },
-    {
-        id: "flowers",
-        parallax: 0.15,
-        zIndex: 30,
-        opacity: 0.8,
-        baseY: HEIGHT_ANCHOR,
-        sprites: [
-            {
-                src: "/garden/thistle_test.png",
-                width: 1080,
-                height: 1080,
-                anchorY: 1,
-                yOffset: 0,
-                scale: 0.5,
-                xPositions: [160, 560, 920, 1300, 1750, 2100, 2580, 3000, 3460],
-            },
-        ],
-    },
-    {
-        id: "foreground",
-        parallax: 0.5,
-        zIndex: 10,
-        baseY: HEIGHT_ANCHOR,
-        sprites: [
-            { src: "/garden/grass_test.png", width: 1024, height: 1200, repeatX: true, scale: 0.8 },
-        ],
-    },
-    // Additional depth layers
-    {
-        id: "flowers-far",
-        parallax: 0.75,
-        zIndex: 28,
-        opacity: 0.5,
-        baseY: HEIGHT_ANCHOR * 0.8,
-        sprites: [
-            {
-                src: "/garden/flower_0.png",
-                width: 520, height: 520,
-                anchorY: 1, yOffset: -18, scale: 0.38,
-                xPositions: [120, 520, 940, 1320, 1680, 2060, 2440, 2820, 3200, 3600],
-            },
-            {
-                src: "/garden/flower_1.png",
-                width: 520, height: 520,
-                anchorY: 1, yOffset: -8, scale: 0.34,
-                xPositions: [300, 700, 1110, 1500, 1860, 2240, 2620, 3000, 3380, 3800],
-            },
-            {
-                src: "/garden/flower_2.png",
-                width: 520, height: 520,
-                anchorY: 1, yOffset: -24, scale: 0.36,
-                xPositions: [180, 600, 980, 1400, 1760, 2140, 2520, 2900, 3280, 3660],
-            },
-        ],
-    },
-    {
-        id: "flowers-near",
-        parallax: 0.05,
-        zIndex: 38,
-        opacity: 0.95,
-        baseY: HEIGHT_ANCHOR,
-        sprites: [
-            {
-                src: "/garden/flower_3.png",
-                width: 270, height: 270,
-                anchorY: 1, yOffset: 6, scale: 0.62,
-                xPositions: [180, 560, 920, 1300, 1750, 2100, 2580, 3000, 3460],
-            },
-            {
-                src: "/garden/flower_4.png",
-                width: 270, height: 270,
-                anchorY: 1, yOffset: -10, scale: 0.58,
-                xPositions: [360, 760, 1100, 1480, 1920, 2280, 2700, 3140, 3540],
-            },
-            {
-                src: "/garden/thistle_test.png",
-                width: 270, height: 270,
-                anchorY: 1, yOffset: 0, scale: 0.5,
-                xPositions: [160, 560, 920, 1300, 1750, 2100, 2580, 3000, 3460],
-            },
-        ],
-    },
-    // Keep a distinct id to avoid key duplication
-    {
-        id: "foreground-2",
-        parallax: 0.25,
-        zIndex: 10,
-        opacity: 0.6,
-        baseY: HEIGHT_ANCHOR * 0.9,
-        sprites: [
-            { src: "/garden/grass_test.png", width: 1024, height: 1200, repeatX: true, scale: 0.8 },
-        ],
-    },
-];

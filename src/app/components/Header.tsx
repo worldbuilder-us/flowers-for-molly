@@ -62,7 +62,7 @@ export default function Header() {
                 justifyContent: 'center',
                 zIndex: 1100,
                 pointerEvents: 'auto',
-                background: 'rgba(255,255,255,0.9)',
+                background: 'transparent',
                 color: 'black',
                 backdropFilter: 'blur(6px)',
             }}
