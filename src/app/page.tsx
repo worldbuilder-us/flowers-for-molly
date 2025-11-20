@@ -1,35 +1,39 @@
 // src/app/page.tsx
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Header from './components/Header';
-import InfiniteParallaxGarden from './components/InfiniteParallaxGarden';
-import StoryDotsOverlay from './components/StoryDotsOverlay';
-import StoryModal, { StoryListItem } from './components/StoryModal';
-import styles from './Page.module.css';
-import { meadowBiome, buildLayersFromBiome } from './garden/biomes';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Header from "./components/Header";
+import InfiniteParallaxGarden from "./components/InfiniteParallaxGarden";
+import StoryDotsOverlay from "./components/StoryDotsOverlay";
+import StoryModal, { StoryListItem } from "./components/StoryModal";
+import styles from "./Page.module.css";
+import { meadowBiome, buildLayersFromBiome } from "./garden/biomes";
 
 export default function Page() {
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [viewport, setViewport] = useState<{ offsetX: number; viewportW: number; viewportH: number }>({
-    offsetX: 0, viewportW: 0, viewportH: 0
+  const [viewport, setViewport] = useState<{
+    offsetX: number;
+    viewportW: number;
+    viewportH: number;
+  }>({
+    offsetX: 0,
+    viewportW: 0,
+    viewportH: 0,
   });
   const [active, setActive] = useState<StoryListItem | null>(null);
   const [debugWireframes, setDebugWireframes] = useState(false);
 
-  const layers = useMemo(
-    () => buildLayersFromBiome(meadowBiome),
-    []
-  );
-
+  const layers = useMemo(() => buildLayersFromBiome(meadowBiome), []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/stories?page=1&limit=1000`, { cache: 'no-store' });
+        const res = await fetch(`/api/stories?page=1&limit=1000`, {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!cancelled) setStories(json.stories || []);
@@ -40,42 +44,55 @@ export default function Page() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const onViewportChange = useCallback((v: { offsetX: number; viewportW: number; viewportH: number }) => {
-    setViewport(v);
-  }, []);
+  const onViewportChange = useCallback(
+    (v: { offsetX: number; viewportW: number; viewportH: number }) => {
+      setViewport(v);
+    },
+    []
+  );
 
   const segmentWidth = 4096;
 
   return (
     <>
       <main>
-        {!debugWireframes &&
-          <Header />
-        }
-        <div className={styles.gardenContainer} style={{ position: 'relative' }}>
+        {!debugWireframes && <Header />}
+        <div
+          className={styles.gardenContainer}
+          style={{ position: "relative" }}
+        >
           <div
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 100,
               right: 12,
               zIndex: 99999,
-              padding: '10px 12px',
-              background: 'rgba(0,0,0,0.4)',
-              color: '#fff',
+              padding: "10px 12px",
+              background: "rgba(0,0,0,0.4)",
+              color: "#fff",
               borderRadius: 8,
               fontSize: 13,
               lineHeight: 1.3,
-              backdropFilter: 'blur(2px)',
-              WebkitBackdropFilter: 'blur(2px)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-              userSelect: 'none'
+              backdropFilter: "blur(2px)",
+              WebkitBackdropFilter: "blur(2px)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+              userSelect: "none",
             }}
           >
             <div style={{ fontWeight: 600, marginBottom: 6 }}>Debug</div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={debugWireframes}
@@ -86,8 +103,7 @@ export default function Page() {
           </div>
 
           <InfiniteParallaxGarden
-            segmentWidth={4096}
-            segmentHeight={4096}
+            segmentWidth={2000}
             layers={layers}
             debugWireframes={debugWireframes}
             onViewportChange={onViewportChange}
