@@ -191,6 +191,8 @@ export function buildLayersFromBiome(biome: BiomeConfig): LayerConfig[] {
 
 const ANCHOR = 1024;
 
+// Path: ./src/app/garden/biomes.ts
+
 export const meadowBiome: BiomeConfig = {
   id: "meadow",
   groups: [
@@ -200,8 +202,9 @@ export const meadowBiome: BiomeConfig = {
       groupFolder: "sky",
       role: "SKYBOX",
       repeatX: true,
-      scale: 1.0,
+      scale: 0.6,
       anchorY: 0, // top
+      opacity: 0.8,
       assets: [
         {
           name: "sky",
@@ -218,15 +221,16 @@ export const meadowBiome: BiomeConfig = {
       groupFolder: "hills_far",
       role: "BACKGROUND_FAR",
       repeatX: true,
-      scale: 1.2,
-      anchorY: 1,
-      baseYOffsetPx: -40,
+      scale: 0.5,
+      anchorY: 0.35,
+      baseYOffsetPx: 0,
+      opacity: 0.75,
       assets: [
         {
           name: "hills_far",
           index: 0,
           width: 2048,
-          height: 600,
+          height: 1600,
         },
       ],
     },
@@ -237,112 +241,256 @@ export const meadowBiome: BiomeConfig = {
       groupFolder: "hills_near",
       role: "BACKGROUND_NEAR",
       repeatX: true,
-      scale: 1.3,
-      anchorY: 1,
-      baseYOffsetPx: -20,
+      scale: 0.75,
+      anchorY: 0.4,
+      baseYOffsetPx: 0,
+      opacity: 0.85,
       assets: [
         {
           name: "hills_near",
           index: 0,
           width: 2048,
-          height: 700,
+          height: 1800,
         },
       ],
     },
 
-    // MIDDLEGROUND (broad grass strip, no curve)
+    // MIDDLEGROUND
     {
       id: "mid_ground",
       groupFolder: "mid_ground",
       role: "MIDDLEGROUND",
       repeatX: true,
-      scale: 1.0,
-      anchorY: 1,
+      scale: 1,
+      anchorY: 0.3,
+      baseYOffsetPx: 50,
       assets: [
         {
           name: "mid_grass",
           index: 0,
-          width: 2048,
-          height: 400,
+          width: 2000,
+          height: 2000,
         },
       ],
     },
 
-    // FOREGROUND_3 – sparse farther flora
+    // ----------------------------------------------------
+    // FOREGROUND_3 – farther flora bands
+    // ----------------------------------------------------
+
+    // flora_group_3
     {
-      id: "flora_fg3",
-      groupFolder: "flora_group_1",
+      id: "flora_fg3_g3",
+      groupFolder: "flora_group_3",
       role: "FOREGROUND_3",
-      scale: 0.45,
-      anchorY: 1,
-      assets: [
-        {
-          name: "dandelion",
-          index: 1,
-          width: 520,
-          height: 520,
-          xPositions: [300, 1300, 2500, 3700],
-        },
-        {
-          name: "grass",
-          index: 2,
-          width: 520,
-          height: 520,
-          xPositions: [200, 1200, 2400, 3600],
-        },
-      ],
-    },
-
-    // FOREGROUND_2 – denser, closer flora
-    {
-      id: "flora_fg2",
-      groupFolder: "flora_group_2",
-      role: "FOREGROUND_2",
-      scale: 0.55,
-      anchorY: 1.2,
+      scale: 0.75,
+      anchorY: 50,
+      baseYOffsetPx: 0,
       opacity: 0.85,
       assets: [
         {
-          name: "thistle",
+          name: "flower",
           index: 1,
           width: 520,
+          height: 700,
+          xPositions: [120, 720, 1320, 1920, 2520, 3120, 3720],
+        },
+        {
+          name: "flower",
+          index: 2,
+          width: 520,
           height: 520,
-          xPositions: [400, 1500, 2600, 3800],
+          xPositions: [360, 960, 1560, 2160, 2760, 3360, 3960],
         },
         {
           name: "grass",
           index: 1,
           width: 520,
           height: 520,
-          xPositions: [350, 1450, 2550, 3750],
+          xPositions: [40, 640, 1240, 1840, 2440, 3040, 3640],
+        },
+        {
+          name: "grass",
+          index: 2,
+          width: 520,
+          height: 700,
+          xPositions: [520, 1120, 1720, 2320, 2920, 3520, 4120],
         },
       ],
     },
 
-    // FOREGROUND_1 – very near, maybe slightly larger / more opaque
+    // flora_group_4
     {
-      id: "flora_fg1",
-      groupFolder: "flora_group_2",
-      role: "FOREGROUND_1",
-      scale: 0.7,
-      anchorY: 1.3,
-      opacity: 1.0,
-      // Optionally override the curve for this band if you want it more dramatic:
-      // curveOverride: { type: "sine", amplitudePct: 0.04, periodsPerSegment: 1, phaseRad: 0 },
+      id: "flora_fg3_g4",
+      groupFolder: "flora_group_4",
+      role: "FOREGROUND_3",
+      scale: 0.8,
+      anchorY: 0.1,
+      baseYOffsetPx: 90,
+      opacity: 0.75,
       assets: [
         {
-          name: "thistle",
+          name: "flower",
+          index: 1,
+          width: 520,
+          height: 700,
+          xPositions: [220, 820, 1420, 2020, 2620, 3220, 3820],
+        },
+        {
+          name: "flower",
           index: 2,
           width: 520,
-          height: 750,
-          xPositions: [500, 1600, 2800, 4000],
+          height: 520,
+          xPositions: [100, 700, 1300, 1900, 2500, 3100, 3700],
+        },
+        {
+          name: "grass",
+          index: 1,
+          width: 520,
+          height: 520,
+          xPositions: [480, 1080, 1680, 2280, 2880, 3480, 4080],
         },
         {
           name: "grass",
           index: 2,
           width: 520,
+          height: 700,
+          xPositions: [300, 900, 1500, 2100, 2700, 3300, 3900],
+        },
+      ],
+    },
+
+    // ----------------------------------------------------
+    // FOREGROUND_2 – mid-depth flora
+    // ----------------------------------------------------
+
+    // flora_group_2
+    {
+      id: "flora_fg2_g2",
+      groupFolder: "flora_group_2",
+      role: "FOREGROUND_2",
+      scale: 1,
+      anchorY: 0.2,
+      baseYOffsetPx: 100,
+      opacity: 0.9,
+      assets: [
+        {
+          name: "flower",
+          index: 1,
+          width: 520,
+          height: 700,
+          xPositions: [80, 560, 1040, 1520, 2000, 2480, 2960, 3440, 3920],
+        },
+        {
+          name: "flower",
+          index: 2,
+          width: 520,
           height: 520,
-          xPositions: [450, 1550, 2750, 3950],
+          xPositions: [280, 760, 1240, 1720, 2200, 2680, 3160, 3640, 4120],
+        },
+        {
+          name: "grass",
+          index: 1,
+          width: 520,
+          height: 520,
+          xPositions: [160, 640, 1120, 1600, 2080, 2560, 3040, 3520, 4000],
+        },
+        {
+          name: "grass",
+          index: 2,
+          width: 520,
+          height: 700,
+          xPositions: [440, 920, 1400, 1880, 2360, 2840, 3320, 3800],
+        },
+      ],
+    },
+
+    // flora_group_5
+    {
+      id: "flora_fg2_g5",
+      groupFolder: "flora_group_5",
+      role: "FOREGROUND_2",
+      scale: 1.5,
+      anchorY: 0.25,
+      baseYOffsetPx: 170,
+      opacity: 0.8,
+      assets: [
+        {
+          name: "flower",
+          index: 1,
+          width: 520,
+          height: 700,
+          xPositions: [200, 680, 1160, 1640, 2120, 2600, 3080, 3560, 4040],
+        },
+        {
+          name: "flower",
+          index: 2,
+          width: 520,
+          height: 520,
+          xPositions: [40, 520, 1000, 1480, 1960, 2440, 2920, 3400, 3880],
+        },
+        {
+          name: "grass",
+          index: 1,
+          width: 520,
+          height: 520,
+          xPositions: [320, 800, 1280, 1760, 2240, 2720, 3200, 3680],
+        },
+        {
+          name: "grass",
+          index: 2,
+          width: 520,
+          height: 700,
+          xPositions: [560, 1040, 1520, 2000, 2480, 2960, 3440, 3920],
+        },
+      ],
+    },
+
+    // ----------------------------------------------------
+    // FOREGROUND_1 – closest flora
+    // ----------------------------------------------------
+
+    // flora_group_1 – largest, most prominent band
+    {
+      id: "flora_fg1_g1",
+      groupFolder: "flora_group_1",
+      role: "FOREGROUND_1",
+      scale: 2,
+      anchorY: 0.35,
+      baseYOffsetPx: 350,
+      opacity: 1.0,
+      assets: [
+        {
+          name: "flower",
+          index: 1,
+          width: 520,
+          height: 700,
+          xPositions: [120, 520, 920, 1320, 1720, 2120, 2520, 2920, 3320, 3720],
+        },
+        {
+          name: "flower",
+          index: 2,
+          width: 520,
+          height: 520,
+          xPositions: [
+            320, 720, 1120, 1520, 1920, 2320, 2720, 3120, 3520, 3920,
+          ],
+        },
+        {
+          name: "grass",
+          index: 1,
+          width: 520,
+          height: 520,
+          xPositions: [40, 440, 840, 1240, 1640, 2040, 2440, 2840, 3240, 3640],
+        },
+        {
+          name: "grass",
+          index: 2,
+          width: 520,
+          height: 700,
+          xPositions: [
+            220, 620, 1020, 1420, 1820, 2220, 2620, 3020, 3420, 3820,
+          ],
         },
       ],
     },

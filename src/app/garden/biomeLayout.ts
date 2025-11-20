@@ -36,52 +36,52 @@ export type BandLayout = {
 
 export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
   FOREGROUND_1: {
-    baseYFromBottomPct: 0.06,
-    defaultParallax: 1.0,
+    baseYFromBottomPct: 0.9,
+    defaultParallax: 0.5,
     defaultZIndex: 100,
     defaultCurve: {
       type: "sine",
-      amplitudePct: 0.03,
+      amplitudePct: 0.01,
       periodsPerSegment: 1,
       phaseRad: 0,
     },
   },
   FOREGROUND_2: {
-    baseYFromBottomPct: 0.12,
-    defaultParallax: 0.9,
+    baseYFromBottomPct: 0.9,
+    defaultParallax: 0.125,
     defaultZIndex: 80,
     defaultCurve: {
       type: "sine",
-      amplitudePct: 0.025,
+      amplitudePct: 0.05,
       periodsPerSegment: 1,
       phaseRad: Math.PI / 4,
     },
   },
   FOREGROUND_3: {
-    baseYFromBottomPct: 0.18,
-    defaultParallax: 0.8,
+    baseYFromBottomPct: 0.9,
+    defaultParallax: 0.1,
     defaultZIndex: 60,
     defaultCurve: {
       type: "sine",
-      amplitudePct: 0.02,
-      periodsPerSegment: 1,
+      amplitudePct: 0.04,
+      periodsPerSegment: 0.5,
       phaseRad: Math.PI / 2,
     },
   },
   MIDDLEGROUND: {
-    baseYFromBottomPct: 0.28,
-    defaultParallax: 0.6,
-    defaultZIndex: 30,
-  },
-  BACKGROUND_NEAR: {
-    baseYFromBottomPct: 0.4,
-    defaultParallax: 0.35,
+    baseYFromBottomPct: 0.9,
+    defaultParallax: 0.08,
     defaultZIndex: 0,
   },
-  BACKGROUND_FAR: {
-    baseYFromBottomPct: 0.5,
-    defaultParallax: 0.2,
+  BACKGROUND_NEAR: {
+    baseYFromBottomPct: 0.9,
+    defaultParallax: 0.075,
     defaultZIndex: -10,
+  },
+  BACKGROUND_FAR: {
+    baseYFromBottomPct: 0.9,
+    defaultParallax: 0.055,
+    defaultZIndex: -100,
   },
   SKYBOX: {
     // Sky just fills; the base line is not very meaningful here.
