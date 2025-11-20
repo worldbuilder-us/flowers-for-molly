@@ -41,7 +41,7 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     defaultZIndex: 100,
     defaultCurve: {
       type: "sine",
-      amplitudePct: 0.01,
+      amplitudePct: 0.05,
       periodsPerSegment: 1,
       phaseRad: 0,
     },
@@ -52,7 +52,7 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     defaultZIndex: 80,
     defaultCurve: {
       type: "sine",
-      amplitudePct: 0.05,
+      amplitudePct: 0.015,
       periodsPerSegment: 1,
       phaseRad: Math.PI / 4,
     },
@@ -63,7 +63,7 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     defaultZIndex: 60,
     defaultCurve: {
       type: "sine",
-      amplitudePct: 0.04,
+      amplitudePct: 0.004,
       periodsPerSegment: 0.5,
       phaseRad: Math.PI / 2,
     },

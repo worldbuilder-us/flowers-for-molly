@@ -202,7 +202,7 @@ export const meadowBiome: BiomeConfig = {
       groupFolder: "sky",
       role: "SKYBOX",
       repeatX: true,
-      scale: 0.6,
+      scale: 1,
       anchorY: 0, // top
       opacity: 0.8,
       assets: [
@@ -230,7 +230,7 @@ export const meadowBiome: BiomeConfig = {
           name: "hills_far",
           index: 0,
           width: 2048,
-          height: 1600,
+          height: 1024,
         },
       ],
     },
@@ -244,7 +244,7 @@ export const meadowBiome: BiomeConfig = {
       scale: 0.75,
       anchorY: 0.4,
       baseYOffsetPx: 0,
-      opacity: 0.85,
+      opacity: 0.8,
       assets: [
         {
           name: "hills_near",
@@ -261,8 +261,8 @@ export const meadowBiome: BiomeConfig = {
       groupFolder: "mid_ground",
       role: "MIDDLEGROUND",
       repeatX: true,
-      scale: 1,
-      anchorY: 0.3,
+      scale: 0.8,
+      anchorY: 0.1,
       baseYOffsetPx: 50,
       assets: [
         {
@@ -324,9 +324,9 @@ export const meadowBiome: BiomeConfig = {
       id: "flora_fg3_g4",
       groupFolder: "flora_group_4",
       role: "FOREGROUND_3",
-      scale: 0.8,
-      anchorY: 0.1,
-      baseYOffsetPx: 90,
+      scale: 0.5,
+      anchorY: 0.01,
+      baseYOffsetPx: 500,
       opacity: 0.75,
       assets: [
         {
@@ -348,7 +348,7 @@ export const meadowBiome: BiomeConfig = {
           index: 1,
           width: 520,
           height: 520,
-          xPositions: [480, 1080, 1680, 2280, 2880, 3480, 4080],
+          xPositions: [480, 2880],
         },
         {
           name: "grass",
@@ -410,7 +410,7 @@ export const meadowBiome: BiomeConfig = {
       id: "flora_fg2_g5",
       groupFolder: "flora_group_5",
       role: "FOREGROUND_2",
-      scale: 1.5,
+      scale: 1,
       anchorY: 0.25,
       baseYOffsetPx: 170,
       opacity: 0.8,
@@ -439,9 +439,9 @@ export const meadowBiome: BiomeConfig = {
         {
           name: "grass",
           index: 2,
-          width: 520,
-          height: 700,
-          xPositions: [560, 1040, 1520, 2000, 2480, 2960, 3440, 3920],
+          width: 240,
+          height: 240,
+          xPositions: [2000],
         },
       ],
     },
@@ -456,7 +456,7 @@ export const meadowBiome: BiomeConfig = {
       groupFolder: "flora_group_1",
       role: "FOREGROUND_1",
       scale: 2,
-      anchorY: 0.35,
+      anchorY: 0.25,
       baseYOffsetPx: 350,
       opacity: 1.0,
       assets: [
@@ -488,9 +488,7 @@ export const meadowBiome: BiomeConfig = {
           index: 2,
           width: 520,
           height: 700,
-          xPositions: [
-            220, 620, 1020, 1420, 1820, 2220, 2620, 3020, 3420, 3820,
-          ],
+          xPositions: [40, 440, 840, 1240, 1640, 2040, 2440, 2840, 3240, 3640],
         },
       ],
     },
