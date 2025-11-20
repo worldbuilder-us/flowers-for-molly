@@ -1,5 +1,10 @@
 // ./src/app/garden/biomes.ts
-import type { LayerConfig, SpriteSpec } from "../components/InfiniteParallaxGarden";
+import type {
+  LayerConfig,
+  SpriteSpec,
+} from "../components/InfiniteParallaxGarden";
+import type { LayerRole, CurveConfig } from "./biomeLayout";
+import { BAND_LAYOUT } from "./biomeLayout";
 // import type { BiomeConfig } from "./biomes";
 
 // -----------------------------
@@ -7,71 +12,69 @@ import type { LayerConfig, SpriteSpec } from "../components/InfiniteParallaxGard
 // -----------------------------
 
 export type AssetInstanceConfig = {
-    /**
-     * Logical asset name (before the index); the file path becomes:
-     *   /garden/{groupFolder}/{assetName}_{index}.png
-     *
-     * Example: name="flower", index=3 → "/garden/flowers/flower_3.png"
-     */
-    name: string;
-    /** Numeric suffix in the filename (assetName_index.png). */
-    index: number;
+  /**
+   * Logical asset name (before the index); the file path becomes:
+   *   /garden/{groupFolder}/{assetName}_{index}.png
+   *
+   * Example: name="flower", index=3 → "/garden/flowers/flower_3.png"
+   */
+  name: string;
+  /** Numeric suffix in the filename (assetName_index.png). */
+  index: number;
 
-    /** Natural sprite size (before any scale). */
-    width: number;
-    height: number;
+  /** Natural sprite size (before any scale). */
+  width: number;
+  height: number;
 
-    /** Optional sprite-level override/multiplier relative to the group defaults. */
-    scaleMultiplier?: number;       // multiplies group.scale
-    yOffset?: number;               // added to group.yOffset
-    anchorY?: number;               // overrides group.anchorY
-    opacityMultiplier?: number;     // multiplies group.opacity
+  /** Optional sprite-level override/multiplier relative to the group defaults. */
+  scaleMultiplier?: number; // multiplies group.scale
+  yOffset?: number; // added to group.yOffset
+  anchorY?: number; // overrides group.anchorY
+  opacityMultiplier?: number; // multiplies group.opacity
 
-    /**
-     * Optional parallax/zIndex tweaks relative to the group; if any of these
-     * differ from other instances, they are automatically placed into separate
-     * internal layers with their own parallax/zIndex.
-     */
-    parallaxOffset?: number;
-    zIndexOffset?: number;
+  /**
+   * Optional parallax/zIndex tweaks relative to the group; if any of these
+   * differ from other instances, they are automatically placed into separate
+   * internal layers with their own parallax/zIndex.
+   */
+  parallaxOffset?: number;
+  zIndexOffset?: number;
 
-    /**
-     * X positions within one segment. For non-repeating sprites.
-     * For repeat strips (group.repeatX=true), leave this undefined.
-     */
-    xPositions?: number[];
+  /**
+   * X positions within one segment. For non-repeating sprites.
+   * For repeat strips (group.repeatX=true), leave this undefined.
+   */
+  xPositions?: number[];
 };
 
 export type AssetGroupConfig = {
-    /** Logical id; also used in layer ids. */
-    id: string;
+  id: string;
+  groupFolder: string;
 
-    /**
-     * Folder name under /public/garden.
-     * Example: "background", "flowers-near", "grass-mid"
-     * Path becomes "/garden/{groupFolder}/{name}_{index}.png"
-     */
-    groupFolder: string;
+  /** Which canonical band this group belongs to. */
+  role: LayerRole;
 
-    /** Layer-like defaults applied to all assets in this group. */
-    parallax: number;
-    zIndex: number;
-    baseY: number;
-    opacity?: number;
-    anchorY?: number;
-    yOffset?: number;
-    scale?: number;
+  /**
+   * Optional overrides; if omitted we use the band's defaults.
+   * These are in normalized or relative units now.
+   */
+  parallax?: number;
+  baseYFromBottomPct?: number;
+  zIndex?: number;
+  opacity?: number;
+  anchorY?: number;
+  baseYOffsetPx?: number;
+  scale?: number;
+  curveOverride?: CurveConfig;
 
-    /** If true, treat each asset as a repeat-x strip instead of positioned sprites. */
-    repeatX?: boolean;
+  repeatX?: boolean;
 
-    /** Assets that belong to this group. */
-    assets: AssetInstanceConfig[];
+  assets: AssetInstanceConfig[];
 };
 
 export type BiomeConfig = {
-    id: string;
-    groups: AssetGroupConfig[];
+  id: string;
+  groups: AssetGroupConfig[];
 };
 
 // -----------------------------
@@ -85,327 +88,263 @@ export type BiomeConfig = {
  * its own layer automatically.
  */
 export function buildLayersFromBiome(biome: BiomeConfig): LayerConfig[] {
-    const layers: LayerConfig[] = [];
+  const layers: LayerConfig[] = [];
 
-    for (const group of biome.groups) {
-        const {
-            id: groupId,
-            groupFolder,
-            parallax: groupParallax,
-            zIndex: groupZ,
-            baseY,
-            opacity: groupOpacity = 1,
-            anchorY: groupAnchorY = 1,
-            yOffset: groupYOffset = 0,
-            scale: groupScale = 1,
-            repeatX = false,
-            assets,
-        } = group;
+  for (const group of biome.groups) {
+    const band = BAND_LAYOUT[group.role];
 
-        // Group assets by their *effective* layer properties
-        const layerBuckets = new Map<
-            string,
-            {
-                id: string;
-                parallax: number;
-                zIndex: number;
-                baseY: number;
-                opacity: number;
-                sprites: SpriteSpec[];
-            }
-        >();
+    const groupParallax = group.parallax ?? band.defaultParallax;
+    const groupZ = group.zIndex ?? band.defaultZIndex;
+    const baseYFromBottomPct =
+      group.baseYFromBottomPct ?? band.baseYFromBottomPct;
+    const groupOpacity = group.opacity ?? 1;
+    const groupAnchorY = group.anchorY ?? 1;
+    const baseYOffsetPx = group.baseYOffsetPx ?? 0;
+    const groupScale = group.scale ?? 1;
+    const repeatX = group.repeatX ?? false;
 
-        for (const asset of assets) {
-            const {
-                name,
-                index,
-                width,
-                height,
-                scaleMultiplier = 1,
-                yOffset = 0,
-                anchorY,
-                opacityMultiplier = 1,
-                parallaxOffset = 0,
-                zIndexOffset = 0,
-                xPositions,
-            } = asset;
+    const curve: CurveConfig | undefined =
+      group.curveOverride ?? band.defaultCurve;
 
-            const effectiveParallax = groupParallax + parallaxOffset;
-            const effectiveZ = groupZ + zIndexOffset;
-            const effectiveBaseY = baseY;
-            const effectiveOpacity = groupOpacity * opacityMultiplier;
+    type BucketKey = string;
+    const layerBuckets = new Map<
+      BucketKey,
+      {
+        id: string;
+        parallax: number;
+        zIndex: number;
+        baseYFromBottomPct: number;
+        opacity: number;
+        curve?: CurveConfig;
+        sprites: SpriteSpec[];
+      }
+    >();
 
-            const key = `${effectiveParallax}|${effectiveZ}|${effectiveBaseY}|${effectiveOpacity}`;
-            let bucket = layerBuckets.get(key);
-            if (!bucket) {
-                bucket = {
-                    id: `${groupId}-${layers.length}-${layerBuckets.size}`,
-                    parallax: effectiveParallax,
-                    zIndex: effectiveZ,
-                    baseY: effectiveBaseY,
-                    opacity: effectiveOpacity,
-                    sprites: [],
-                };
-                layerBuckets.set(key, bucket);
-            }
+    for (const asset of group.assets) {
+      const {
+        name,
+        index,
+        width,
+        height,
+        scaleMultiplier = 1,
+        yOffset = 0,
+        anchorY,
+        opacityMultiplier = 1,
+        parallaxOffset = 0,
+        zIndexOffset = 0,
+        xPositions,
+      } = asset;
 
-            const spriteScale = groupScale * scaleMultiplier;
-            const sprite: SpriteSpec = {
-                src: `/garden/${groupFolder}/${name}_${index}.png`,
-                width,
-                height,
-                anchorY: anchorY ?? groupAnchorY,
-                yOffset: groupYOffset + yOffset,
-                scale: spriteScale,
-                repeatX,
-                xPositions: repeatX ? undefined : xPositions ?? [],
-            };
+      const effectiveParallax = groupParallax + parallaxOffset;
+      const effectiveZ = groupZ + zIndexOffset;
+      const effectiveOpacity = groupOpacity * opacityMultiplier;
 
-            bucket.sprites.push(sprite);
-        }
+      const key: BucketKey = `${effectiveParallax}|${effectiveZ}|${baseYFromBottomPct}|${effectiveOpacity}|${
+        curve?.type ?? "none"
+      }`;
 
-        for (const bucket of layerBuckets.values()) {
-            layers.push({
-                id: bucket.id,
-                parallax: bucket.parallax,
-                zIndex: bucket.zIndex,
-                baseY: bucket.baseY,
-                opacity: bucket.opacity,
-                sprites: bucket.sprites,
-            });
-        }
+      let bucket = layerBuckets.get(key);
+      if (!bucket) {
+        bucket = {
+          id: `${group.id}-${layers.length}-${layerBuckets.size}`,
+          parallax: effectiveParallax,
+          zIndex: effectiveZ,
+          baseYFromBottomPct,
+          opacity: effectiveOpacity,
+          curve,
+          sprites: [],
+        };
+        layerBuckets.set(key, bucket);
+      }
+
+      const spriteScale = groupScale * scaleMultiplier;
+      const sprite: SpriteSpec = {
+        src: `/garden/${group.groupFolder}/${name}_${index}.png`,
+        width,
+        height,
+        anchorY: anchorY ?? groupAnchorY,
+        // This remains in pixels but is purely an adjustment on top of the curved baseline.
+        yOffsetPx: baseYOffsetPx + yOffset,
+        scale: spriteScale,
+        repeatX,
+        xPositions: repeatX ? undefined : xPositions ?? [],
+      };
+
+      bucket.sprites.push(sprite);
     }
 
-    return layers;
+    for (const bucket of layerBuckets.values()) {
+      layers.push({
+        id: bucket.id,
+        parallax: bucket.parallax,
+        zIndex: bucket.zIndex,
+        baseYFromBottomPct: bucket.baseYFromBottomPct,
+        opacity: bucket.opacity,
+        curve: bucket.curve,
+        sprites: bucket.sprites,
+      });
+    }
+  }
+
+  return layers;
 }
 
 const ANCHOR = 1024;
 
 export const meadowBiome: BiomeConfig = {
-    id: "meadow",
-    groups: [
-        // Background strip
+  id: "meadow",
+  groups: [
+    // SKYBOX
+    {
+      id: "sky",
+      groupFolder: "sky",
+      role: "SKYBOX",
+      repeatX: true,
+      scale: 1.0,
+      anchorY: 0, // top
+      assets: [
         {
-            id: "background",
-            groupFolder: "background",
-            parallax: 0.99,
-            zIndex: -100,
-            baseY: ANCHOR,
-            opacity: 1,
-            anchorY: 1,
-            yOffset: 0,
-            scale: 2,
-            repeatX: true,
-            assets: [
-                {
-                    name: "bg", // /garden/background/bg_0.png
-                    index: 0,
-                    width: 2048,
-                    height: 720,
-                },
-            ],
+          name: "sky",
+          index: 0,
+          width: 2048,
+          height: 1024,
         },
+      ],
+    },
 
-        // flora group 1 - farther
+    // FAR HILLS (BACKGROUND_FAR)
+    {
+      id: "hills_far",
+      groupFolder: "hills_far",
+      role: "BACKGROUND_FAR",
+      repeatX: true,
+      scale: 1.2,
+      anchorY: 1,
+      baseYOffsetPx: -40,
+      assets: [
         {
-            id: "flora_group_1_far",
-            groupFolder: "flora_group_1",
-            parallax: 0.25,
-            zIndex: 28,
-            baseY: ANCHOR,
-            opacity: 1,
-            anchorY: 1,
-            scale: 0.4,
-            assets: [
-                {
-                    name: "dandelion",
-                    index: 1,
-                    width: 520,
-                    height: 520,
-                    yOffset: -5,
-                    xPositions: [20, 1920, 3520],
-                },
-                {
-                    name: "dandelion",
-                    index: 2,
-                    width: 520,
-                    height: 750,
-                    yOffset: -2,
-                    scaleMultiplier: 0.34 / 0.38, // to match your original per-asset scale
-                    xPositions: [60, 2020, 3600],
-                },
-                {
-                    name: "grass",
-                    index: 1,
-                    width: 520,
-                    height: 520,
-                    yOffset: 0,
-                    scaleMultiplier: 0.36 / 0.38,
-                    xPositions: [40, 2000, 3660],
-                },
-                {
-                    name: "grass",
-                    index: 2,
-                    width: 520,
-                    height: 520,
-                    yOffset: 32,
-                    scaleMultiplier: 0.4 / 0.38,
-                    xPositions: [0, 1940, 3460],
-                },
-                // {
-                //     name: "ground",
-                //     index: 1,
-                //     width: 1040,
-                //     height: 520,
-                //     yOffset: 20,
-                //     scaleMultiplier: 0.42 / 0.38,
-                //     xPositions: [240, 2180, 3700],
-                // }
-            ],
+          name: "hills_far",
+          index: 0,
+          width: 2048,
+          height: 600,
         },
-        // flora group 2 - nearer
+      ],
+    },
+
+    // NEAR HILLS (BACKGROUND_NEAR)
+    {
+      id: "hills_near",
+      groupFolder: "hills_near",
+      role: "BACKGROUND_NEAR",
+      repeatX: true,
+      scale: 1.3,
+      anchorY: 1,
+      baseYOffsetPx: -20,
+      assets: [
         {
-            id: "flora_group_2_near",
-            groupFolder: "flora_group_2",
-            parallax: 0.9,
-            zIndex: 50,
-            baseY: ANCHOR,
-            opacity: 0.65,
-            anchorY: 1.5,
-            scale: 0.5,
-            assets: [
-                {
-                    name: "thistle",
-                    index: 1,
-                    width: 520,
-                    height: 520,
-                    yOffset: 0,
-                    xPositions: [300, 1300, 2500, 3660],
-                },
-                {
-                    name: "thistle",
-                    index: 2,
-                    width: 520,
-                    height: 750,
-                    yOffset: -50,
-                    scaleMultiplier: 0.32 / 0.38,
-                    xPositions: [350, 1320, 2520, 3650],
-                },
-                {
-                    name: "grass",
-                    index: 1,
-                    width: 520,
-                    height: 520,
-                    yOffset: 10,
-                    scaleMultiplier: 0.34 / 0.38,
-                    xPositions: [300, 1290, 2490, 3600],
-                },
-                {
-                    name: "grass",
-                    index: 2,
-                    width: 520,
-                    height: 520,
-                    yOffset: 40,
-                    scaleMultiplier: 0.4 / 0.38,
-                    xPositions: [280, 1250, 2550, 3700],
-                },
-            ],
+          name: "hills_near",
+          index: 0,
+          width: 2048,
+          height: 700,
         },
-        //duplicate flora group 1 with different parallax/zIndex and placement
+      ],
+    },
+
+    // MIDDLEGROUND (broad grass strip, no curve)
+    {
+      id: "mid_ground",
+      groupFolder: "mid_ground",
+      role: "MIDDLEGROUND",
+      repeatX: true,
+      scale: 1.0,
+      anchorY: 1,
+      assets: [
         {
-            id: "flora_group_1_near",
-            groupFolder: "flora_group_1",
-            parallax: 0.95,
-            zIndex: 40,
-            baseY: ANCHOR,
-            opacity: 0.75,
-            anchorY: 1,
-            scale: 0.6,
-            assets: [
-                {
-                    name: "dandelion",
-                    index: 1,
-                    width: 520,
-                    height: 520,
-                    yOffset: -5,
-                    xPositions: [400, 1600, 2800, 4000],
-                },
-                {
-                    name: "dandelion",
-                    index: 2,
-                    width: 520,
-                    height: 750,
-                    yOffset: -2,
-                    scaleMultiplier: 0.34 / 0.38, // to match your original per-asset scale
-                    xPositions: [450, 1650, 2850, 3950],
-                },
-                {
-                    name: "grass",
-                    index: 1,
-                    width: 520,
-                    height: 520,
-                    yOffset: 0,
-                    scaleMultiplier: 0.36 / 0.38,
-                    xPositions: [420, 1620, 2820, 3900],
-                },
-                {
-                    name: "grass",
-                    index: 2,
-                    width: 520,
-                    height: 520,
-                    yOffset: 32,
-                    scaleMultiplier: 0.4 / 0.38,
-                    xPositions: [380, 1580, 2780, 3800],
-                },
-            ],
+          name: "mid_grass",
+          index: 0,
+          width: 2048,
+          height: 400,
         },
-        // duplicate flora group 2 with different scale, parallax/zIndex and placement
+      ],
+    },
+
+    // FOREGROUND_3 – sparse farther flora
+    {
+      id: "flora_fg3",
+      groupFolder: "flora_group_1",
+      role: "FOREGROUND_3",
+      scale: 0.45,
+      anchorY: 1,
+      assets: [
         {
-            id: "flora_group_2_nearer",
-            groupFolder: "flora_group_2",
-            parallax: 0.15,
-            zIndex: 2,
-            baseY: ANCHOR,
-            opacity: 0.7,
-            anchorY: 1.5,
-            scale: 0.25,
-            assets: [
-                {
-                    name: "thistle",
-                    index: 1,
-                    width: 520,
-                    height: 520,
-                    yOffset: 0,
-                    xPositions: [500, 1400, 2600, 3800],
-                },
-                {
-                    name: "thistle",
-                    index: 2,
-                    width: 520,
-                    height: 750,
-                    yOffset: -50,
-                    scaleMultiplier: 0.32 / 0.38,
-                    xPositions: [550, 1450, 2550, 3750],
-                },
-                {
-                    name: "grass",
-                    index: 1,
-                    width: 520,
-                    height: 520,
-                    yOffset: 10,
-                    scaleMultiplier: 0.34 / 0.38,
-                    xPositions: [520, 1420, 2620, 3720],
-                },
-                {
-                    name: "grass",
-                    index: 2,
-                    width: 520,
-                    height: 520,
-                    yOffset: 40,
-                    scaleMultiplier: 0.4 / 0.38,
-                    xPositions: [480, 1380, 2580, 3680],
-                },
-            ],
+          name: "dandelion",
+          index: 1,
+          width: 520,
+          height: 520,
+          xPositions: [300, 1300, 2500, 3700],
         },
-    ],
+        {
+          name: "grass",
+          index: 2,
+          width: 520,
+          height: 520,
+          xPositions: [200, 1200, 2400, 3600],
+        },
+      ],
+    },
+
+    // FOREGROUND_2 – denser, closer flora
+    {
+      id: "flora_fg2",
+      groupFolder: "flora_group_2",
+      role: "FOREGROUND_2",
+      scale: 0.55,
+      anchorY: 1.2,
+      opacity: 0.85,
+      assets: [
+        {
+          name: "thistle",
+          index: 1,
+          width: 520,
+          height: 520,
+          xPositions: [400, 1500, 2600, 3800],
+        },
+        {
+          name: "grass",
+          index: 1,
+          width: 520,
+          height: 520,
+          xPositions: [350, 1450, 2550, 3750],
+        },
+      ],
+    },
+
+    // FOREGROUND_1 – very near, maybe slightly larger / more opaque
+    {
+      id: "flora_fg1",
+      groupFolder: "flora_group_2",
+      role: "FOREGROUND_1",
+      scale: 0.7,
+      anchorY: 1.3,
+      opacity: 1.0,
+      // Optionally override the curve for this band if you want it more dramatic:
+      // curveOverride: { type: "sine", amplitudePct: 0.04, periodsPerSegment: 1, phaseRad: 0 },
+      assets: [
+        {
+          name: "thistle",
+          index: 2,
+          width: 520,
+          height: 750,
+          xPositions: [500, 1600, 2800, 4000],
+        },
+        {
+          name: "grass",
+          index: 2,
+          width: 520,
+          height: 520,
+          xPositions: [450, 1550, 2750, 3950],
+        },
+      ],
+    },
+  ],
 };
