@@ -34,7 +34,7 @@
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
-  font-size: clamp(2rem, 8vw, 6rem);
+  font-size: clamp(6rem, 8vw, 6rem);
   line-height: 0.9;
 }
 
@@ -45,7 +45,7 @@
 /* Descriptive paragraphs */
 .descriptionSection {
   font-size: 1.05rem;
-  line-height: 1.7;
+  line-height: 1.5;
   margin-bottom: 2.5rem;
 }
 
@@ -65,7 +65,7 @@
 
 .dividerLine {
   width: 100%;
-  height: 2px;
+  height: 1px;
 }
 
 .dividerLine line {
