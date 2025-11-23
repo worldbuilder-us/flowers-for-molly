@@ -24,8 +24,8 @@ export default function AboutPage() {
               <em>Flowers for Molly</em> is a collaborative and generative
               artistic tribute to honor and celebrate the life of our dearest
               Molly Dowd. Built from the shared stories, memories, and moments
-              offered by Molly’s friends and family, we can weave the past into
-              the present, preserving her legacy in the years to come.
+              offered by Molly`&lsquo;`s friends and family, we can weave the
+              past into the present, preserving her legacy in the years to come.
             </p>
 
             <p>
@@ -66,7 +66,7 @@ export default function AboutPage() {
               <br />
               The garden we started to grow.
               <br />
-              I'll take them with me, I'll carry them from here.
+              I`&lsquo;`ll take them with me, I`&lsquo;`ll carry them from here.
             </p>
           </section>
         </div>
