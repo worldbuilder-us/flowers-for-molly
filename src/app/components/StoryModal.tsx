@@ -1,84 +1,147 @@
 // src/app/components/StoryModal.tsx
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useEffect } from "react";
+import ReactDOM from "react-dom";
+import { goldenbookFont } from "../fonts";
 
 export type StoryListItem = {
-    _id: string;
-    authorName: string;
-    authorEmail?: string;
-    textPlain: string;
-    textMarkdown: string;
-    importedAt?: string;
+  _id: string;
+  authorName: string;
+  authorEmail?: string;
+  textPlain: string;
+  textMarkdown: string;
+  importedAt?: string;
 };
 
 export default function StoryModal({
-    story,
-    onClose,
+  story,
+  onClose,
 }: {
-    story: StoryListItem | null;
-    onClose: () => void;
+  story: StoryListItem | null;
+  onClose: () => void;
 }) {
-    useEffect(() => {
-        if (!story) return;
-        const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-        document.addEventListener('keydown', onKey);
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.removeEventListener('keydown', onKey);
-            document.body.style.overflow = '';
-        };
-    }, [story, onClose]);
+  useEffect(() => {
+    if (!story) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [story, onClose]);
 
-    const idx = Math.floor(Math.random() * 5) + 1;
-    // filenames like bg-gradient-01.png ... bg-gradient-05.png
-    const bgFilename = `/gradients/bg-gradient-${String(idx).padStart(2, "0")}.png`;
+  if (!story) return null;
 
-    if (!story) return null;
-    return ReactDOM.createPortal(
+  return ReactDOM.createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Story by ${story.authorName}`}
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(255,255,255,0.35)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 60,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={goldenbookFont.className}
+        style={{
+          width: "min(720px, 92vw)",
+          height: "min(540px, 80vh)", // constant-ish size
+          background: "#ffffff",
+          borderRadius: 20,
+          boxShadow: "0 18px 45px rgba(0,0,0,0.35)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
         <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Story by ${story.authorName}`}
+          style={{
+            flexShrink: 0,
+            padding: "16px 20px",
+            borderBottom: "1px solid rgba(0,0,0,0.07)",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 400,
+              fontSize: "1.15rem",
+              letterSpacing: "0.04em",
+              color: "rgba(0,0,0,0.85)",
+            }}
+          >
+            {story.authorName}
+          </div>
+
+          {story.importedAt ? (
+            <div
+              style={{
+                marginLeft: "auto",
+                fontSize: "0.8rem",
+                opacity: 0.7,
+                color: "rgba(0,0,0,0.85)",
+              }}
+            >
+              {new Date(story.importedAt).toLocaleDateString()}
+            </div>
+          ) : (
+            <div style={{ marginLeft: "auto" }} />
+          )}
+
+          <button
+            aria-label="Close story"
             onClick={onClose}
             style={{
-                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60,
+              border: "none",
+              background: "transparent",
+              fontSize: "1.4rem",
+              lineHeight: 1,
+              cursor: "pointer",
+              padding: "4px 0 4px 8px",
+              color: "rgba(0,0,0,0.85)",
             }}
+          >
+            ×
+          </button>
+        </div>
+
+        <div
+          style={{
+            padding: "18px 22px",
+            flex: 1,
+            overflowY: "auto",
+            fontSize: "1.02rem",
+            lineHeight: 1.6,
+            color: "#111111",
+          }}
         >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                    width: 'min(860px, 92vw)',
-                    maxHeight: '80vh',
-                    background: 'white',
-                    border: '6px solid black',
-                    borderRadius: 18,
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    backgroundImage: `url(${bgFilename})`,
-                }}
+          {story.textPlain.split(/\n{2,}/).map((p, i) => (
+            <p
+              key={i}
+              style={{
+                margin: "0 0 1em 0",
+                whiteSpace: "pre-wrap",
+              }}
             >
-                <div style={{ padding: '14px 18px', borderBottom: '6px solid black', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 800, fontSize: '1.05rem' }}>{story.authorName}</div>
-                    <button
-                        aria-label="Close story"
-                        onClick={onClose}
-                        style={{ background: 'transparent', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}
-                    >
-                        ×
-                    </button>
-                </div>
-                <div style={{ padding: 18, overflowY: 'auto', lineHeight: 1.5, fontSize: '1.02rem' }}>
-                    {story.textPlain.split(/\n{2,}/).map((p, i) => (
-                        <p key={i} style={{ margin: '0 0 1em 0', whiteSpace: 'pre-wrap' }}>{p}</p>
-                    ))}
-                </div>
-            </div>
-        </div>,
-        document.body
-    );
+              {p}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
 }
