@@ -44,7 +44,7 @@
 
 /* Descriptive paragraphs */
 .descriptionSection {
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   line-height: 1.5;
   margin-bottom: 2.5rem;
 }
@@ -80,7 +80,7 @@
 }
 
 .poemText {
-  font-size: 2rem; /* slightly larger than description */
+  font-size: 1.75rem; /* slightly larger than description */
   line-height: 1.8;
   white-space: normal;
 }
