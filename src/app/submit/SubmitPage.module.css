@@ -1,0 +1,183 @@
+/* src/app/submit/SubmitPage.module.css */
+
+.submitMain {
+  min-height: 100vh;
+  padding-top: 0rem; /* breathing room under the fixed header */
+  padding-bottom: rem;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #000;
+  background-image: url("/gradients/bg-gradient-pages.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.submitContent {
+  width: 100%;
+  max-width: 45%; /* match about page single-column feel */
+  margin: 0 1.5rem;
+  padding: 2.5rem 2rem;
+
+  text-align: center;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+
+  /* move up slightly */
+  margin-top: -5rem;
+}
+
+/* Header: two stacked words */
+.submitTitle {
+  margin: 0 0 5rem 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  font-size: clamp(4.5rem, 8vw, 10rem);
+  line-height: 0.9;
+}
+
+.submitTitleWord {
+  display: block;
+}
+
+/* Intro copy above the form – subtle inverted pyramid */
+.introSection {
+  font-size: 1.5rem;
+  line-height: 1.5;
+  font-weight: 500;
+  max-width: 100%; /* widest block for the first paragraph */
+}
+
+.introSection p {
+  margin: 0 auto 2.5rem;
+  max-width: 100%; /* slightly narrower → subtle inward pinch */
+}
+
+.introSection p:first-child {
+  max-width: 100%; /* first block widest */
+}
+
+.introSection p:last-child {
+  margin-bottom: 2;
+}
+
+/* Error box */
+.errorBox {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 0, 0, 0.1);
+  color: #ffe6e6;
+  border: 1px solid rgba(255, 0, 0, 0.4);
+  text-align: left;
+}
+
+/* Form layout */
+.form {
+  width: 100%;
+  margin-top: 3rem;
+}
+
+/* two-column row on desktop, single column on small screens */
+.formRowTwoUp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .formRowTwoUp {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+
+  width: 100%;
+  padding-bottom: 1rem;
+  margin-bottom: 2.5rem;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.9); /* single horizontal line */
+}
+
+/* Inputs & textarea – no box, just text over the line */
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0; /* rely on field padding / line for spacing */
+  font-size: 1.5rem;
+  color: #ffffff;
+  outline: none;
+}
+
+/* Placeholder-only look until typing */
+.input::placeholder,
+.textarea::placeholder {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Slight emphasis on focus by adjusting the parent line */
+.input:focus + .fieldUnderline,
+.textarea:focus + .fieldUnderline {
+  opacity: 1;
+}
+
+/* Textarea as a single visible row with scrolling */
+.textarea {
+  resize: none;
+  min-height: 1.8rem; /* ~one line */
+  max-height: 1.8rem;
+  overflow-y: auto;
+  line-height: 1.8rem;
+  white-space: pre-wrap; /* keep paragraph breaks visible */
+}
+
+/* Actions */
+.actionsRow {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.submitButton {
+  margin-top: 2rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.2);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease, opacity 0.12s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
