@@ -1,6 +1,5 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-// @ts-expect-error
 import "./globals.css";
 import { goldenbookFont, montserratFont } from "./fonts";
 
