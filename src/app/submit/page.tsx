@@ -1,207 +1,141 @@
 // src/app/submit/page.tsx
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Header from '../components/Header';
+import * as React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Header from "../components/Header";
+import { goldenbookFont, montserratFont } from "../fonts";
+import styles from "./SubmitPage.module.css";
 
 export default function SubmitPage() {
-    const router = useRouter();
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [story, setStory] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [story, setStory] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        setError(null);
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
 
-        if (!name.trim() || !story.trim()) {
-            setError('Please provide both your name and a story.');
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            const res = await fetch('/api/stories', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                cache: 'no-store',
-                body: JSON.stringify({ name, email, story }),
-            });
-
-            const json = await res.json();
-            if (!res.ok || !json?.ok) {
-                throw new Error(json?.error || `Submit failed (HTTP ${res.status})`);
-            }
-
-            // Go straight to the story view
-            router.push(`/view/${json.id}`);
-        } catch (err) {
-            setError((err as Error)?.message || 'Something went wrong while submitting.');
-        } finally {
-            setSubmitting(false);
-        }
+    if (!name.trim() || !story.trim()) {
+      setError("Please provide both your name and a story.");
+      return;
     }
 
-    return (
-        <>
-            <Header />
-            <main
-                style={{
-                    minHeight: 'calc(100vh - 80px)',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'center',
-                    paddingTop: '10%',
-                    paddingBottom: '4rem',
-                    boxSizing: 'border-box',
-                    zIndex: 1000,
-                }}
-            >
-                <div
-                    style={{
-                        width: '100%',
-                        maxWidth: '800px',
-                        padding: '2rem',
-                        margin: '0 1rem',
-                        color: 'rgba(0, 0, 0, 0.95)',
-                        textAlign: 'left',
-                        background: 'transparent',
-                    }}
-                >
-                    <h1 style={{ margin: 0, marginBottom: '1rem', fontSize: '1.75rem' }}>
-                        Share A Story
-                    </h1>
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/stories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({ name, email, story }),
+      });
 
-                    <p style={{ marginTop: '0.75rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                        In the field below, please share a story (or two, three, or more), a favorite memory,
-                        your favorite qualities, or an anecdote that comes to mind when you think of her.
-                        It can be anything—old tales, new tales, bits about her personality, her little
-                        idiosyncrasies—whatever holds meaning for you. The more, the better.
-                    </p>
+      const json = await res.json();
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || `Submit failed (HTTP ${res.status})`);
+      }
 
-                    <p style={{ marginTop: 0, marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                        Once you’ve added your story, hit share and watch it come to life as it’s added to the whole.
-                    </p>
+      router.push(`/view/${json.id}`);
+    } catch (err) {
+      setError(
+        (err as Error)?.message || "Something went wrong while submitting."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
-                    {error ? (
-                        <div style={{
-                            marginBottom: '1rem',
-                            padding: '0.75rem 1rem',
-                            borderRadius: 8,
-                            background: 'rgba(255,0,0,0.08)',
-                            color: '#3b0d0d',
-                            border: '1px solid rgba(255,0,0,0.2)'
-                        }}>
-                            {error}
-                        </div>
-                    ) : null}
+  return (
+    <>
+      <Header />
 
-                    <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-                        <div
-                            style={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '1rem',
-                                marginBottom: '1rem',
-                            }}
-                        >
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                <label htmlFor="name" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
-                                    Name
-                                </label>
-                                <input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Your name"
-                                    required
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem 1rem',
-                                        borderRadius: 10,
-                                        border: '2px solid rgba(0,0,0,0.9)',
-                                        background: 'white',
-                                        boxSizing: 'border-box',
-                                        fontSize: '1rem',
-                                    }}
-                                />
-                            </div>
+      <main aria-labelledby="submit-title" className={styles.submitMain}>
+        <div className={`${styles.submitContent} ${goldenbookFont.className}`}>
+          <h1 id="submit-title" className={styles.submitTitle}>
+            <span className={styles.submitTitleWord}>SHARE</span>
+            <span className={styles.submitTitleWord}>A STORY</span>
+          </h1>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                <label htmlFor="email" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
-                                    Email
-                                </label>
-                                <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="you@example.com"
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem 1rem',
-                                        borderRadius: 10,
-                                        border: '2px solid rgba(0,0,0,0.9)',
-                                        background: 'white',
-                                        boxSizing: 'border-box',
-                                        fontSize: '1rem',
-                                    }}
-                                />
-                            </div>
-                        </div>
+          <section
+            className={`${styles.introSection} ${goldenbookFont.className}`}
+          >
+            <p>
+              In the field below, please share a story (or two, three, or more),
+              a favorite memory, your favorite qualities, or an anecdote that
+              comes to mind when you think of her. It can be anything—old tales,
+              new tales, bits about her personality, her little
+              idiosyncrasies—whatever holds meaning for you. The more, the
+              better.
+            </p>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                            <label htmlFor="story" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
-                                Your story
-                            </label>
-                            <textarea
-                                id="story"
-                                name="story"
-                                value={story}
-                                onChange={(e) => setStory(e.target.value)}
-                                placeholder="Share a memory, anecdote, or anything you wish to contribute..."
-                                rows={8}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '1rem',
-                                    borderRadius: 10,
-                                    border: '2px solid rgba(0,0,0,0.9)',
-                                    background: 'white',
-                                    boxSizing: 'border-box',
-                                    fontSize: '1rem',
-                                    resize: 'vertical',
-                                }}
-                            />
-                        </div>
+            <p>
+              Once you’ve added your story, hit share and watch it come to life
+              as it’s added to the whole.
+            </p>
+          </section>
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                style={{
-                                    padding: '0.75rem 1.25rem',
-                                    borderRadius: 10,
-                                    border: '2px solid rgba(0,0,0,0.9)',
-                                    background: submitting ? '#f0f0f0' : 'white',
-                                    color: 'black',
-                                    fontWeight: 700,
-                                    cursor: submitting ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 6px 18px rgba(0,0,0,0.2)',
-                                }}
-                            >
-                                {submitting ? 'Sharing…' : 'Share'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </main>
-        </>
-    );
+          {error ? <div className={styles.errorBox}>{error}</div> : null}
+
+          <form
+            onSubmit={handleSubmit}
+            className={`${styles.form} ${goldenbookFont.className}`}
+          >
+            <div className={styles.formRowTwoUp}>
+              <div className={styles.formField}>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  required
+                  className={styles.input}
+                />
+              </div>
+
+              <div className={styles.formField}>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Your email"
+                  className={styles.input}
+                />
+              </div>
+            </div>
+
+            <div className={styles.formField}>
+              <textarea
+                id="story"
+                name="story"
+                value={story}
+                onChange={(e) => setStory(e.target.value)}
+                placeholder="Your story...big or small, it doesn't matter as long as it's important to you"
+                rows={1}
+                required
+                className={styles.textarea}
+              />
+            </div>
+
+            <div className={styles.actionsRow}>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`${styles.submitButton} ${montserratFont.className}`}
+              >
+                {submitting ? "Submitting…" : "Submit"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </>
+  );
 }

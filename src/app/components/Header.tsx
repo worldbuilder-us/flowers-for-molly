@@ -3,95 +3,90 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { montserratFont } from "../fonts";
+import styles from "./Header.module.css";
 
-const linkStyle: React.CSSProperties = {
-  color: "white",
-  textDecoration: "none",
-  fontSize: "1.1rem",
-  fontWeight: 600,
-  padding: "8% 5%",
-  letterSpacing: "0.04em",
+type NavItem = {
+  label: string;
+  href: string;
 };
 
-// TODO: MAKE HOME BUTTON FIXED LEFT ON HEADER
+function getNavForPath(pathname: string): NavItem[] {
+  // Normalize route bases
+  const isHome = pathname === "/";
+  const isSubmit = pathname.startsWith("/submit");
+  const isAbout = pathname.startsWith("/about");
+  const isView = pathname.startsWith("/view");
 
-// const homeStyle: React.CSSProperties = {
-//     color: 'black',
-//     textDecoration: 'none',
-//     fontSize: '1.1rem',
-//     fontWeight: 600,
-//     letterSpacing: '0.04em',
-//     display: 'fixed',
-//     left: '10%',
-//     transform: 'translateX(-50%)',
-// }
+  if (isHome) {
+    // Garden = home
+    return [
+      { label: "Submit", href: "/submit" },
+      { label: "About", href: "/about" },
+      { label: "Index", href: "/view" },
+    ];
+  }
 
-function Divider() {
-  return (
-    <svg
-      width="18"
-      height="48"
-      viewBox="0 0 2 48"
-      aria-hidden="true"
-      style={{ display: "block", margin: "0 8px" }}
-    >
-      <line
-        x1="1"
-        y1="8"
-        x2="1"
-        y2="40"
-        stroke="rgba(0,0,0,0.85)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+  if (isSubmit) {
+    return [
+      { label: "Back To The Garden", href: "/" },
+      { label: "About", href: "/about" },
+      { label: "Index", href: "/view" },
+    ];
+  }
+
+  if (isAbout) {
+    return [
+      { label: "Back To The Garden", href: "/" },
+      { label: "Submit", href: "/submit" },
+      { label: "Index", href: "/view" },
+    ];
+  }
+
+  // /view and /view/[id] (index)
+  if (isView) {
+    return [
+      { label: "Back To The Garden", href: "/" },
+      { label: "Submit", href: "/submit" },
+      { label: "About", href: "/about" },
+    ];
+  }
+
+  // Fallback (shouldn't really hit)
+  return [
+    { label: "Back To The Garden", href: "/" },
+    { label: "Submit", href: "/submit" },
+    { label: "Index", href: "/view" },
+  ];
+}
+
+function isActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  if (href === "/view")
+    return pathname === "/view" || pathname.startsWith("/view/");
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export default function Header() {
+  const pathname = usePathname() || "/";
+  const items = getNavForPath(pathname);
+
   return (
-    <header
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 80,
-        display: "flex",
-        alignItems: "right",
-        justifyContent: "right",
-        zIndex: 1100,
-        pointerEvents: "auto",
-        background: "transparent",
-        color: "white",
-        backdropFilter: "blur(6px)",
-      }}
-    >
-      <nav
-        role="navigation"
-        aria-label="Main"
-        style={{
-          display: "flex",
-          alignItems: "right",
-          justifyContent: "right",
-          color: "white",
-        }}
-      >
-        <Link href="/" style={linkStyle}>
-          home
-        </Link>
-
-        <Link href="/submit" style={linkStyle}>
-          submit
-        </Link>
-
-        <Link href="/view" style={linkStyle}>
-          view
-        </Link>
-
-        <Link href="/about" style={linkStyle}>
-          about
-        </Link>
+    <header className={`${styles.header} ${montserratFont.className}`}>
+      <nav role="navigation" aria-label="Main" className={styles.nav}>
+        {items.map((item) => {
+          const active = isActive(pathname, item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`${styles.link} ${active ? styles.linkActive : ""}`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
     </header>
   );
