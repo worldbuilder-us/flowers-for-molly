@@ -6,15 +6,30 @@ import math
 # -----------------------------------------------------
 # Configuration
 # -----------------------------------------------------
-blend_dir = os.path.dirname(bpy.data.filepath)
-input_folder = os.path.join(blend_dir, "flower_imports")
-output_folder = os.path.join(blend_dir, "flower_exports")
 
 # Limit number of images to process (set to None to disable)
 max_images = None  # e.g., process only 5 images
 
-# Ensure output folder exists
-os.makedirs(output_folder, exist_ok=True)
+base_dir = os.path.dirname(bpy.data.filepath)
+
+import_folders = [
+    os.path.join(base_dir, "flower_imports", "flora_group_1"),
+    os.path.join(base_dir, "flower_imports", "flora_group_2"),
+    os.path.join(base_dir, "flower_imports", "flora_group_3"),
+    os.path.join(base_dir, "flower_imports", "flora_group_4"),
+    os.path.join(base_dir, "flower_imports", "flora_group_5"),
+]
+
+export_folders = [
+    os.path.join(base_dir, "..", "public", "garden", "flora_group_1"),
+    os.path.join(base_dir, "..", "public", "garden", "flora_group_2"),
+    os.path.join(base_dir, "..", "public", "garden", "flora_group_3"),
+    os.path.join(base_dir, "..", "public", "garden", "flora_group_4"),
+    os.path.join(base_dir, "..", "public", "garden", "flora_group_5"),
+]
+
+import_folders = [os.path.abspath(f) for f in import_folders]
+export_folders = [os.path.abspath(f) for f in export_folders]
 
 # Access compositor node tree
 tree = bpy.data.node_groups["Compositing Nodetree.002"]
@@ -38,7 +53,7 @@ def randomize_nodes():
 
     # Value node (used to drive the Displace strength)
     value_node = tree.nodes.get("Value")
-    value_node.outputs[0].default_value = random.uniform(50, 150)
+    value_node.outputs[0].default_value = random.uniform(25, 100)
 
     # Directional Blur 2
     blur2.inputs["Rotation"].default_value = math.radians(random.uniform(-4, 4))
@@ -51,34 +66,32 @@ def randomize_nodes():
 # -----------------------------------------------------
 # Batch process images
 # -----------------------------------------------------
-image_files = sorted([
-    f for f in os.listdir(input_folder)
-    if f.lower().endswith((".png", ".jpg", ".jpeg"))
-])
+for import_dir, export_dir in zip(import_folders, export_folders):
+    os.makedirs(export_dir, exist_ok=True)
 
-if max_images is not None:
-    image_files = image_files[:max_images]
+    image_files = sorted([
+        f for f in os.listdir(import_dir)
+        if f.lower().endswith((".png", ".jpg", ".jpeg"))
+    ])
 
-for i, file_name in enumerate(image_files, start=1):
-    img_path = os.path.join(input_folder, file_name)
-    output_path = os.path.join(output_folder, f"processed_{os.path.splitext(file_name)[0]}.png")
+    if max_images is not None:
+        image_files = image_files[:max_images]
 
-    # Load image into the compositor node
-    img = bpy.data.images.load(img_path)
-    img_node.image = img
+    for i, file_name in enumerate(image_files, start=1):
+        img_path = os.path.join(import_dir, file_name)
+        output_path = os.path.join(export_dir, file_name)
 
-    # Randomize parameters
-    randomize_nodes()
+        img = bpy.data.images.load(img_path)
+        img_node.image = img
 
-    # Set output path
-    bpy.context.scene.render.filepath = output_path
+        randomize_nodes()
 
-    # Render and save
-    bpy.ops.render.render(write_still=True)
+        bpy.context.scene.render.filepath = output_path
+        bpy.ops.render.render(write_still=True)
 
-    # Cleanup loaded image to free memory
-    bpy.data.images.remove(img)
+        bpy.data.images.remove(img)
 
-    print(f"Rendered {i}/{len(image_files)}: {file_name}")
+        print(f"Rendered {file_name} from {import_dir} to {export_dir}")
+
 
 print("✅ Batch processing complete!")
