@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 public/assets/sky_transition2.psd
+blender-photoshop/sky_transition2.psd
