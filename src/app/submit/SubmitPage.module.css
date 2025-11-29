@@ -25,20 +25,17 @@
   text-align: center;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-
-  /* move up slightly */
-  margin-top: -5rem;
 }
 
 /* Header: two stacked words */
 .submitTitle {
   margin: 0 0 5rem 0;
-  letter-spacing: 0.1em;
+  /* letter-spacing: 0.05em; */
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
   font-size: clamp(4.5rem, 8vw, 10rem);
-  line-height: 0.9;
+  line-height: 0.825;
 }
 
 .submitTitleWord {
