@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import { goldenbookFont, montserratFont } from "../fonts";
@@ -15,6 +15,41 @@ export default function SubmitPage() {
   const [story, setStory] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const storyRef = useRef<HTMLTextAreaElement | null>(null);
+  const MAX_ROWS = 8;
+
+  const autoResize = (el: HTMLTextAreaElement) => {
+    if (typeof window === "undefined") return;
+
+    const computed = window.getComputedStyle(el);
+    const lineHeight = parseFloat(computed.lineHeight || "0") || 0;
+    const paddingTop = parseFloat(computed.paddingTop || "0") || 0;
+    const paddingBottom = parseFloat(computed.paddingBottom || "0") || 0;
+    const borderTop = parseFloat(computed.borderTopWidth || "0") || 0;
+    const borderBottom = parseFloat(computed.borderBottomWidth || "0") || 0;
+
+    const extra = paddingTop + paddingBottom + borderTop + borderBottom;
+    const maxHeight = lineHeight * MAX_ROWS + extra;
+
+    // Reset to auto so scrollHeight is measured correctly
+    el.style.height = "auto";
+
+    const newHeight = Math.min(el.scrollHeight, maxHeight);
+    el.style.height = `${newHeight}px`;
+    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+  };
+
+  useEffect(() => {
+    if (storyRef.current) {
+      autoResize(storyRef.current);
+    }
+  }, []);
+
+  function handleStoryChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setStory(e.target.value);
+    autoResize(e.target);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -115,8 +150,9 @@ export default function SubmitPage() {
               <textarea
                 id="story"
                 name="story"
+                ref={storyRef}
                 value={story}
-                onChange={(e) => setStory(e.target.value)}
+                onChange={handleStoryChange}
                 placeholder="Your story...big or small, it doesn't matter as long as it's important to you"
                 rows={1}
                 required

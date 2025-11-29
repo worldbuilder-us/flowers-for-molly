@@ -2,8 +2,8 @@
 
 .submitMain {
   min-height: 100vh;
-  padding-top: 0rem; /* breathing room under the fixed header */
-  padding-bottom: rem;
+  padding-top: 0rem;
+  padding-bottom: 4rem; /* fix invalid 'rem' and give breathing room */
   box-sizing: border-box;
 
   display: flex;
@@ -18,7 +18,7 @@
 
 .submitContent {
   width: 100%;
-  max-width: 45%; /* match about page single-column feel */
+  max-width: 45%; /* desktop: keep narrow, book-like column */
   margin: 0 1.5rem;
   padding: 2.5rem 2rem;
 
@@ -30,7 +30,6 @@
 /* Header: two stacked words */
 .submitTitle {
   margin: 0 0 5rem 0;
-  /* letter-spacing: 0.05em; */
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
@@ -42,25 +41,21 @@
   display: block;
 }
 
-/* Intro copy above the form – subtle inverted pyramid */
+/* Intro copy */
 .introSection {
   font-size: 1.5rem;
   line-height: 1.5;
   font-weight: 500;
-  max-width: 100%; /* widest block for the first paragraph */
+  max-width: 100%;
 }
 
 .introSection p {
   margin: 0 auto 2.5rem;
-  max-width: 100%; /* slightly narrower → subtle inward pinch */
-}
-
-.introSection p:first-child {
-  max-width: 100%; /* first block widest */
+  max-width: 100%;
 }
 
 .introSection p:last-child {
-  margin-bottom: 2;
+  margin-bottom: 2rem;
 }
 
 /* Error box */
@@ -104,7 +99,7 @@
   padding-bottom: 1rem;
   margin-bottom: 2.5rem;
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.9); /* single horizontal line */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.9);
 }
 
 /* Inputs & textarea – no box, just text over the line */
@@ -115,7 +110,7 @@
   border: none;
   border-radius: 0;
   background: transparent;
-  padding: 0; /* rely on field padding / line for spacing */
+  padding: 0;
   font-size: 1.5rem;
   color: #ffffff;
   outline: none;
@@ -127,20 +122,15 @@
   color: rgba(255, 255, 255, 0.65);
 }
 
-/* Slight emphasis on focus by adjusting the parent line */
-.input:focus + .fieldUnderline,
-.textarea:focus + .fieldUnderline {
-  opacity: 1;
-}
-
-/* Textarea as a single visible row with scrolling */
+/* Textarea: auto-grow up to 8 lines, then scroll */
 .textarea {
+  --textarea-line-height: 1.8rem;
+
   resize: none;
-  min-height: 1.8rem; /* ~one line */
-  max-height: 1.8rem;
-  overflow-y: auto;
-  line-height: 1.8rem;
-  white-space: pre-wrap; /* keep paragraph breaks visible */
+  min-height: var(--textarea-line-height); /* single visible row initially */
+  line-height: var(--textarea-line-height);
+  white-space: pre-wrap;
+  overflow-y: hidden; /* scroll toggled on via JS once we hit max height */
 }
 
 /* Actions */
@@ -177,4 +167,39 @@
 .submitButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* ---------- Responsiveness tweaks ---------- */
+
+/* Medium screens: widen content slightly */
+@media (max-width: 1024px) {
+  .submitContent {
+    max-width: 70%;
+    padding: 2.5rem 1.75rem;
+  }
+}
+
+/* Small screens / phones */
+@media (max-width: 768px) {
+  .submitMain {
+    align-items: flex-start;
+    padding-top: 5rem;
+    padding-bottom: 3rem;
+  }
+
+  .submitContent {
+    max-width: 100%;
+    margin: 0 1.25rem;
+    padding: 2rem 1.25rem;
+    text-align: left; /* easier to read on narrow screens */
+  }
+
+  .submitTitle {
+    margin-bottom: 3rem;
+    font-size: clamp(3rem, 14vw, 4.5rem);
+  }
+
+  .introSection {
+    font-size: 1.15rem;
+  }
 }
