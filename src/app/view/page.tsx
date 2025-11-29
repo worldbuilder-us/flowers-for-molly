@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
 import StoryModal, { StoryListItem } from "../components/StoryModal";
-import { goldenbookFont } from "../fonts";
+import { goldenbookFont, montserratFont } from "../fonts";
 import styles from "./ViewPage.module.css";
 
 type ApiResp = {
@@ -105,28 +105,19 @@ export default function ViewIndex() {
           </div>
 
           {/* Pager */}
-          <div className={styles.pager}>
+          <div className={`${styles.pager} ${montserratFont.className}`}>
             <button
               aria-label="Previous page"
               disabled={!canPrev || loading}
               onClick={() => canPrev && setPage((p) => p - 1)}
-              className={styles.pagerButton}
+              className={`${styles.pagerButton}`}
             >
-              <svg width="44" height="28" viewBox="0 0 44 28" aria-hidden>
+              <svg viewBox="0 0 20 12" aria-hidden>
                 <path
-                  d="M18 3 L4 14 L18 25"
+                  d="M10 2 L4 6 L10 10"
                   fill="none"
                   stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="6"
-                  y1="14"
-                  x2="40"
-                  y2="14"
-                  stroke="white"
-                  strokeWidth="3"
+                  strokeWidth="2"
                   strokeLinecap="round"
                 />
               </svg>
@@ -142,21 +133,12 @@ export default function ViewIndex() {
               onClick={() => canNext && setPage((p) => p + 1)}
               className={styles.pagerButton}
             >
-              <svg width="44" height="28" viewBox="0 0 44 28" aria-hidden>
+              <svg viewBox="0 0 20 12" aria-hidden>
                 <path
-                  d="M26 3 L40 14 L26 25"
+                  d="M10 2 L16 6 L10 10"
                   fill="none"
                   stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="4"
-                  y1="14"
-                  x2="38"
-                  y2="14"
-                  stroke="white"
-                  strokeWidth="3"
+                  strokeWidth="2"
                   strokeLinecap="round"
                 />
               </svg>

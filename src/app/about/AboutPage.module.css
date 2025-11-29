@@ -30,11 +30,10 @@
 /* Header: three stacked words */
 .aboutTitle {
   margin: 0 0 2.5rem 0;
-  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
-  font-size: clamp(6rem, 8vw, 6rem);
+  font-size: clamp(6rem, 8vw, 7rem);
   line-height: 0.9;
 }
 
@@ -44,9 +43,10 @@
 
 /* Descriptive paragraphs */
 .descriptionSection {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   line-height: 1.5;
   margin-bottom: 2.5rem;
+  font-weight: 500;
 }
 
 .descriptionSection p {
@@ -79,8 +79,25 @@
   margin-top: 1.5rem;
 }
 
+/* Wrapper applies shared typography */
 .poemText {
-  font-size: 1.75rem; /* slightly larger than description */
-  line-height: 1.8;
+  font-size: 2rem; /* slightly larger than description */
+  font-weight: 500;
   white-space: normal;
+}
+
+/* Individual lines; adjust line-height / spacing per line if needed */
+.poemLine {
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* vertical spacing between lines (acts like your <br/> gaps) */
+.poemLine + .poemLine {
+  margin-top: 0.75rem;
+}
+
+.poemLineEmphasis {
+  line-height: 1.2;
+  padding-top: 0.5rem;
 }

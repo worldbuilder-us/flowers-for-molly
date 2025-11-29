@@ -159,10 +159,28 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 6px;
+
+  padding: 10px;
+  width: 44px;
+  height: 32px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+}
+
+.pagerButton svg {
+  display: block;
+
+  /* Ensures the SVG does not add stray whitespace */
+  width: 18px; /* smaller for better optical centering */
+  height: 12px;
+
+  /* SVGs have baseline alignment by default; this fixes that */
+  vertical-align: middle;
 }
 
 .pagerButton:disabled {
