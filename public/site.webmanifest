@@ -1,5 +1,10 @@
 {
   "name": "Flowers For Molly",
+  "short_name": "Molly",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "/android-icon-36x36.png",
