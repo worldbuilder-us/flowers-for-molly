@@ -27,7 +27,7 @@ type Dot = {
   r: number; // radius px
   author: string;
   story: StoryListItem;
-  parallax: number; // 0..1
+  parallax: number; // 0..1 (we'll lock to 1 to stick to world)
 };
 
 type Particle = {
@@ -194,8 +194,11 @@ export default function StoryDotsOverlay({
       const y = topPad + Math.floor(rnd() * usableH);
       const r = 8 + Math.floor(rnd() * 6);
 
+      // We keep t/pMin/pMax around, but we *lock* parallax to 1 so that
+      // dots are fixed in world space (no layer parallax).
       const t = (y - topPad) / Math.max(1, usableH);
-      const parallax = pMin + t * (pMax - pMin);
+      const _parallax = pMin + t * (pMax - pMin);
+      const parallax = 1; // <- lock to world; no parallax vs layers
 
       return { id: s._id, x, y, r, author: s.authorName, story: s, parallax };
     });
@@ -206,6 +209,8 @@ export default function StoryDotsOverlay({
     Record<string, boolean>
   >({});
 
+  // Logical world offset within one segment; we use this with parallax=1
+  // so dots are pinned to world coordinates across the full segment.
   const offsetMod =
     ((viewport.offsetX % segmentWidth) + segmentWidth) % segmentWidth;
 
@@ -213,7 +218,6 @@ export default function StoryDotsOverlay({
 
   const onEnter = useCallback((key: string, storyId: string) => {
     setHoverId(key);
-    // mark this story's spiral as triggered if not already
     setTriggeredSpirals((prev) =>
       prev[storyId] ? prev : { ...prev, [storyId]: true }
     );
@@ -232,11 +236,14 @@ export default function StoryDotsOverlay({
       >
         {[-1, 0, 1].flatMap((tile) =>
           dots.map((d) => {
-            const parallaxShift = offsetMod * d.parallax;
+            // World-locked dots: parallax is fixed to 1, so we use the
+            // raw world offset here (no layer-relative parallax factor).
+            const parallaxShift = offsetMod; // <- changed from offsetMod * d.parallax
+
             const left = d.x + tile * segmentWidth - d.r - parallaxShift;
             const top = d.y - d.r;
             const key = `${tile}:${d.id}`;
-            const triggerKey = d.id; // one spiral per story, across tiles
+            const triggerKey = d.id;
 
             const isHover = hoverId === key;
             const hasTriggered = !!triggeredSpirals[triggerKey];
