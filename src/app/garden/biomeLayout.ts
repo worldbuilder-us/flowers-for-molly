@@ -36,7 +36,7 @@ export type BandLayout = {
 
 export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
   FOREGROUND_1: {
-    baseYFromBottomPct: 0.9,
+    baseYFromBottomPct: 0.5,
     defaultParallax: 0.5,
     defaultZIndex: 100,
     defaultCurve: {
@@ -47,8 +47,8 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     },
   },
   FOREGROUND_2: {
-    baseYFromBottomPct: 0.9,
-    defaultParallax: 0.125,
+    baseYFromBottomPct: 0.6,
+    defaultParallax: 0.25,
     defaultZIndex: 80,
     defaultCurve: {
       type: "sine",
@@ -58,8 +58,8 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     },
   },
   FOREGROUND_3: {
-    baseYFromBottomPct: 0.9,
-    defaultParallax: 0.1,
+    baseYFromBottomPct: 0.75,
+    defaultParallax: 0.125,
     defaultZIndex: 60,
     defaultCurve: {
       type: "sine",
@@ -69,18 +69,18 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     },
   },
   MIDDLEGROUND: {
-    baseYFromBottomPct: 0.9,
-    defaultParallax: 0.08,
+    baseYFromBottomPct: 0.75,
+    defaultParallax: 0.05,
     defaultZIndex: 0,
   },
   BACKGROUND_NEAR: {
-    baseYFromBottomPct: 0.9,
-    defaultParallax: 0.075,
+    baseYFromBottomPct: 0.8,
+    defaultParallax: 0.025,
     defaultZIndex: -10,
   },
   BACKGROUND_FAR: {
     baseYFromBottomPct: 0.9,
-    defaultParallax: 0.055,
+    defaultParallax: 0.0125,
     defaultZIndex: -100,
   },
   SKYBOX: {

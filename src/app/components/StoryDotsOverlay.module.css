@@ -1,0 +1,154 @@
+/* src/app/components/StoryDotsOverlay.module.css */
+
+.storyDotsOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  z-index: 9999;
+}
+
+.tiles {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.dotWrapper {
+  position: absolute;
+}
+
+/* Pulsating dot itself */
+.dotButton {
+  border-radius: 999px;
+  background: #ffffa0;
+  border: 4px solid #ffffee;
+  box-shadow: 10px 10px 20px rgba(255, 255, 255, 0.8);
+  opacity: 0.98;
+  pointer-events: auto;
+  cursor: pointer;
+
+  display: block;
+  padding: 0;
+  outline: none;
+  border-width: 4px;
+
+  animation: storyDotPulse 2.4s ease-in-out infinite;
+}
+
+.dotButton:hover {
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.95);
+}
+
+.dotButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+/* Tooltip above the dot */
+.tooltip {
+  position: absolute;
+  left: -30px;
+  top: -34px;
+  padding: 6px 10px;
+  background: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  white-space: nowrap;
+  color: black;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  user-select: none;
+  pointer-events: none;
+}
+
+.tooltipText {
+  display: inline-block;
+}
+
+/* Particle spiral container – anchored at the dot, extends to the right. */
+.particleLayer {
+  position: absolute;
+  transform: translate(-5%, -5%);
+  width: 420px;
+  height: 220px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Tiny particles; animated via keyframes using CSS vars */
+.particleDot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 999px;
+  background: rgba(225, 255, 255, 0.9);
+  box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.8);
+
+  /* default values if JS props haven't set them yet */
+  --dx: 0px;
+  --dy: 0px;
+  --depthScale: 1;
+  --twist: 15deg;
+  --depthAlpha: 1;
+
+  animation-name: storyDotParticle;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+/*
+ * 0%   : at the dot, tiny, invisible
+ * 40%  : reaches its helix position (implied tornado)
+ * 100% : drifts gently away from helix, fades out
+ *
+ * Because every particle starts at (0,0) and moves linearly toward its
+ * own helix position, the spiral appears to "grow" from the dot rather
+ * than exploding from the already-formed shape.
+ */
+@keyframes storyDotParticle {
+  0% {
+    transform: translate(0, 0) scale(0.1);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(calc(var(--hx) * 0.2), calc(var(--hy) * 0.2))
+      scale(0.4);
+    opacity: calc(var(--depthAlpha) * 0.4);
+  }
+  45% {
+    transform: translate(var(--hx), var(--hy)) scale(0.8);
+    opacity: var(--depthAlpha);
+  }
+  100% {
+    transform: translate(
+        calc(var(--hx) + var(--driftX)),
+        calc(var(--hy) + var(--driftY))
+      )
+      scale(var(--depthScale));
+    opacity: 0;
+  }
+}
+
+/* Constant pulsing for the main dots */
+@keyframes storyDotPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
+  }
+  40% {
+    transform: scale(1.18);
+    opacity: 0.8;
+    box-shadow: 0 0 26px rgba(255, 255, 255, 0.95);
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
+  }
+}
