@@ -1,4 +1,4 @@
-// ./src/app/components/InfiniteParallaxGarden.tsx
+// src/app/components/InfiniteParallaxGarden.tsx
 "use client";
 
 import React, {
@@ -16,27 +16,46 @@ import Image from "next/image";
  * ------------------------------------------------------------
  * A horizontally scrollable, seamless (wrap-around) panorama with
  * multi-layer parallax. Designed as the homepage "garden" scene.
+ *
+ * Responsiveness model:
+ * - Treat `segmentWidth`, sprite sizes, xPositions, and offsets as *logical*
+ *   coordinates.
+ * - Use a base logical scene height (BASE_SCENE_HEIGHT).
+ * - Compute `sceneScale = effectiveHeight / BASE_SCENE_HEIGHT`.
+ * - All logical geometry is multiplied by `sceneScale` so the composition
+ *   stays consistent across desktop and mobile.
  */
+
+const BASE_SCENE_HEIGHT = 1024; // logical reference height
+
+// Tune this to control how "fast" the walk feels.
+// Smaller = slower, smoother motion.
+const SCROLL_SPEED = 0.3;
 
 // -----------------------------
 // Types
 // -----------------------------
 export type SpriteSpec = {
   src: string;
+  /** Logical source resolution in px (unscaled). */
   width: number;
   height: number;
   anchorY?: number;
-  /** Pixel offset AFTER the band baseline + curve. */
+  /** Logical pixel offset AFTER the band baseline + curve. */
   yOffsetPx?: number;
+  /** Logical scale factor applied on top of width/height. */
   scale?: number;
   repeatX?: boolean;
+  /** Logical X positions within a single segment. */
   xPositions?: number[];
 };
 
 export type LayerCurveConfig = {
   type: "sine";
-  amplitudePct: number; // relative to scene height
-  periodsPerSegment: number; // # of full waves per segment
+  /** 0..1, relative to scene height. */
+  amplitudePct: number;
+  /** Number of full waves per logical segment. */
+  periodsPerSegment: number;
   phaseRad?: number;
 };
 
@@ -50,7 +69,7 @@ export type LayerConfig = {
    */
   baseYFromBottomPct?: number;
   /**
-   * Back-compat: if given, used directly as px from top.
+   * Back-compat: if given, used directly as px from top (logical units).
    * If both are set, baseYFromBottomPct wins.
    */
   baseYPx?: number;
@@ -60,35 +79,44 @@ export type LayerConfig = {
 };
 
 export type GardenViewport = {
+  /** Logical world offset in the [0, segmentWidth) space. */
   offsetX: number;
+  /** Actual rendered viewport dimensions in CSS px. */
   viewportW: number;
   viewportH: number;
 };
 
 export type GardenProps = {
-  /** Logical width of a single repeating segment in CSS px. */
+  /**
+   * Logical width of a single repeating segment in units matching your
+   * biome xPositions.
+   */
   segmentWidth?: number;
-  /** Fixed height of the scene in CSS px (set to your viewport height). */
+  /**
+   * Optional fixed *rendered* height of the scene in CSS px.
+   * If omitted, the component will fill its parent (via 100% height)
+   * and measure that height for scaling.
+   */
   segmentHeight?: number;
   /** Declarative asset/layer template. */
   layers: LayerConfig[];
-  /** Optional: start offset inside the middle segment. */
+  /** Optional: start offset in logical units inside the middle segment. */
   initialOffsetX?: number; // default 0
-  /** Optional: map vertical wheel to horizontal scroll (recommended). */
+  /** Optional: map vertical wheel to horizontal scroll (desktop-only UX). */
   wheelToHorizontal?: boolean; // default true
   /** Optional className for outer wrapper. */
   className?: string;
-  /** Optional callback when viewport changes (passes scrollLeft). */
+  /** Optional callback when viewport changes. */
   onViewportChange?: (v: GardenViewport) => void;
-  /** When true, swap images for outlined boxes with labels */
+  /** When true, swap images for outlined boxes with labels. */
   debugWireframes?: boolean;
 };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 export default function InfiniteParallaxGarden({
-  segmentWidth = 4096,
-  segmentHeight = 4096,
+  segmentWidth = 4096, // logical
+  segmentHeight,
   layers,
   initialOffsetX = 0,
   wheelToHorizontal = true,
@@ -97,10 +125,12 @@ export default function InfiniteParallaxGarden({
   debugWireframes = false,
 }: GardenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [measuredH, setMeasuredH] = useState<number | null>(null);
 
-  const middleStart = segmentWidth; // [A][B][C] each = segmentWidth
-  const [scrollLeft, setScrollLeft] = useState(0);
+  /**
+   * If segmentHeight is not provided, we fill the parent (height: 100%)
+   * and use a ResizeObserver to measure the actual pixel height for scaling.
+   */
+  const [measuredH, setMeasuredH] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     if (segmentHeight) return;
@@ -117,34 +147,66 @@ export default function InfiniteParallaxGarden({
     return () => ro.disconnect();
   }, [segmentHeight]);
 
+  // Actual rendered height in CSS px.
   const effectiveHeight = segmentHeight ?? measuredH ?? 720;
 
+  // Scene-wide scale factor: logical → physical pixels.
+  const sceneScale = effectiveHeight / BASE_SCENE_HEIGHT;
+
+  // Rendered segment width in CSS px.
+  const segmentWidthPx = segmentWidth * sceneScale;
+
+  // Middle segment start in scroll coordinates.
+  const middleStartPx = segmentWidthPx; // [A][B][C]
+
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  /**
+   * Initialize scroll position so we start in the middle segment at
+   * the requested *logical* offset.
+   */
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const target = middleStart + (initialOffsetX % segmentWidth);
+
+    const logicalInitial =
+      ((initialOffsetX % segmentWidth) + segmentWidth) % segmentWidth;
+    const target = middleStartPx + logicalInitial * sceneScale;
+
     el.scrollLeft = target;
     setScrollLeft(target);
-  }, [middleStart, initialOffsetX, segmentWidth]);
+  }, [initialOffsetX, segmentWidth, middleStartPx, sceneScale]);
 
+  /**
+   * Wrap-around scroll behavior to maintain the infinite illusion.
+   * Uses rendered segmentWidth in CSS px so it stays correct on all screens.
+   */
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     let x = el.scrollLeft;
 
-    const leftBoundary = middleStart * 0.5;
-    const rightBoundary = middleStart * 1.5;
+    const leftBoundary = middleStartPx * 0.5;
+    const rightBoundary = middleStartPx * 1.5;
 
     if (x < leftBoundary) {
-      x += segmentWidth;
+      x += segmentWidthPx;
       el.scrollLeft = x;
     } else if (x > rightBoundary) {
-      x -= segmentWidth;
+      x -= segmentWidthPx;
       el.scrollLeft = x;
     }
     setScrollLeft(el.scrollLeft);
-  }, [middleStart, segmentWidth]);
+  }, [middleStartPx, segmentWidthPx]);
 
+  /**
+   * Map vertical wheel to horizontal scroll.
+   *
+   * To get back your previous "global" feeling (scroll anywhere on the page
+   * and the garden moves), we bind to `window` again, but we:
+   * - apply a SCROLL_SPEED multiplier for a slower, smoother walk.
+   * - still respect Shift+scroll for standard horizontal scroll.
+   */
   useEffect(() => {
     if (!wheelToHorizontal) return;
     const el = scrollRef.current;
@@ -152,9 +214,19 @@ export default function InfiniteParallaxGarden({
 
     const onWheel = (e: WheelEvent) => {
       if (e.shiftKey) return;
+
+      // If the garden isn't mounted or sized yet, skip.
+      if (!scrollRef.current) return;
+
+      // Slow, smoothed walk.
+      const rawDelta = e.deltaY + e.deltaX * 0.5;
+      const delta = rawDelta * SCROLL_SPEED;
+
+      if (delta === 0) return;
+
       e.preventDefault();
-      const delta = e.deltaY + e.deltaX * 0.5;
-      el.scrollLeft += delta;
+
+      scrollRef.current.scrollLeft += delta;
       handleScroll();
     };
 
@@ -162,20 +234,43 @@ export default function InfiniteParallaxGarden({
     return () => window.removeEventListener("wheel", onWheel);
   }, [wheelToHorizontal, handleScroll]);
 
-  const localX = useMemo(() => {
-    const x = (scrollLeft - middleStart) % segmentWidth;
-    return x < 0 ? x + segmentWidth : x;
-  }, [scrollLeft, middleStart, segmentWidth]);
+  /**
+   * Local X position within the middle segment, in rendered CSS px.
+   */
+  const localXPx = useMemo(() => {
+    if (segmentWidthPx === 0) return 0;
+    const x = (scrollLeft - middleStartPx) % segmentWidthPx;
+    return x < 0 ? x + segmentWidthPx : x;
+  }, [scrollLeft, middleStartPx, segmentWidthPx]);
 
+  /**
+   * Report viewport to consumers (e.g. StoryDotsOverlay) using:
+   * - logical offsetX in [0, segmentWidth)
+   * - physical viewport width/height in CSS px
+   */
   const notifyViewport = useCallback(() => {
     if (!onViewportChange) return;
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el || sceneScale === 0) return;
+
     const w = el.clientWidth;
     const h = el.clientHeight;
-    const logicalOffsetX = (scrollLeft - middleStart + localX) % segmentWidth;
+
+    const worldOffsetPx = scrollLeft - middleStartPx + localXPx;
+    let logicalOffsetX = worldOffsetPx / sceneScale;
+
+    logicalOffsetX %= segmentWidth;
+    if (logicalOffsetX < 0) logicalOffsetX += segmentWidth;
+
     onViewportChange({ offsetX: logicalOffsetX, viewportW: w, viewportH: h });
-  }, [onViewportChange, scrollLeft, middleStart, localX, segmentWidth]);
+  }, [
+    onViewportChange,
+    scrollLeft,
+    middleStartPx,
+    localXPx,
+    sceneScale,
+    segmentWidth,
+  ]);
 
   useEffect(() => {
     notifyViewport();
@@ -190,23 +285,25 @@ export default function InfiniteParallaxGarden({
     return () => ro.disconnect();
   }, [onViewportChange, notifyViewport]);
 
+  /**
+   * Render a single segment of a layer.
+   * All sprite geometry is converted from logical units to CSS px
+   * using `sceneScale`, so the composition remains consistent.
+   */
   const renderLayerSegment = (layer: LayerConfig, segmentIndex: number) => {
     const { sprites, parallax, opacity = 1, curve } = layer;
 
-    const parallaxShift = -localX * (1 - clamp(parallax, 0, 1));
+    const parallaxShift = -localXPx * (1 - clamp(parallax, 0, 1));
 
-    // Convert normalized baseline to pixels.
-    // If baseYFromBottomPct is present: 0 = bottom, 1 = top.
     const computeBaseYpx = (): number => {
       if (typeof layer.baseYFromBottomPct === "number") {
         const fromBottom = clamp(layer.baseYFromBottomPct, 0, 1);
-        // CSS y-axis is from top, so invert.
         return effectiveHeight * (1 - fromBottom);
       }
       if (typeof layer.baseYPx === "number") {
-        return layer.baseYPx;
+        // Interpret baseYPx as logical.
+        return layer.baseYPx * sceneScale;
       }
-      // Fallback: bottom of scene.
       return effectiveHeight;
     };
 
@@ -214,9 +311,9 @@ export default function InfiniteParallaxGarden({
 
     const style: React.CSSProperties = {
       position: "absolute",
-      left: segmentIndex * segmentWidth,
+      left: segmentIndex * segmentWidthPx,
       top: 0,
-      width: segmentWidth,
+      width: segmentWidthPx,
       height: effectiveHeight,
       transform: `translateX(${parallaxShift}px)`,
       willChange: "transform",
@@ -254,19 +351,22 @@ export default function InfiniteParallaxGarden({
       <div key={`seg-${layer.id}-${segmentIndex}`} style={style}>
         {sprites.map((s, i) => {
           const anchorY = s.anchorY ?? 1;
-          const yOffsetPx = s.yOffsetPx ?? 0;
-          const scale = s.scale ?? 1;
-          const h = s.height * scale;
-          const w = s.width * scale;
+          const logicalYOffset = s.yOffsetPx ?? 0;
+          const spriteLogicalScale = s.scale ?? 1;
+
+          // Final sprite render scale = sprite scale * scene scale.
+          const effectiveSpriteScale = spriteLogicalScale * sceneScale;
+          const h = s.height * effectiveSpriteScale;
+          const w = s.width * effectiveSpriteScale;
+          const yOffsetPx = logicalYOffset * sceneScale;
 
           if (s.repeatX) {
-            // Background hills / skybox (no per-sprite sine needed generally)
             if (debugWireframes) {
               const wfStyle: React.CSSProperties = {
                 position: "absolute",
                 left: 0,
                 top: baseYpx - h * anchorY + yOffsetPx,
-                width: segmentWidth,
+                width: segmentWidthPx,
                 height: h,
                 outline: "2px dashed rgba(0, 0, 200, 0.8)",
                 background: "rgba(255,255,200,0.08)",
@@ -274,9 +374,11 @@ export default function InfiniteParallaxGarden({
               return (
                 <div key={`repwf-${i}`} style={wfStyle}>
                   <WireLabel
-                    text={`${layer.id} • ${s.width}×${
+                    text={`${layer.id} • src: ${s.width}×${
                       s.height
-                    }px • scale: ${scale.toFixed(2)}x parallax: ${parallax}`}
+                    }px • rendered: ${Math.round(w)}×${Math.round(
+                      h
+                    )} • parallax: ${parallax}`}
                   />
                 </div>
               );
@@ -286,26 +388,27 @@ export default function InfiniteParallaxGarden({
               position: "absolute",
               left: 0,
               top: baseYpx - h * anchorY + yOffsetPx,
-              width: segmentWidth,
+              width: segmentWidthPx,
               height: h,
               backgroundImage: `url(${s.src})`,
               backgroundRepeat: "repeat-x",
               backgroundSize: `${w}px ${h}px`,
-              backgroundPositionX: `${-segmentIndex * segmentWidth}px`,
+              backgroundPositionX: `${-segmentIndex * segmentWidthPx}px`,
               imageRendering: "auto",
             };
             return <div key={`rep-${i}`} style={stripStyle} />;
           }
 
           const xs = s.xPositions ?? [];
-          return xs.map((x, j) => {
-            const leftX = x - w * 0.5;
+          return xs.map((xLogical, j) => {
+            const xPx = xLogical * sceneScale;
+            const leftX = xPx - w * 0.5;
 
-            // WORLD X across segments for smooth sine.
-            const worldX = segmentIndex * segmentWidth + x;
+            const worldXpx = segmentIndex * segmentWidthPx + xPx;
             const t =
-              (2 * Math.PI * periodsPerSegment * worldX) / segmentWidth +
+              (2 * Math.PI * periodsPerSegment * worldXpx) / segmentWidthPx +
               curvePhase;
+
             const curveYOffset = curveAmplitudePx
               ? curveAmplitudePx * Math.sin(t)
               : 0;
@@ -325,11 +428,15 @@ export default function InfiniteParallaxGarden({
               return (
                 <div key={`sprwf-${i}-${j}`} style={wfStyle}>
                   <WireLabel
-                    text={`${layer.id} • ${s.width}×${
+                    text={`${layer.id} • src: ${s.width}×${
                       s.height
-                    }px • ${Math.round(w)}×${Math.round(
+                    }px • rendered: ${Math.round(w)}×${Math.round(
                       h
-                    )} • scale: ${scale.toFixed(2)}x parallax: ${parallax}`}
+                    )} • scale: ${spriteLogicalScale.toFixed(
+                      2
+                    )}x • sceneScale: ${sceneScale.toFixed(
+                      2
+                    )} • parallax: ${parallax}`}
                   />
                 </div>
               );
@@ -343,6 +450,7 @@ export default function InfiniteParallaxGarden({
               height: h,
               pointerEvents: "none",
             };
+
             return (
               <Image
                 key={`spr-${i}-${j}`}
@@ -353,6 +461,7 @@ export default function InfiniteParallaxGarden({
                 style={spriteStyle}
                 draggable={false}
                 priority={false}
+                sizes="100vw"
               />
             );
           });
@@ -367,7 +476,7 @@ export default function InfiniteParallaxGarden({
       position: "absolute",
       left: 0,
       top: 0,
-      width: segmentWidth * 3,
+      width: segmentWidthPx * 3,
       height: effectiveHeight,
       zIndex: z,
     };
@@ -384,12 +493,12 @@ export default function InfiniteParallaxGarden({
   const containerStyle: React.CSSProperties & { scrollbarWidth?: string } = {
     position: "relative",
     width: "100%",
-    height: effectiveHeight,
+    height: segmentHeight ?? "100%", // fill parent when no explicit height
     overflowX: "scroll",
     overflowY: "hidden",
     overscrollBehavior: "none",
     WebkitOverflowScrolling: "touch",
-    scrollbarWidth: "none",
+    scrollbarWidth: "none", // Firefox
   };
 
   return (
@@ -402,7 +511,7 @@ export default function InfiniteParallaxGarden({
       <div
         style={{
           position: "relative",
-          width: segmentWidth * 3,
+          width: segmentWidthPx * 3,
           height: effectiveHeight,
         }}
       >

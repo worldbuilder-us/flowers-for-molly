@@ -33,7 +33,7 @@
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
-  font-size: clamp(6rem, 8vw, 7rem);
+  font-size: clamp(4rem, 8vw, 7rem);
   line-height: 0.9;
 }
 
@@ -81,7 +81,7 @@
 
 /* Wrapper applies shared typography */
 .poemText {
-  font-size: 2rem; /* slightly larger than description */
+  font-size: 2rem; /* desktop base */
   font-weight: 500;
   white-space: normal;
 }
@@ -100,4 +100,89 @@
 .poemLineEmphasis {
   line-height: 1.2;
   padding-top: 0.5rem;
+}
+
+/* ----------------------------------------
+ * Responsive adjustments
+ * -------------------------------------- */
+
+/* Medium screens: slightly tighten layout */
+@media (max-width: 1024px) {
+  .aboutContent {
+    max-width: 52ch;
+    margin: 0 1.25rem;
+    padding: 2.25rem 1.75rem;
+  }
+
+  .descriptionSection {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+
+  .poemText {
+    font-size: 1.8rem;
+  }
+}
+
+/* Mobile / small tablets */
+@media (max-width: 768px) {
+  .aboutMain {
+    align-items: flex-start; /* allow scrolling rather than hard centering */
+    justify-content: center;
+    padding-top: 5rem; /* account for header height on mobile */
+    padding-bottom: 2.5rem;
+  }
+
+  .aboutContent {
+    max-width: 100%;
+    margin: 0 1rem;
+    padding: 2rem 1.25rem 2.25rem;
+    text-align: left; /* more natural for long text on narrow screens */
+  }
+
+  .aboutTitle {
+    font-size: clamp(2.6rem, 9vw, 3.4rem);
+    margin-bottom: 2rem;
+    text-align: left;
+  }
+
+  .descriptionSection {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  /* .divider {
+    margin: 2rem 0 1.5rem 0;
+  } */
+
+  .poemText {
+    font-size: 1.4rem;
+    line-height: 1.4;
+  }
+
+  .poemLine + .poemLine {
+    margin-top: 0.6rem;
+  }
+}
+
+/* Extra-small screens (very narrow phones) */
+@media (max-width: 480px) {
+  .aboutMain {
+    padding-top: 4.75rem;
+    padding-bottom: 2rem;
+  }
+
+  .aboutContent {
+    margin: 0 0.75rem;
+    padding: 1.75rem 1rem 2rem;
+  }
+
+  .aboutTitle {
+    font-size: clamp(2.2rem, 9vw, 3rem);
+  }
+
+  .poemText {
+    font-size: 1.25rem;
+  }
 }
