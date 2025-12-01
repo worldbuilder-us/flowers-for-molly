@@ -140,7 +140,7 @@ function ParticleSpiral({
     }
 
     return items;
-  }, [dotRadius, seed]);
+  }, [seed]); // dotRadius is not used inside, so omit from deps
 
   return (
     <div
@@ -151,25 +151,29 @@ function ParticleSpiral({
         left: dotRadius * 2 + 6,
       }}
     >
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className={styles.particleDot}
-          style={{
-            width: p.size,
-            height: p.size,
-            animationDelay: `${p.delay}s`,
-            // keep durations reasonably long so motion feels like drift
-            animationDuration: `${2.2 + p.depth * 1.3}s`,
-            ["--hx" as any]: `${p.hx}px`,
-            ["--hy" as any]: `${p.hy}px`,
-            ["--driftX" as any]: `${p.driftX}px`,
-            ["--driftY" as any]: `${p.driftY}px`,
-            ["--depthScale" as any]: `${0.8 + p.depth * 0.6}`,
-            ["--depthAlpha" as any]: `${0.4 + p.depth * 0.5}`,
-          }}
-        />
-      ))}
+      {particles.map((p) => {
+        const particleStyle: React.CSSProperties = {
+          width: p.size,
+          height: p.size,
+          animationDelay: `${p.delay}s`,
+          // keep durations reasonably long so motion feels like drift
+          animationDuration: `${2.2 + p.depth * 1.3}s`,
+          "--hx": `${p.hx}px`,
+          "--hy": `${p.hy}px`,
+          "--driftX": `${p.driftX}px`,
+          "--driftY": `${p.driftY}px`,
+          "--depthScale": `${0.8 + p.depth * 0.6}`,
+          "--depthAlpha": `${0.4 + p.depth * 0.5}`,
+        } as React.CSSProperties;
+
+        return (
+          <div
+            key={p.id}
+            className={styles.particleDot}
+            style={particleStyle}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -194,11 +198,9 @@ export default function StoryDotsOverlay({
       const y = topPad + Math.floor(rnd() * usableH);
       const r = 8 + Math.floor(rnd() * 6);
 
-      // We keep t/pMin/pMax around, but we *lock* parallax to 1 so that
-      // dots are fixed in world space (no layer parallax).
-      const t = (y - topPad) / Math.max(1, usableH);
-      const _parallax = pMin + t * (pMax - pMin);
-      const parallax = 1; // <- lock to world; no parallax vs layers
+      // We keep pMin/pMax as arguments for potential future tuning,
+      // but we lock parallax to 1 so dots are fixed in world space.
+      const parallax = 1;
 
       return { id: s._id, x, y, r, author: s.authorName, story: s, parallax };
     });
@@ -238,7 +240,7 @@ export default function StoryDotsOverlay({
           dots.map((d) => {
             // World-locked dots: parallax is fixed to 1, so we use the
             // raw world offset here (no layer-relative parallax factor).
-            const parallaxShift = offsetMod; // <- changed from offsetMod * d.parallax
+            const parallaxShift = offsetMod;
 
             const left = d.x + tile * segmentWidth - d.r - parallaxShift;
             const top = d.y - d.r;
