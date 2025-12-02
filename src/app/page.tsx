@@ -1,13 +1,25 @@
 // src/app/page.tsx
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Header from "./components/Header";
 import InfiniteParallaxGarden from "./components/InfiniteParallaxGarden";
 import StoryDotsOverlay from "./components/StoryDotsOverlay";
 import StoryModal, { StoryListItem } from "./components/StoryModal";
 import styles from "./Page.module.css";
 import { meadowBiome, buildLayersFromBiome } from "./garden/biomes";
+
+const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
+  "flowers for molly theme 0.1.mp3"
+)}`;
+const BACKGROUND_MUSIC_BASE_VOLUME = 0.2;
+const BACKGROUND_MUSIC_FADE_DURATION = 4; // seconds
 
 export default function Page() {
   const [stories, setStories] = useState<StoryListItem[]>([]);
@@ -25,6 +37,82 @@ export default function Page() {
   const [debugWireframes, setDebugWireframes] = useState(false);
 
   const layers = useMemo(() => buildLayersFromBiome(meadowBiome), []);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const startMusic = () => {
+      if (hasStartedRef.current) return;
+      hasStartedRef.current = true;
+
+      const audio = new Audio(BACKGROUND_MUSIC_SRC);
+      audio.loop = true;
+      audio.volume = 0;
+
+      const handleTimeUpdate = () => {
+        if (!audio.duration || Number.isNaN(audio.duration)) return;
+
+        const t = audio.currentTime;
+        const d = audio.duration;
+
+        let volume = BACKGROUND_MUSIC_BASE_VOLUME;
+
+        // Fade in at the start of each loop
+        if (t < BACKGROUND_MUSIC_FADE_DURATION) {
+          const progress = Math.min(1, t / BACKGROUND_MUSIC_FADE_DURATION);
+          volume = BACKGROUND_MUSIC_BASE_VOLUME * progress;
+        }
+
+        // Fade out near the end of each loop
+        const timeRemaining = d - t;
+        if (timeRemaining < BACKGROUND_MUSIC_FADE_DURATION) {
+          const progress = Math.max(
+            0,
+            timeRemaining / BACKGROUND_MUSIC_FADE_DURATION
+          );
+          volume = BACKGROUND_MUSIC_BASE_VOLUME * progress;
+        }
+
+        audio.volume = Math.max(
+          0,
+          Math.min(BACKGROUND_MUSIC_BASE_VOLUME, volume)
+        );
+      };
+
+      audio.addEventListener("timeupdate", handleTimeUpdate);
+
+      audio.play().catch((err) => {
+        // Autoplay can be blocked by the browser; in that case we just log.
+        console.warn("Background music play blocked:", err);
+      });
+
+      audioRef.current = audio;
+    };
+
+    const interactionEvents: Array<keyof WindowEventMap> = [
+      "pointerdown",
+      "keydown",
+    ];
+
+    interactionEvents.forEach((evt) =>
+      window.addEventListener(evt, startMusic, { once: true })
+    );
+
+    return () => {
+      interactionEvents.forEach((evt) =>
+        window.removeEventListener(evt, startMusic as EventListener)
+      );
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+        audioRef.current.load();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
