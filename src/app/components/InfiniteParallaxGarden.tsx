@@ -30,7 +30,7 @@ const BASE_SCENE_HEIGHT = 1024; // logical reference height
 
 // Tune this to control how "fast" the walk feels.
 // Smaller = slower, smoother motion.
-const SCROLL_SPEED = 0.3;
+const SCROLL_SPEED = 0.15;
 
 // -----------------------------
 // Types
