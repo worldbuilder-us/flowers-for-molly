@@ -21,7 +21,7 @@
 .dotButton {
   border-radius: 999px;
   background: #ffffa0;
-  border: 4px solid #ffffee;
+  border: 2px solid #ffffee;
   box-shadow: 10px 10px 20px rgba(255, 255, 255, 0.8);
   opacity: 0.98;
   pointer-events: auto;

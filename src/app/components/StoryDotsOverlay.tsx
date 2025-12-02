@@ -140,7 +140,7 @@ function ParticleSpiral({
     }
 
     return items;
-  }, [seed]); // dotRadius is not used inside, so omit from deps
+  }, [seed]);
 
   return (
     <div
@@ -149,6 +149,8 @@ function ParticleSpiral({
       style={{
         // helix origin sits just to the right of the dot
         left: dotRadius * 2 + 6,
+        // particles are purely visual; do not eat pointer events
+        pointerEvents: "none",
       }}
     >
       {particles.map((p) => {
@@ -156,7 +158,6 @@ function ParticleSpiral({
           width: p.size,
           height: p.size,
           animationDelay: `${p.delay}s`,
-          // keep durations reasonably long so motion feels like drift
           animationDuration: `${2.2 + p.depth * 1.3}s`,
           "--hx": `${p.hx}px`,
           "--hy": `${p.hy}px`,
@@ -196,7 +197,7 @@ export default function StoryDotsOverlay({
       const rnd = rng01(h);
       const x = Math.floor(rnd() * segmentWidth);
       const y = topPad + Math.floor(rnd() * usableH);
-      const r = 2 + Math.floor(rnd() * 6);
+      const r = 6 + Math.floor(rnd() * 6);
 
       // We keep pMin/pMax as arguments for potential future tuning,
       // but we lock parallax to 1 so dots are fixed in world space.
@@ -275,20 +276,26 @@ export default function StoryDotsOverlay({
   const onLeave = useCallback(() => setHoverId(null), []);
 
   return (
-    <div className={styles.storyDotsOverlay}>
+    <div
+      className={styles.storyDotsOverlay}
+      style={{
+        // Let scroll gestures fall through to the garden by default
+        pointerEvents: "none",
+      }}
+    >
       <div
         className={styles.tiles}
         style={{
           left: baseLeft,
           width: segmentWidth * 3,
+          // tiles container stays non-interactive; only child buttons are
+          // clickable so drags over empty space scroll the garden.
+          pointerEvents: "none",
         }}
       >
         {[-1, 0, 1].flatMap((tile) =>
           dots.map((d) => {
-            // World-locked dots: parallax is fixed to 1, so we use the
-            // raw world offset here (no layer-relative parallax factor).
             const parallaxShift = offsetMod;
-
             const left = d.x + tile * segmentWidth - d.r - parallaxShift;
             const top = d.y - d.r;
             const key = `${tile}:${d.id}`;
@@ -301,7 +308,12 @@ export default function StoryDotsOverlay({
               <div
                 key={key}
                 className={styles.dotWrapper}
-                style={{ left, top }}
+                style={{
+                  left,
+                  top,
+                  // dot wrapper and its content should be interactive
+                  pointerEvents: "auto",
+                }}
               >
                 <button
                   aria-label={`Open story by ${d.author}`}
@@ -317,7 +329,13 @@ export default function StoryDotsOverlay({
                 />
 
                 {isHover && (
-                  <div className={styles.tooltip}>
+                  <div
+                    className={styles.tooltip}
+                    style={{
+                      // tooltip purely visual; don't block clicks/scroll
+                      pointerEvents: "none",
+                    }}
+                  >
                     <span className={styles.tooltipText}>{d.author}</span>
                   </div>
                 )}
