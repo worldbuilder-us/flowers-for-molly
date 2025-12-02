@@ -12,24 +12,24 @@ max_images = None  # e.g., process only 5 images
 
 base_dir = os.path.dirname(bpy.data.filepath)
 
+# Get all subfolders of meadow_foreground
+import_base = os.path.join(base_dir, "flower_imports", "meadow_foreground")
+export_base = os.path.join(base_dir, "..", "public", "garden", "meadow_foreground")
+
+# Discover all subfolders
 import_folders = [
-    os.path.join(base_dir, "flower_imports", "flora_group_1"),
-    os.path.join(base_dir, "flower_imports", "flora_group_2"),
-    os.path.join(base_dir, "flower_imports", "flora_group_3"),
-    os.path.join(base_dir, "flower_imports", "flora_group_4"),
-    os.path.join(base_dir, "flower_imports", "flora_group_5"),
+    os.path.join(import_base, subfolder)
+    for subfolder in os.listdir(import_base)
+    if os.path.isdir(os.path.join(import_base, subfolder))
 ]
 
 export_folders = [
-    os.path.join(base_dir, "..", "public", "garden", "flora_group_1"),
-    os.path.join(base_dir, "..", "public", "garden", "flora_group_2"),
-    os.path.join(base_dir, "..", "public", "garden", "flora_group_3"),
-    os.path.join(base_dir, "..", "public", "garden", "flora_group_4"),
-    os.path.join(base_dir, "..", "public", "garden", "flora_group_5"),
+    os.path.join(export_base, os.path.basename(imp_folder))
+    for imp_folder in import_folders
 ]
 
-import_folders = [os.path.abspath(f) for f in import_folders]
-export_folders = [os.path.abspath(f) for f in export_folders]
+import_folders = sorted([os.path.abspath(f) for f in import_folders])
+export_folders = sorted([os.path.abspath(f) for f in export_folders])
 
 # Access compositor node tree
 tree = bpy.data.node_groups["Compositing Nodetree.002"]
