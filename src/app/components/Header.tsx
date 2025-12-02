@@ -13,7 +13,6 @@ type NavItem = {
 };
 
 function getNavForPath(pathname: string): NavItem[] {
-  // Normalize route bases
   const isHome = pathname === "/";
   const isSubmit = pathname.startsWith("/submit");
   const isAbout = pathname.startsWith("/about");
@@ -71,9 +70,19 @@ function isActive(pathname: string, href: string): boolean {
 export default function Header() {
   const pathname = usePathname() || "/";
   const items = getNavForPath(pathname);
+  const isGarden = pathname === "/";
+
+  const headerClassName = [
+    styles.header,
+    montserratFont.className,
+    // Apply blur only when NOT on the garden scene
+    !isGarden ? styles.headerBlur : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <header className={`${styles.header} ${montserratFont.className}`}>
+    <header className={headerClassName}>
       <nav role="navigation" aria-label="Main" className={styles.nav}>
         {items.map((item) => {
           const active = isActive(pathname, item.href);
