@@ -15,7 +15,6 @@
   pointer-events: auto;
   background: transparent;
   color: #ffffff;
-  backdrop-filter: blur(6px);
 }
 
 .nav {
