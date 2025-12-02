@@ -202,9 +202,8 @@ export default function InfiniteParallaxGarden({
   }, [middleStartPx, segmentWidthPx]);
 
   /**
-   * Map vertical wheel to horizontal scroll on desktop, but
-   * **do not** interfere when a modal is open (we detect this via
-   * `document.body.style.overflow === "hidden"` which StoryModal sets).
+   * Map vertical wheel to horizontal scroll on desktop,
+   * but don't interfere when a modal has locked body scroll.
    */
   useEffect(() => {
     if (!wheelToHorizontal) return;
@@ -214,7 +213,7 @@ export default function InfiniteParallaxGarden({
     const onWheel = (e: WheelEvent) => {
       if (e.shiftKey) return;
 
-      // If a modal has locked the body scroll, let the modal handle wheel.
+      // If StoryModal has set body overflow to hidden, let it consume scroll.
       if (document.body.style.overflow === "hidden") {
         return;
       }
@@ -339,7 +338,7 @@ export default function InfiniteParallaxGarden({
           fontWeight: 600,
           padding: "2px 6px",
           borderRadius: 6,
-          background: "rgba(0,0,0,0.95)",
+          background: "rgba(0, 0, 0, 0.95)",
           color: "#fff",
           pointerEvents: "none",
           whiteSpace: "nowrap",
@@ -371,7 +370,7 @@ export default function InfiniteParallaxGarden({
                 width: segmentWidthPx,
                 height: h,
                 outline: "2px dashed rgba(0, 0, 200, 0.8)",
-                background: "rgba(255,255,200,0.08)",
+                background: "rgba(255, 255, 200, 0.08)",
               };
               return (
                 <div key={`repwf-${i}`} style={wfStyle}>
@@ -425,7 +424,7 @@ export default function InfiniteParallaxGarden({
                 width: w,
                 height: h,
                 outline: "1px solid rgba(255, 180, 0, 0.9)",
-                background: "rgba(255,180,0,0.08)",
+                background: "rgba(255, 180, 0, 0.08)",
               };
               return (
                 <div key={`sprwf-${i}-${j}`} style={wfStyle}>
@@ -501,12 +500,8 @@ export default function InfiniteParallaxGarden({
     overscrollBehavior: "none",
     WebkitOverflowScrolling: "touch",
     scrollbarWidth: "none", // Firefox
-    /**
-     * Allow both horizontal and vertical default panning.
-     * - Horizontal: native swipe-to-scroll for the garden on mobile.
-     * - Vertical: the page can still scroll when appropriate.
-     */
-    touchAction: "pan-x pan-y",
+    // NOTE: no touchAction override and no manual touch handlers.
+    // Mobile browsers can now do their native horizontal scrolling.
   };
 
   return (
