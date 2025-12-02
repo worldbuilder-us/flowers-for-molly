@@ -201,7 +201,7 @@ export const meadowBiome: BiomeConfig = {
           width: 220,
           height: 220,
           xPositions: [750, 1470],
-          yOffset: 100,
+          yOffset: 150,
         },
         {
           name: "grass",
