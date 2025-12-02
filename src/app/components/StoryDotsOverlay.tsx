@@ -97,7 +97,7 @@ function ParticleSpiral({
     for (let i = 0; i < count; i++) {
       const base = i / count;
 
-      const depth = 0.4 + rnd() * 6; // 0.4..1.0
+      const depth = 0.4 + rnd() * 6; // 0.4..≈6.4
       const phase = rnd() * Math.PI * 5;
 
       // Where along the helix this particle will "settle"
@@ -211,6 +211,49 @@ export default function StoryDotsOverlay({
     Record<string, boolean>
   >({});
 
+  // Preload SFX one time on the client
+  const sfxPlayersRef = React.useRef<HTMLAudioElement[] | null>(null);
+  const SFX_COUNT = 6;
+  const SFX_BASE_VOLUME = 0.125;
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const players: HTMLAudioElement[] = [];
+    for (let i = 0; i < SFX_COUNT; i++) {
+      const audio = new Audio(`/sound/sfx/sfx_${i}.mp3`);
+      audio.volume = SFX_BASE_VOLUME;
+      players.push(audio);
+    }
+    sfxPlayersRef.current = players;
+
+    return () => {
+      if (!sfxPlayersRef.current) return;
+      sfxPlayersRef.current.forEach((audio) => {
+        audio.pause();
+        audio.src = "";
+        audio.load();
+      });
+      sfxPlayersRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const playRandomSfx = React.useCallback(() => {
+    const players = sfxPlayersRef.current;
+    if (!players || players.length === 0) return;
+
+    const idx = Math.floor(Math.random() * players.length);
+    const audio = players[idx];
+
+    try {
+      audio.currentTime = 0;
+      void audio.play();
+    } catch (err) {
+      console.warn("SFX play blocked:", err);
+    }
+  }, []);
+
   // Logical world offset within one segment; we use this with parallax=1
   // so dots are pinned to world coordinates across the full segment.
   const offsetMod =
@@ -218,12 +261,16 @@ export default function StoryDotsOverlay({
 
   const baseLeft = -segmentWidth;
 
-  const onEnter = useCallback((key: string, storyId: string) => {
-    setHoverId(key);
-    setTriggeredSpirals((prev) =>
-      prev[storyId] ? prev : { ...prev, [storyId]: true }
-    );
-  }, []);
+  const onEnter = useCallback(
+    (key: string, storyId: string) => {
+      setHoverId(key);
+      setTriggeredSpirals((prev) =>
+        prev[storyId] ? prev : { ...prev, [storyId]: true }
+      );
+      playRandomSfx();
+    },
+    [playRandomSfx]
+  );
 
   const onLeave = useCallback(() => setHoverId(null), []);
 
