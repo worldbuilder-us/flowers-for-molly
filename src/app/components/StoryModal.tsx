@@ -4,6 +4,7 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
 import { goldenbookFont } from "../fonts";
+import styles from "./StoryModal.module.css";
 
 export type StoryListItem = {
   _id: string;
@@ -43,104 +44,47 @@ export default function StoryModal({
       aria-modal="true"
       aria-label={`Story by ${story.authorName}`}
       onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(255,255,255,0.35)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 9999, // ensure modal sits above header and captures taps
-      }}
+      className={styles.backdrop}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={goldenbookFont.className}
-        style={{
-          width: "min(720px, 92vw)",
-          height: "min(540px, 80vh)",
-          background: "#ffffff",
-          borderRadius: 20,
-          boxShadow: "0 18px 45px rgba(0,0,0,0.35)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
+        className={`${styles.modal} ${goldenbookFont.className}`}
       >
-        <div
-          style={{
-            flexShrink: 0,
-            padding: "16px 20px",
-            borderBottom: "1px solid rgba(0,0,0,0.07)",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              fontWeight: 400,
-              fontSize: "1.15rem",
-              letterSpacing: "0.04em",
-              color: "rgba(0,0,0,0.85)",
-            }}
-          >
-            {story.authorName}
+        {/* Decorative frame layers */}
+        <div className={styles.borderLeft} aria-hidden="true" />
+        <div className={styles.borderRight} aria-hidden="true" />
+        <div className={styles.borderBottom} aria-hidden="true" />
+        <div className={styles.borderTop} aria-hidden="true" />
+
+        {/* Inner content, padded away from the decorative borders */}
+        <div className={styles.inner}>
+          <header className={styles.header}>
+            <div className={styles.author}>{story.authorName}</div>
+
+            {story.importedAt ? (
+              <div className={styles.date}>
+                {new Date(story.importedAt).toLocaleDateString()}
+              </div>
+            ) : (
+              <div className={styles.dateSpacer} />
+            )}
+
+            <button
+              aria-label="Close story"
+              onClick={onClose}
+              className={styles.closeButton}
+            >
+              ×
+            </button>
+          </header>
+
+          <div className={styles.body}>
+            {story.textPlain.split(/\n{2,}/).map((p, i) => (
+              <p key={i} className={styles.paragraph}>
+                {p}
+              </p>
+            ))}
           </div>
-
-          {story.importedAt ? (
-            <div
-              style={{
-                marginLeft: "auto",
-                fontSize: "0.8rem",
-                opacity: 0.7,
-                color: "rgba(0,0,0,0.85)",
-              }}
-            >
-              {new Date(story.importedAt).toLocaleDateString()}
-            </div>
-          ) : (
-            <div style={{ marginLeft: "auto" }} />
-          )}
-
-          <button
-            aria-label="Close story"
-            onClick={onClose}
-            style={{
-              border: "none",
-              background: "transparent",
-              fontSize: "1.4rem",
-              lineHeight: 1,
-              cursor: "pointer",
-              padding: "4px 0 4px 8px",
-              color: "rgba(0,0,0,0.85)",
-            }}
-          >
-            ×
-          </button>
-        </div>
-
-        <div
-          style={{
-            padding: "18px 22px",
-            flex: 1,
-            overflowY: "auto",
-            fontSize: "1.02rem",
-            lineHeight: 1.6,
-            color: "#111111",
-          }}
-        >
-          {story.textPlain.split(/\n{2,}/).map((p, i) => (
-            <p
-              key={i}
-              style={{
-                margin: "0 0 1em 0",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {p}
-            </p>
-          ))}
         </div>
       </div>
     </div>,
