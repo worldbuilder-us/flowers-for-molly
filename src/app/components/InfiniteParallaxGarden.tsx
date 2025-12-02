@@ -30,7 +30,7 @@ const BASE_SCENE_HEIGHT = 1024; // logical reference height
 
 // Tune this to control how "fast" the walk feels.
 // Smaller = slower, smoother motion.
-const SCROLL_SPEED = 0.3;
+const SCROLL_SPEED = 0.15;
 
 // -----------------------------
 // Types
@@ -129,25 +129,6 @@ export default function InfiniteParallaxGarden({
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   /**
-   * Touch drag state for mobile horizontal scrolling.
-   */
-  const touchStateRef = useRef<{
-    startX: number;
-    startY: number;
-    startScrollLeft: number;
-    isDragging: boolean;
-    isLockedDirection: boolean;
-    isHorizontal: boolean;
-  }>({
-    startX: 0,
-    startY: 0,
-    startScrollLeft: 0,
-    isDragging: false,
-    isLockedDirection: false,
-    isHorizontal: false,
-  });
-
-  /**
    * If segmentHeight is not provided, we fill the parent (height: 100%)
    * and use a ResizeObserver to measure the actual pixel height for scaling.
    */
@@ -221,12 +202,9 @@ export default function InfiniteParallaxGarden({
   }, [middleStartPx, segmentWidthPx]);
 
   /**
-   * Map vertical wheel to horizontal scroll.
-   *
-   * To get back your previous "global" feeling (scroll anywhere on the page
-   * and the garden moves), we bind to `window` again, but we:
-   * - apply a SCROLL_SPEED multiplier for a slower, smoother walk.
-   * - still respect Shift+scroll for standard horizontal scroll.
+   * Map vertical wheel to horizontal scroll on desktop, but
+   * **do not** interfere when a modal is open (we detect this via
+   * `document.body.style.overflow === "hidden"` which StoryModal sets).
    */
   useEffect(() => {
     if (!wheelToHorizontal) return;
@@ -236,10 +214,13 @@ export default function InfiniteParallaxGarden({
     const onWheel = (e: WheelEvent) => {
       if (e.shiftKey) return;
 
-      // If the garden isn't mounted or sized yet, skip.
+      // If a modal has locked the body scroll, let the modal handle wheel.
+      if (document.body.style.overflow === "hidden") {
+        return;
+      }
+
       if (!scrollRef.current) return;
 
-      // Slow, smoothed walk.
       const rawDelta = e.deltaY + e.deltaX * 0.5;
       const delta = rawDelta * SCROLL_SPEED;
 
@@ -305,72 +286,6 @@ export default function InfiniteParallaxGarden({
     ro.observe(el);
     return () => ro.disconnect();
   }, [onViewportChange, notifyViewport]);
-
-  /**
-   * Touch handlers to support horizontal drag scrolling on mobile.
-   * We only intercept when the gesture is predominantly horizontal,
-   * so vertical scrolling on the page still feels natural.
-   */
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (e.touches.length !== 1) return;
-
-    const touch = e.touches[0];
-    touchStateRef.current = {
-      startX: touch.clientX,
-      startY: touch.clientY,
-      startScrollLeft: el.scrollLeft,
-      isDragging: true,
-      isLockedDirection: false,
-      isHorizontal: false,
-    };
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const state = touchStateRef.current;
-    if (!state.isDragging || e.touches.length !== 1) return;
-
-    const touch = e.touches[0];
-    const dx = touch.clientX - state.startX;
-    const dy = touch.clientY - state.startY;
-
-    // Lock gesture direction once movement is significant
-    if (!state.isLockedDirection) {
-      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-        state.isLockedDirection = true;
-        state.isHorizontal = Math.abs(dx) > Math.abs(dy);
-      }
-    }
-
-    if (!state.isLockedDirection || !state.isHorizontal) {
-      // Let vertical scroll behave normally.
-      return;
-    }
-
-    // Horizontal gesture: prevent default vertical scroll and move garden.
-    e.preventDefault();
-
-    const target = state.startScrollLeft - dx;
-    el.scrollLeft = target;
-    handleScroll();
-  };
-
-  const endTouchDrag = () => {
-    touchStateRef.current.isDragging = false;
-    touchStateRef.current.isLockedDirection = false;
-  };
-
-  const handleTouchEnd = () => {
-    endTouchDrag();
-  };
-
-  const handleTouchCancel = () => {
-    endTouchDrag();
-  };
 
   /**
    * Render a single segment of a layer.
@@ -586,9 +501,12 @@ export default function InfiniteParallaxGarden({
     overscrollBehavior: "none",
     WebkitOverflowScrolling: "touch",
     scrollbarWidth: "none", // Firefox
-    // Allow vertical scrolling gestures by default, but our touch handler
-    // will preventDefault when we detect a horizontal drag.
-    touchAction: "pan-y",
+    /**
+     * Allow both horizontal and vertical default panning.
+     * - Horizontal: native swipe-to-scroll for the garden on mobile.
+     * - Vertical: the page can still scroll when appropriate.
+     */
+    touchAction: "pan-x pan-y",
   };
 
   return (
@@ -597,10 +515,6 @@ export default function InfiniteParallaxGarden({
       className={className}
       style={containerStyle}
       onScroll={handleScroll}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchCancel}
     >
       <div
         style={{
