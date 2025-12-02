@@ -41,13 +41,13 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     defaultZIndex: 100,
     defaultCurve: {
       type: "sine",
-      amplitudePct: 0.05,
-      periodsPerSegment: 1,
+      amplitudePct: 0.02,
+      periodsPerSegment: 8,
       phaseRad: 0,
     },
   },
   FOREGROUND_2: {
-    baseYFromBottomPct: 0.6,
+    baseYFromBottomPct: 0.25,
     defaultParallax: 0.25,
     defaultZIndex: 80,
     defaultCurve: {
@@ -58,13 +58,13 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     },
   },
   FOREGROUND_3: {
-    baseYFromBottomPct: 0.75,
+    baseYFromBottomPct: 0.5,
     defaultParallax: 0.125,
     defaultZIndex: 60,
     defaultCurve: {
       type: "sine",
-      amplitudePct: 0.004,
-      periodsPerSegment: 0.5,
+      amplitudePct: 0.01,
+      periodsPerSegment: 4,
       phaseRad: Math.PI / 2,
     },
   },

@@ -103,7 +103,7 @@ export default function Page() {
           </div> */}
 
           <InfiniteParallaxGarden
-            segmentWidth={2048}
+            segmentWidth={4096}
             layers={layers}
             debugWireframes={debugWireframes}
             onViewportChange={onViewportChange}

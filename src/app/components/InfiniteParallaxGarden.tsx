@@ -48,6 +48,8 @@ export type SpriteSpec = {
   repeatX?: boolean;
   /** Logical X positions within a single segment. */
   xPositions?: number[];
+  /** Optional CSS blur in px. */
+  blurPx?: number;
 };
 
 export type LayerCurveConfig = {
