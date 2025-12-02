@@ -196,7 +196,7 @@ export default function StoryDotsOverlay({
       const rnd = rng01(h);
       const x = Math.floor(rnd() * segmentWidth);
       const y = topPad + Math.floor(rnd() * usableH);
-      const r = 8 + Math.floor(rnd() * 6);
+      const r = 2 + Math.floor(rnd() * 6);
 
       // We keep pMin/pMax as arguments for potential future tuning,
       // but we lock parallax to 1 so dots are fixed in world space.

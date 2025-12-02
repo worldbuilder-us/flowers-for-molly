@@ -25,8 +25,10 @@ export default function StoryModal({
     if (!story) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
+
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = originalOverflow;
@@ -48,7 +50,7 @@ export default function StoryModal({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 60,
+        zIndex: 9999, // ensure modal sits above header and captures taps
       }}
     >
       <div
@@ -56,7 +58,7 @@ export default function StoryModal({
         className={goldenbookFont.className}
         style={{
           width: "min(720px, 92vw)",
-          height: "min(540px, 80vh)", // constant-ish size
+          height: "min(540px, 80vh)",
           background: "#ffffff",
           borderRadius: 20,
           boxShadow: "0 18px 45px rgba(0,0,0,0.35)",
