@@ -184,8 +184,8 @@ export default function StoryDotsOverlay({
   segmentWidth,
   viewport,
   onDotClick,
-  pMin = 0.35,
-  pMax = 0.95,
+  pMin = 0.125,
+  pMax = 0.25,
 }: StoryDotsOverlayProps) {
   const dots = useMemo<Dot[]>(() => {
     const vh = Math.max(300, viewport.viewportH || 700);

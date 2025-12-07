@@ -9,7 +9,9 @@ import React, {
   useState,
 } from "react";
 import Header from "./components/Header";
-import InfiniteParallaxGarden from "./components/InfiniteParallaxGarden";
+import InfiniteParallaxGarden, {
+  type PointerDebugInfo,
+} from "./components/InfiniteParallaxGarden";
 import StoryDotsOverlay from "./components/StoryDotsOverlay";
 import StoryModal, { StoryListItem } from "./components/StoryModal";
 import styles from "./Page.module.css";
@@ -20,6 +22,10 @@ const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
 )}`;
 const BACKGROUND_MUSIC_BASE_VOLUME = 0.2;
 const BACKGROUND_MUSIC_FADE_DURATION = 4; // seconds
+
+// For now we have a single biome; if you add others, this can
+// be derived from your biome config (e.g. biome.id or biome.slug).
+const ACTIVE_BIOME_NAME = "meadow";
 
 export default function Page() {
   const [stories, setStories] = useState<StoryListItem[]>([]);
@@ -34,7 +40,12 @@ export default function Page() {
     viewportH: 0,
   });
   const [active, setActive] = useState<StoryListItem | null>(null);
+
   const [debugWireframes, setDebugWireframes] = useState(false);
+  const [debugPointer, setDebugPointer] = useState(false);
+  const [pointerDebug, setPointerDebug] = useState<PointerDebugInfo | null>(
+    null
+  );
 
   const layers = useMemo(() => buildLayersFromBiome(meadowBiome), []);
 
@@ -146,6 +157,13 @@ export default function Page() {
 
   const segmentWidth = 4096;
 
+  // If pointer debug is turned off, clear any lingering pointer debug info
+  useEffect(() => {
+    if (!debugPointer) {
+      setPointerDebug(null);
+    }
+  }, [debugPointer]);
+
   return (
     <>
       <main>
@@ -173,6 +191,8 @@ export default function Page() {
             }}
           >
             <div style={{ fontWeight: 600, marginBottom: 6 }}>Debug</div>
+
+            {/* wireframes toggle */}
             <label
               style={{
                 display: "flex",
@@ -188,13 +208,33 @@ export default function Page() {
               />
               Wireframe sprites
             </label>
+
+            {/* pointer debug toggle */}
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                marginTop: 6,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={debugPointer}
+                onChange={(e) => setDebugPointer(e.target.checked)}
+              />
+              Pointer debug
+            </label>
           </div>
 
           <InfiniteParallaxGarden
-            segmentWidth={4096}
+            segmentWidth={segmentWidth}
             layers={layers}
             debugWireframes={debugWireframes}
             onViewportChange={onViewportChange}
+            // Only collect pointer debug info while pointer debug is on
+            onPointerDebugChange={debugPointer ? setPointerDebug : undefined}
           />
 
           {/* dots overlay */}
@@ -205,6 +245,59 @@ export default function Page() {
               viewport={viewport}
               onDotClick={(s) => setActive(s)}
             />
+          )}
+
+          {/* Pointer debug tooltip (follows pointer, mouse + touch) */}
+          {debugPointer && pointerDebug && (
+            <div
+              style={{
+                position: "fixed",
+                left: pointerDebug.clientX + 12,
+                top: pointerDebug.clientY + 12,
+                zIndex: 100000,
+                background: "rgba(0,0,0,0.85)",
+                color: "#fff",
+                padding: "6px 8px",
+                borderRadius: 6,
+                fontSize: 11,
+                lineHeight: 1.3,
+                maxWidth: 280,
+                pointerEvents: "none",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+              }}
+            >
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                Cursor Debug
+              </div>
+              <div>
+                screen:{" "}
+                {`${Math.round(pointerDebug.clientX)}, ${Math.round(
+                  pointerDebug.clientY
+                )}`}
+              </div>
+              <div>
+                garden:{" "}
+                {`${Math.round(pointerDebug.containerX)}, ${Math.round(
+                  pointerDebug.containerY
+                )}`}
+              </div>
+              <div>
+                logicalX (scene):{" "}
+                {`${pointerDebug.worldLogicalX.toFixed(1)} / ${
+                  pointerDebug.segmentWidth
+                }`}
+              </div>
+              <div>
+                segment repeat: {pointerDebug.segmentRepeat} • localX:{" "}
+                {pointerDebug.segmentLocalX.toFixed(1)}
+              </div>
+              <div>
+                viewport offsetX:{" "}
+                {pointerDebug.viewportLogicalOffsetX.toFixed(1)}
+              </div>
+              <div>sceneScale: {pointerDebug.sceneScale.toFixed(3)}</div>
+              <div>biome: {ACTIVE_BIOME_NAME}</div>
+            </div>
           )}
         </div>
 

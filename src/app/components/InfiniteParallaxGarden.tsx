@@ -11,25 +11,7 @@ import React, {
 } from "react";
 import Image from "next/image";
 
-/**
- * InfiniteParallaxGarden
- * ------------------------------------------------------------
- * A horizontally scrollable, seamless (wrap-around) panorama with
- * multi-layer parallax. Designed as the homepage "garden" scene.
- *
- * Responsiveness model:
- * - Treat `segmentWidth`, sprite sizes, xPositions, and offsets as *logical*
- *   coordinates.
- * - Use a base logical scene height (BASE_SCENE_HEIGHT).
- * - Compute `sceneScale = effectiveHeight / BASE_SCENE_HEIGHT`.
- * - All logical geometry is multiplied by `sceneScale` so the composition
- *   stays consistent across desktop and mobile.
- */
-
 const BASE_SCENE_HEIGHT = 1024; // logical reference height
-
-// Tune this to control how "fast" the walk feels.
-// Smaller = slower, smoother motion.
 const SCROLL_SPEED = 0.15;
 
 // -----------------------------
@@ -88,6 +70,38 @@ export type GardenViewport = {
   viewportH: number;
 };
 
+/**
+ * PointerDebugInfo
+ * ------------------------------------------------------------
+ * Emitted on pointer move when debug is active.
+ * Gives multiple coordinate systems for the point under the cursor
+ * within the infinite scene.
+ */
+export type PointerDebugInfo = {
+  /** Browser screen-space coordinates (CSS px). */
+  clientX: number;
+  clientY: number;
+  /** Position inside the scroll container (CSS px). */
+  containerX: number;
+  containerY: number;
+  /** Logical / scene metrics. */
+  sceneScale: number;
+  segmentWidth: number;
+  segmentWidthPx: number;
+  /** Horizontal scroll offset in CSS px. */
+  scrollLeft: number;
+  /** Local X within the middle segment in CSS px. */
+  localXPx: number;
+  /** Logical X position at the pointer, wrapped to [0, segmentWidth). */
+  worldLogicalX: number;
+  /** Integer repeat index of the segment the pointer is in. */
+  segmentRepeat: number;
+  /** Same as worldLogicalX but named explicitly for "segment" debugging. */
+  segmentLocalX: number;
+  /** Last reported viewport offsetX (logical), for context. */
+  viewportLogicalOffsetX: number;
+};
+
 export type GardenProps = {
   /**
    * Logical width of a single repeating segment in units matching your
@@ -112,6 +126,12 @@ export type GardenProps = {
   onViewportChange?: (v: GardenViewport) => void;
   /** When true, swap images for outlined boxes with labels. */
   debugWireframes?: boolean;
+  /**
+   * Optional: emit detailed pointer metrics for debug overlays.
+   * When undefined, pointer debug is disabled.
+   * When called with `null`, it means pointer left the garden.
+   */
+  onPointerDebugChange?: (info: PointerDebugInfo | null) => void;
 };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -125,6 +145,7 @@ export default function InfiniteParallaxGarden({
   className,
   onViewportChange,
   debugWireframes = false,
+  onPointerDebugChange,
 }: GardenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -162,6 +183,12 @@ export default function InfiniteParallaxGarden({
   const middleStartPx = segmentWidthPx; // [A][B][C]
 
   const [scrollLeft, setScrollLeft] = useState(0);
+
+  /**
+   * Keep track of the last logical viewport offset so pointer debug can
+   * reference it without re-deriving.
+   */
+  const lastLogicalOffsetRef = useRef(0);
 
   /**
    * Initialize scroll position so we start in the middle segment at
@@ -263,6 +290,7 @@ export default function InfiniteParallaxGarden({
     logicalOffsetX %= segmentWidth;
     if (logicalOffsetX < 0) logicalOffsetX += segmentWidth;
 
+    lastLogicalOffsetRef.current = logicalOffsetX;
     onViewportChange({ offsetX: logicalOffsetX, viewportW: w, viewportH: h });
   }, [
     onViewportChange,
@@ -285,6 +313,82 @@ export default function InfiniteParallaxGarden({
     ro.observe(el);
     return () => ro.disconnect();
   }, [onViewportChange, notifyViewport]);
+
+  /**
+   * Pointer → debug info
+   * ------------------------------------------------------------
+   * Emits detailed coordinate info when onPointerDebugChange is provided.
+   * Works for both mouse and touch thanks to PointerEvents.
+   */
+  const handlePointerMove = useCallback(
+    (ev: React.PointerEvent<HTMLDivElement>) => {
+      if (!onPointerDebugChange) return;
+      const el = scrollRef.current;
+      if (!el || sceneScale === 0) {
+        onPointerDebugChange(null);
+        return;
+      }
+
+      const rect = el.getBoundingClientRect();
+      const containerX = ev.clientX - rect.left;
+      const containerY = ev.clientY - rect.top;
+
+      // If pointer is outside the container, treat as "no debug".
+      if (
+        containerX < 0 ||
+        containerX > rect.width ||
+        containerY < 0 ||
+        containerY > rect.height
+      ) {
+        onPointerDebugChange(null);
+        return;
+      }
+
+      // World X in scroll pixels from left edge of [A][B][C]
+      const worldPx = scrollLeft + containerX;
+      // Offset from canonical middle segment origin
+      const worldPxFromMiddle = worldPx - middleStartPx;
+      const worldLogical = worldPxFromMiddle / sceneScale;
+
+      // Segment repeat index (can be negative)
+      const segmentRepeat = Math.floor(worldLogical / segmentWidth);
+
+      // Wrap logical X into [0, segmentWidth)
+      const wrappedLogical =
+        ((worldLogical % segmentWidth) + segmentWidth) % segmentWidth;
+
+      onPointerDebugChange({
+        clientX: ev.clientX,
+        clientY: ev.clientY,
+        containerX,
+        containerY,
+        sceneScale,
+        segmentWidth,
+        segmentWidthPx,
+        scrollLeft,
+        localXPx,
+        worldLogicalX: wrappedLogical,
+        segmentRepeat,
+        segmentLocalX: wrappedLogical,
+        viewportLogicalOffsetX: lastLogicalOffsetRef.current,
+      });
+    },
+    [
+      onPointerDebugChange,
+      sceneScale,
+      scrollLeft,
+      middleStartPx,
+      segmentWidth,
+      segmentWidthPx,
+      localXPx,
+    ]
+  );
+
+  const handlePointerLeave = useCallback(() => {
+    if (onPointerDebugChange) {
+      onPointerDebugChange(null);
+    }
+  }, [onPointerDebugChange]);
 
   /**
    * Render a single segment of a layer.
@@ -500,8 +604,6 @@ export default function InfiniteParallaxGarden({
     overscrollBehavior: "none",
     WebkitOverflowScrolling: "touch",
     scrollbarWidth: "none", // Firefox
-    // NOTE: no touchAction override and no manual touch handlers.
-    // Mobile browsers can now do their native horizontal scrolling.
   };
 
   return (
@@ -510,6 +612,9 @@ export default function InfiniteParallaxGarden({
       className={className}
       style={containerStyle}
       onScroll={handleScroll}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerLeave}
     >
       <div
         style={{
