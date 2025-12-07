@@ -605,13 +605,13 @@ export const meadowBiome: BiomeConfig = {
       role: "BACKGROUND_NEAR",
       repeatX: false,
       scale: 0.5,
-      anchorY: 0.35,
+      anchorY: 0.6,
       baseYOffsetPx: 0,
-      opacity: 0.6,
+      opacity: 1,
       assets: [
         {
           name: "hills_near",
-          index: 1,
+          index: 0,
           width: 3048,
           height: 1950,
           xPositions: [800, 3000],
@@ -644,13 +644,13 @@ export const meadowBiome: BiomeConfig = {
       role: "BACKGROUND_NEAR",
       repeatX: false,
       scale: 0.5,
-      anchorY: 0.3,
+      anchorY: 0.6,
       baseYOffsetPx: 0,
-      opacity: 0.8,
+      opacity: 1,
       assets: [
         {
           name: "hills_near",
-          index: 1,
+          index: 0,
           width: 2048,
           height: 1800,
           xPositions: [0, 1800],

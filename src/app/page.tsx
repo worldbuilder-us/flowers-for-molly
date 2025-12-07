@@ -154,7 +154,7 @@ export default function Page() {
           className={styles.gardenContainer}
           style={{ position: "relative" }}
         >
-          {/* <div
+          <div
             style={{
               position: "absolute",
               top: 100,
@@ -188,7 +188,7 @@ export default function Page() {
               />
               Wireframe sprites
             </label>
-          </div> */}
+          </div>
 
           <InfiniteParallaxGarden
             segmentWidth={4096}
