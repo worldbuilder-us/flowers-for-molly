@@ -266,9 +266,6 @@ export default function Page() {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
               }}
             >
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                Cursor Debug
-              </div>
               <div>
                 screen:{" "}
                 {`${Math.round(pointerDebug.clientX)}, ${Math.round(
