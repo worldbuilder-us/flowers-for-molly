@@ -28,6 +28,10 @@ export type SpriteSpec = {
   /** Logical scale factor applied on top of width/height. */
   scale?: number;
   repeatX?: boolean;
+  /** Optional repeat strip start in logical units. */
+  repeatStartPx?: number;
+  /** Optional repeat strip width in logical units. */
+  repeatWidthPx?: number;
   /** Logical X positions within a single segment. */
   xPositions?: number[];
   /** Optional CSS blur in px. */
@@ -65,6 +69,8 @@ export type LayerConfig = {
 export type GardenViewport = {
   /** Logical world offset in the [0, segmentWidth) space. */
   offsetX: number;
+  /** Logical viewport width in units matching segmentWidth. */
+  logicalW: number;
   /** Actual rendered viewport dimensions in CSS px. */
   viewportW: number;
   viewportH: number;
@@ -283,15 +289,20 @@ export default function InfiniteParallaxGarden({
 
     const w = el.clientWidth;
     const h = el.clientHeight;
+    const logicalW = w / sceneScale;
 
-    const worldOffsetPx = scrollLeft - middleStartPx + localXPx;
-    let logicalOffsetX = worldOffsetPx / sceneScale;
+    let logicalOffsetX = localXPx / sceneScale;
 
     logicalOffsetX %= segmentWidth;
     if (logicalOffsetX < 0) logicalOffsetX += segmentWidth;
 
     lastLogicalOffsetRef.current = logicalOffsetX;
-    onViewportChange({ offsetX: logicalOffsetX, viewportW: w, viewportH: h });
+    onViewportChange({
+      offsetX: logicalOffsetX,
+      logicalW,
+      viewportW: w,
+      viewportH: h,
+    });
   }, [
     onViewportChange,
     scrollLeft,
@@ -466,12 +477,15 @@ export default function InfiniteParallaxGarden({
           const yOffsetPx = logicalYOffset * sceneScale;
 
           if (s.repeatX) {
+            const repeatStartPx = (s.repeatStartPx ?? 0) * sceneScale;
+            const repeatWidthPx =
+              (s.repeatWidthPx ?? segmentWidth) * sceneScale;
             if (debugWireframes) {
               const wfStyle: React.CSSProperties = {
                 position: "absolute",
-                left: 0,
+                left: repeatStartPx,
                 top: baseYpx - h * anchorY + yOffsetPx,
-                width: segmentWidthPx,
+                width: repeatWidthPx,
                 height: h,
                 outline: "2px dashed rgba(0, 0, 200, 0.8)",
                 background: "rgba(255, 255, 200, 0.08)",
@@ -491,14 +505,17 @@ export default function InfiniteParallaxGarden({
 
             const stripStyle: React.CSSProperties = {
               position: "absolute",
-              left: 0,
+              left: repeatStartPx,
               top: baseYpx - h * anchorY + yOffsetPx,
-              width: segmentWidthPx,
+              width: repeatWidthPx,
               height: h,
               backgroundImage: `url(${s.src})`,
               backgroundRepeat: "repeat-x",
               backgroundSize: `${w}px ${h}px`,
-              backgroundPositionX: `${-segmentIndex * segmentWidthPx}px`,
+              backgroundPositionX: `${-(
+                segmentIndex * segmentWidthPx +
+                repeatStartPx
+              )}px`,
               imageRendering: "auto",
             };
             return <div key={`rep-${i}`} style={stripStyle} />;

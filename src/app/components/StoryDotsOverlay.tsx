@@ -257,10 +257,13 @@ export default function StoryDotsOverlay({
 
   // Logical world offset within one segment; we use this with parallax=1
   // so dots are pinned to world coordinates across the full segment.
-  const offsetMod =
-    ((viewport.offsetX % segmentWidth) + segmentWidth) % segmentWidth;
-
-  const baseLeft = -segmentWidth;
+  const sceneScale =
+    viewport.logicalW > 0 ? viewport.viewportW / viewport.logicalW : 1;
+  const offsetX = viewport.offsetX;
+  const logicalW = Math.max(1, viewport.logicalW || segmentWidth);
+  const buffer = logicalW * 0.5;
+  const visibleStart = viewport.offsetX - buffer;
+  const visibleEnd = viewport.offsetX + logicalW + buffer;
 
   const onEnter = useCallback(
     (key: string, storyId: string) => {
@@ -286,8 +289,8 @@ export default function StoryDotsOverlay({
       <div
         className={styles.tiles}
         style={{
-          left: baseLeft,
-          width: segmentWidth * 3,
+          left: 0,
+          width: "100%",
           // tiles container stays non-interactive; only child buttons are
           // clickable so drags over empty space scroll the garden.
           pointerEvents: "none",
@@ -295,8 +298,11 @@ export default function StoryDotsOverlay({
       >
         {[-1, 0, 1].flatMap((tile) =>
           dots.map((d) => {
-            const parallaxShift = offsetMod;
-            const left = d.x + tile * segmentWidth - d.r - parallaxShift;
+            const worldX = d.x + tile * segmentWidth;
+            if (worldX < visibleStart || worldX > visibleEnd) {
+              return null;
+            }
+            const left = (worldX - offsetX) * sceneScale - d.r;
             const top = d.y - d.r;
             const key = `${tile}:${d.id}`;
             const triggerKey = d.id;

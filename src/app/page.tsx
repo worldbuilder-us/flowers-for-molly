@@ -15,7 +15,7 @@ import InfiniteParallaxGarden, {
 import StoryDotsOverlay from "./components/StoryDotsOverlay";
 import StoryModal, { StoryListItem } from "./components/StoryModal";
 import styles from "./Page.module.css";
-import { meadowBiome, buildLayersFromBiome } from "./garden/biomes";
+import { getWorldConfig } from "./garden/biomeLoader";
 
 const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
   "flowers for molly theme 0.1.mp3"
@@ -23,19 +23,17 @@ const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
 const BACKGROUND_MUSIC_BASE_VOLUME = 0.2;
 const BACKGROUND_MUSIC_FADE_DURATION = 4; // seconds
 
-// For now we have a single biome; if you add others, this can
-// be derived from your biome config (e.g. biome.id or biome.slug).
-const ACTIVE_BIOME_NAME = "meadow";
-
 export default function Page() {
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewport, setViewport] = useState<{
     offsetX: number;
+    logicalW: number;
     viewportW: number;
     viewportH: number;
   }>({
     offsetX: 0,
+    logicalW: 0,
     viewportW: 0,
     viewportH: 0,
   });
@@ -47,7 +45,10 @@ export default function Page() {
     null
   );
 
-  const layers = useMemo(() => buildLayersFromBiome(meadowBiome), []);
+  const worldConfig = useMemo(() => getWorldConfig(), []);
+  const layers = worldConfig.layers;
+  const activeBiome = worldConfig.layout.biomes[0];
+  const activeBiomeName = activeBiome?.id ?? "meadow";
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasStartedRef = useRef(false);
@@ -149,13 +150,18 @@ export default function Page() {
   }, []);
 
   const onViewportChange = useCallback(
-    (v: { offsetX: number; viewportW: number; viewportH: number }) => {
+    (v: {
+      offsetX: number;
+      logicalW: number;
+      viewportW: number;
+      viewportH: number;
+    }) => {
       setViewport(v);
     },
     []
   );
 
-  const segmentWidth = 4096;
+  const segmentWidth = worldConfig.layout.segmentWidth;
 
   // If pointer debug is turned off, clear any lingering pointer debug info
   useEffect(() => {
@@ -233,6 +239,7 @@ export default function Page() {
             layers={layers}
             debugWireframes={debugWireframes}
             onViewportChange={onViewportChange}
+            initialOffsetX={activeBiome?.startOffset ?? 0}
             // Only collect pointer debug info while pointer debug is on
             onPointerDebugChange={debugPointer ? setPointerDebug : undefined}
           />
@@ -293,7 +300,7 @@ export default function Page() {
                 {pointerDebug.viewportLogicalOffsetX.toFixed(1)}
               </div>
               <div>sceneScale: {pointerDebug.sceneScale.toFixed(3)}</div>
-              <div>biome: {ACTIVE_BIOME_NAME}</div>
+              <div>biome: {activeBiomeName}</div>
             </div>
           )}
         </div>
