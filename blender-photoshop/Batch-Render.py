@@ -113,6 +113,10 @@ for job in jobs:
             planned_ops.append(f"Out={output_path}")
             planned_ops.append("")
 
+            # Decide output resolution per-subfolder
+            is_far_hills = sub_name.lower() == 'far_hills'
+            res_x, res_y = (2048, 1024) if is_far_hills else (1080, 1080)
+
             if dry_run:
                 continue
 
@@ -128,6 +132,14 @@ for job in jobs:
                     bpy.context.window.scene = scene
                 except Exception:
                     bpy.context.scene = scene
+
+                # apply per-asset resolution
+                try:
+                    scene.render.resolution_x = res_x
+                    scene.render.resolution_y = res_y
+                    scene.render.resolution_percentage = 100
+                except Exception:
+                    pass
 
                 node_tree = getattr(scene, "node_tree", None)
 
