@@ -36,28 +36,12 @@ tree = bpy.data.node_groups["Compositing Nodetree.002"]
 
 # Get nodes by name
 img_node = tree.nodes.get("Image")
-blur1 = tree.nodes.get("Directional Blur")
-noise = tree.nodes.get("Noise Texture.001")
-blur2 = tree.nodes.get("Directional Blur.002")
 glare = tree.nodes.get("Glare")
 
 # -----------------------------------------------------
 # Helper: Randomize parameters
 # -----------------------------------------------------
 def randomize_nodes():
-    # Directional Blur 1
-    blur1.inputs["Direction"].default_value = random.uniform(0, 90)
-
-    # Noise Texture
-    noise.inputs["Scale"].default_value = random.uniform(1, 5)
-
-    # Value node (used to drive the Displace strength)
-    value_node = tree.nodes.get("Value")
-    value_node.outputs[0].default_value = random.uniform(25, 100)
-
-    # Directional Blur 2
-    blur2.inputs["Rotation"].default_value = math.radians(random.uniform(-4, 4))
-    blur2.inputs["Direction"].default_value = random.uniform(0, 90)
     
     # Glare
     glare.inputs["Streaks"].default_value = random.randint(4, 6)
