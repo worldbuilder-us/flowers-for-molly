@@ -29,8 +29,11 @@ jobs = [
     },
     {
         "scene": "meadow-background",
-        "import_base": os.path.join(base_dir, "landscape_imports", "forest"),
+        "import_base": os.path.join(base_dir, "landscape_imports", "meadow"),
         "export_base": os.path.join(base_dir, "..", "public", "garden", "meadow_background"),
+        "subfolder_mapping": {
+            "hills_far": "far_hills"
+        }
     },
     {
         "scene": "forest-flowers",
@@ -85,6 +88,7 @@ for job in jobs:
     import_base = job["import_base"]
     export_base = job["export_base"]
     scene_name = job["scene"]
+    subfolder_mapping = job.get("subfolder_mapping", {})
 
     subfolders = collect_subfolders(import_base)
     if not subfolders:
@@ -93,7 +97,9 @@ for job in jobs:
 
     for subfolder in subfolders:
         sub_name = os.path.basename(subfolder)
-        target_dir = os.path.join(export_base, sub_name)
+        # Apply subfolder mapping if available
+        output_sub_name = subfolder_mapping.get(sub_name, sub_name)
+        target_dir = os.path.join(export_base, output_sub_name)
         os.makedirs(target_dir, exist_ok=True)
 
         image_files = sorted([f for f in os.listdir(subfolder) if f.lower().endswith((".png", ".jpg", ".jpeg"))])
@@ -114,7 +120,7 @@ for job in jobs:
             planned_ops.append("")
 
             # Decide output resolution per-subfolder
-            is_far_hills = sub_name.lower() == 'far_hills'
+            is_far_hills = output_sub_name.lower() == 'far_hills'
             res_x, res_y = (2048, 1024) if is_far_hills else (1080, 1080)
 
             if dry_run:
