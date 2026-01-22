@@ -114,6 +114,13 @@ export function buildLayersFromBiome(
           ? undefined
           : (xPositions ?? []).map((x) => x + xOffset),
         blurPx,
+        debug: {
+          name,
+          index,
+          groupId: group.id,
+          role: group.role,
+          xPositionsLocal: xPositions,
+        },
       };
 
       bucket.sprites.push(sprite);
@@ -127,6 +134,8 @@ export function buildLayersFromBiome(
         baseYFromBottomPct: bucket.baseYFromBottomPct,
         opacity: bucket.opacity,
         curve: bucket.curve,
+        role: group.role,
+        groupId: group.id,
         sprites: bucket.sprites,
       });
     }

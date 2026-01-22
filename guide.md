@@ -69,3 +69,24 @@ Key logic:
 
 If you change how the garden reports viewport metrics, update the culling logic
 in `src/app/components/StoryDotsOverlay.tsx` accordingly.
+
+## Debug Wireframes (Hover-Only)
+
+The garden exposes hover-only wireframes for inspecting assets in context. Use
+the debug toggles on the garden page:
+- `Wireframe foreground`: shows hover targets for foreground layers.
+- `Wireframe background`: shows hover targets for middle/background/sky layers.
+
+When you hover an asset, its wireframe appears with:
+- Asset name and index (matches the manifest file name).
+- Group id and layer role.
+- Source and rendered size.
+- `x local` (from the biome manifest) and `x world` (global world space).
+
+Pin mode:
+- Enable "Pin wireframe on click".
+- Click any asset to keep its wireframe visible while you move around.
+- Click the same asset again to unpin.
+
+Use `x local` to find the corresponding entry in the biome JSON, and use
+`x world` to understand where it lands in the overall world layout.
