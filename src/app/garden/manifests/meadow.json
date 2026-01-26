@@ -402,6 +402,41 @@
           "height": 800,
           "xPositions": [600, 1800, 2500, 3300, 3600],
           "yOffset": 250
+        },
+        {
+          "name": "hills_far",
+          "index": 2,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [0]
+        },
+        {
+          "name": "hills_far",
+          "index": 3,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [900]
+        },
+        {
+          "name": "hills_far",
+          "index": 4,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [1800]
+        },
+        {
+          "name": "hills_far",
+          "index": 5,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [2700]
+        },
+        {
+          "name": "hills_far",
+          "index": 6,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [3600]
         }
       ]
     },

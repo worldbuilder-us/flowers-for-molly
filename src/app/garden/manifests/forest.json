@@ -1,0 +1,435 @@
+{
+  "id": "forest",
+  "label": "Forest",
+  "segmentWidth": 4096,
+  "lengthInSegments": 1,
+  "assetBasePath": "/garden/biomes/forest",
+  "groups": [
+    {
+      "id": "sky",
+      "folder": "background/sky",
+      "role": "SKYBOX",
+      "repeatX": true,
+      "repeatWithinBiome": true,
+      "scale": 1,
+      "anchorY": 0,
+      "opacity": 0.9,
+      "assets": [
+        {
+          "name": "sky",
+          "index": 5,
+          "width": 1456,
+          "height": 816
+        }
+      ]
+    },
+    {
+      "id": "hills_far",
+      "folder": "background/hills_far",
+      "role": "BACKGROUND_FAR",
+      "repeatX": false,
+      "scale": 0.6,
+      "anchorY": 0.35,
+      "opacity": 0.4,
+      "assets": [
+        {
+          "name": "hills_far",
+          "index": 1,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [0]
+        },
+        {
+          "name": "hills_far",
+          "index": 2,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [500]
+        },
+        {
+          "name": "hills_far",
+          "index": 3,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [1000]
+        },
+        {
+          "name": "hills_far",
+          "index": 4,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [1500]
+        },
+        {
+          "name": "hills_far",
+          "index": 5,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [2000]
+        },
+        {
+          "name": "hills_far",
+          "index": 6,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [2500]
+        },
+        {
+          "name": "hills_far",
+          "index": 7,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [3000]
+        },
+        {
+          "name": "hills_far",
+          "index": 8,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [3500]
+        },
+        {
+          "name": "hills_far",
+          "index": 9,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [3900]
+        }
+      ]
+    },
+    {
+      "id": "mid_ground",
+      "folder": "background/mid_ground",
+      "role": "MIDDLEGROUND",
+      "repeatX": true,
+      "repeatWithinBiome": true,
+      "scale": 0.65,
+      "anchorY": 0.3,
+      "baseYOffsetPx": 40,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "mid_grass",
+          "index": 1,
+          "width": 1080,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "scenery",
+      "folder": "background/scenery",
+      "role": "MIDDLEGROUND",
+      "repeatX": false,
+      "scale": 0.6,
+      "anchorY": 0.15,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "pathway",
+          "index": 1,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [2300],
+          "yOffset": 120
+        }
+      ]
+    },
+    {
+      "id": "trees_back",
+      "folder": "foreground/flora_group_5",
+      "role": "BACKGROUND_NEAR",
+      "repeatX": false,
+      "scale": 0.7,
+      "anchorY": 0.2,
+      "opacity": 0.85,
+      "assets": [
+        {
+          "name": "pine_tree",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [300]
+        },
+        {
+          "name": "hickory_tree",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [1100]
+        },
+        {
+          "name": "hickory_tree",
+          "index": 2,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [1900]
+        },
+        {
+          "name": "chestnut_tree",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [2700]
+        },
+        {
+          "name": "elm_tree",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [3500]
+        },
+        {
+          "name": "deciduous_cluster",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [2300]
+        }
+      ]
+    },
+    {
+      "id": "flora_fg1",
+      "folder": "foreground/flora_group_1",
+      "role": "FOREGROUND_1",
+      "repeatX": false,
+      "scale": 1.05,
+      "anchorY": 0.12,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "ferns",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [400, 2200]
+        },
+        {
+          "name": "ferns",
+          "index": 2,
+          "width": 1024,
+          "height": 611,
+          "xPositions": [1200, 3200]
+        },
+        {
+          "name": "ferns",
+          "index": 3,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [1800, 3600]
+        },
+        {
+          "name": "floral_cluster",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [700, 2500]
+        },
+        {
+          "name": "floral_cluster",
+          "index": 2,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [1500, 3300]
+        },
+        {
+          "name": "floral_cluster",
+          "index": 3,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [1000, 2900]
+        },
+        {
+          "name": "floral_cluster",
+          "index": 4,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [2000]
+        },
+        {
+          "name": "floral_cluster",
+          "index": 5,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [360]
+        },
+        {
+          "name": "shrubs",
+          "index": 1,
+          "width": 1678,
+          "height": 1583,
+          "xPositions": [500, 2700]
+        },
+        {
+          "name": "shrubs",
+          "index": 2,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [1300, 3500]
+        },
+        {
+          "name": "bushes",
+          "index": 1,
+          "width": 1831,
+          "height": 1733,
+          "xPositions": [900, 3100]
+        },
+        {
+          "name": "bushes",
+          "index": 2,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [2100]
+        },
+        {
+          "name": "moss",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [600, 1800, 3000],
+          "yOffset": -120
+        },
+        {
+          "name": "moss",
+          "index": 2,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [2400],
+          "yOffset": -80
+        },
+        {
+          "name": "moss",
+          "index": 3,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [3800],
+          "yOffset": -80
+        }
+      ]
+    },
+    {
+      "id": "flora_fg2",
+      "folder": "foreground/flora_group_2",
+      "role": "FOREGROUND_2",
+      "repeatX": false,
+      "scale": 1,
+      "anchorY": 0.1,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "saplings",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [1100, 2700]
+        },
+        {
+          "name": "tall_thin_stemmed_plants",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [1900, 3500]
+        }
+      ]
+    },
+    {
+      "id": "flora_fg3",
+      "folder": "foreground/flora_group_3",
+      "role": "FOREGROUND_2",
+      "repeatX": false,
+      "scale": 0.95,
+      "anchorY": 0.1,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "rocks",
+          "index": 1,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [500, 2300],
+          "yOffset": -120
+        },
+        {
+          "name": "rocks",
+          "index": 2,
+          "width": 1024,
+          "height": 526,
+          "xPositions": [1600],
+          "yOffset": -80
+        },
+        {
+          "name": "rocks",
+          "index": 3,
+          "width": 1024,
+          "height": 771,
+          "xPositions": [3000],
+          "yOffset": -100
+        },
+        {
+          "name": "rocks",
+          "index": 4,
+          "width": 1024,
+          "height": 662,
+          "xPositions": [3600],
+          "yOffset": -90
+        }
+      ]
+    },
+    {
+      "id": "trunks_fg3",
+      "folder": "foreground/flora_group_4",
+      "role": "FOREGROUND_3",
+      "repeatX": false,
+      "scale": 0.9,
+      "anchorY": 0.05,
+      "opacity": 0.95,
+      "assets": [
+        {
+          "name": "tree_trunk",
+          "index": 1,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [600, 2600]
+        },
+        {
+          "name": "tree_trunk",
+          "index": 2,
+          "width": 1080,
+          "height": 960,
+          "xPositions": [1400, 3200]
+        },
+        {
+          "name": "tree_trunk",
+          "index": 3,
+          "width": 834,
+          "height": 980,
+          "xPositions": [2000]
+        },
+        {
+          "name": "tree_trunk",
+          "index": 4,
+          "width": 769,
+          "height": 971,
+          "xPositions": [3600]
+        },
+        {
+          "name": "branches",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [900],
+          "yOffset": 150
+        },
+        {
+          "name": "branches",
+          "index": 2,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [2800],
+          "yOffset": 150
+        }
+      ]
+    }
+  ]
+}
