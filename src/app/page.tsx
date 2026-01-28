@@ -18,7 +18,7 @@ import styles from "./Page.module.css";
 import { getWorldConfig } from "./garden/biomeLoader";
 
 const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
-  "flowers for molly theme 0.1.mp3"
+  "flowers for molly theme 0.1.mp3",
 )}`;
 const BACKGROUND_MUSIC_BASE_VOLUME = 0.2;
 const BACKGROUND_MUSIC_FADE_DURATION = 4; // seconds
@@ -46,7 +46,7 @@ export default function Page() {
   const [debugWireframesPinMode, setDebugWireframesPinMode] = useState(false);
   const [debugPointer, setDebugPointer] = useState(false);
   const [pointerDebug, setPointerDebug] = useState<PointerDebugInfo | null>(
-    null
+    null,
   );
 
   const worldConfig = useMemo(() => getWorldConfig(), []);
@@ -87,14 +87,14 @@ export default function Page() {
         if (timeRemaining < BACKGROUND_MUSIC_FADE_DURATION) {
           const progress = Math.max(
             0,
-            timeRemaining / BACKGROUND_MUSIC_FADE_DURATION
+            timeRemaining / BACKGROUND_MUSIC_FADE_DURATION,
           );
           volume = BACKGROUND_MUSIC_BASE_VOLUME * progress;
         }
 
         audio.volume = Math.max(
           0,
-          Math.min(BACKGROUND_MUSIC_BASE_VOLUME, volume)
+          Math.min(BACKGROUND_MUSIC_BASE_VOLUME, volume),
         );
       };
 
@@ -114,12 +114,12 @@ export default function Page() {
     ];
 
     interactionEvents.forEach((evt) =>
-      window.addEventListener(evt, startMusic, { once: true })
+      window.addEventListener(evt, startMusic, { once: true }),
     );
 
     return () => {
       interactionEvents.forEach((evt) =>
-        window.removeEventListener(evt, startMusic as EventListener)
+        window.removeEventListener(evt, startMusic as EventListener),
       );
       if (audioRef.current) {
         audioRef.current.pause();
@@ -162,7 +162,7 @@ export default function Page() {
     }) => {
       setViewport(v);
     },
-    []
+    [],
   );
 
   const segmentWidth = worldConfig.layout.segmentWidth;
@@ -283,14 +283,14 @@ export default function Page() {
           />
 
           {/* dots overlay */}
-          {!loading && stories.length > 0 && (
+          {/* {!loading && stories.length > 0 && (
             <StoryDotsOverlay
               stories={stories}
               segmentWidth={segmentWidth}
               viewport={viewport}
               onDotClick={(s) => setActive(s)}
             />
-          )}
+          )} */}
 
           {/* Pointer debug tooltip (follows pointer, mouse + touch) */}
           {debugPointer && pointerDebug && (
@@ -314,13 +314,13 @@ export default function Page() {
               <div>
                 screen:{" "}
                 {`${Math.round(pointerDebug.clientX)}, ${Math.round(
-                  pointerDebug.clientY
+                  pointerDebug.clientY,
                 )}`}
               </div>
               <div>
                 garden:{" "}
                 {`${Math.round(pointerDebug.containerX)}, ${Math.round(
-                  pointerDebug.containerY
+                  pointerDebug.containerY,
                 )}`}
               </div>
               <div>

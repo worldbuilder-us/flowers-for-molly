@@ -7,9 +7,9 @@ import forestToMeadow from "./manifests/forest_to_meadow.json";
 
 export const BIOME_MANIFESTS: BiomeManifest[] = [
   meadow,
-  meadowToForest,
+  // meadowToForest,
   forest,
-  forestToMeadow,
+  // forestToMeadow,
 ];
 
 export const BIOME_ORDER = BIOME_MANIFESTS.map((b) => b.id);

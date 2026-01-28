@@ -59,7 +59,7 @@ type StoryDotsOverlayProps = {
  *   gently outward, with randomness so the helix is visible but
  *   not rigid.
  */
-function ParticleSpiral({
+const ParticleSpiral = React.memo(function ParticleSpiral({
   dotRadius,
   seed,
 }: {
@@ -177,7 +177,7 @@ function ParticleSpiral({
       })}
     </div>
   );
-}
+});
 
 export default function StoryDotsOverlay({
   stories,
@@ -211,6 +211,12 @@ export default function StoryDotsOverlay({
   const [triggeredSpirals, setTriggeredSpirals] = useState<
     Record<string, boolean>
   >({});
+  const [activeSpirals, setActiveSpirals] = useState<Record<string, boolean>>(
+    {}
+  );
+  const spiralTimeoutsRef = React.useRef<Map<string, number>>(new Map());
+  const triggeredSpiralsRef = React.useRef<Record<string, boolean>>({});
+  const SPIRAL_LIFETIME_MS = 12000;
 
   // Preload SFX one time on the client
   const sfxPlayersRef = React.useRef<HTMLAudioElement[] | null>(null);
@@ -240,6 +246,10 @@ export default function StoryDotsOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  React.useEffect(() => {
+    triggeredSpiralsRef.current = triggeredSpirals;
+  }, [triggeredSpirals]);
+
   const playRandomSfx = React.useCallback(() => {
     const players = sfxPlayersRef.current;
     if (!players || players.length === 0) return;
@@ -268,15 +278,42 @@ export default function StoryDotsOverlay({
   const onEnter = useCallback(
     (key: string, storyId: string) => {
       setHoverId(key);
-      setTriggeredSpirals((prev) =>
-        prev[storyId] ? prev : { ...prev, [storyId]: true }
-      );
+      const alreadyTriggered = !!triggeredSpiralsRef.current[storyId];
+      if (!alreadyTriggered) {
+        setTriggeredSpirals((prev) =>
+          prev[storyId] ? prev : { ...prev, [storyId]: true }
+        );
+        setActiveSpirals((prev) =>
+          prev[storyId] ? prev : { ...prev, [storyId]: true }
+        );
+        if (!spiralTimeoutsRef.current.has(storyId)) {
+          const timeoutId = window.setTimeout(() => {
+            spiralTimeoutsRef.current.delete(storyId);
+            setActiveSpirals((prev) => {
+              if (!prev[storyId]) return prev;
+              const next = { ...prev };
+              delete next[storyId];
+              return next;
+            });
+          }, SPIRAL_LIFETIME_MS);
+          spiralTimeoutsRef.current.set(storyId, timeoutId);
+        }
+      }
       playRandomSfx();
     },
     [playRandomSfx]
   );
 
   const onLeave = useCallback(() => setHoverId(null), []);
+
+  React.useEffect(() => {
+    return () => {
+      spiralTimeoutsRef.current.forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
+      spiralTimeoutsRef.current.clear();
+    };
+  }, []);
 
   return (
     <div
@@ -309,6 +346,7 @@ export default function StoryDotsOverlay({
 
             const isHover = hoverId === key;
             const hasTriggered = !!triggeredSpirals[triggerKey];
+            const isActiveSpiral = !!activeSpirals[triggerKey];
 
             return (
               <div
@@ -346,7 +384,7 @@ export default function StoryDotsOverlay({
                   </div>
                 )}
 
-                {hasTriggered && (
+                {hasTriggered && isActiveSpiral && (
                   <ParticleSpiral dotRadius={d.r} seed={hash32(d.id)} />
                 )}
               </div>

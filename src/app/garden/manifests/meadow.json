@@ -216,13 +216,13 @@
       "repeatX": true,
       "repeatWithinBiome": true,
       "scale": 0.6,
-      "anchorY": 0.3,
+      "anchorY": 0.4,
       "baseYOffsetPx": 50,
       "opacity": 1,
       "assets": [
         {
           "name": "mid_grass",
-          "index": 0,
+          "index": 7,
           "width": 2000,
           "height": 2000
         }
@@ -325,14 +325,14 @@
       "folder": "meadow_background/hills_near",
       "role": "BACKGROUND_NEAR",
       "repeatX": false,
-      "scale": 0.5,
-      "anchorY": 0.6,
+      "scale": 0.6,
+      "anchorY": 0.7,
       "baseYOffsetPx": 0,
       "opacity": 1,
       "assets": [
         {
           "name": "hills_near",
-          "index": 0,
+          "index": 4,
           "width": 3048,
           "height": 1950,
           "xPositions": [800, 3000]
@@ -364,14 +364,14 @@
       "folder": "meadow_background/hills_near",
       "role": "BACKGROUND_NEAR",
       "repeatX": false,
-      "scale": 0.5,
-      "anchorY": 0.6,
+      "scale": 0.3,
+      "anchorY": 0.4,
       "baseYOffsetPx": 0,
       "opacity": 1,
       "assets": [
         {
           "name": "hills_near",
-          "index": 0,
+          "index": 6,
           "width": 2048,
           "height": 1800,
           "xPositions": [0, 1800]
@@ -406,37 +406,30 @@
         {
           "name": "hills_far",
           "index": 2,
-          "width": 2048,
+          "width": 1024,
           "height": 1024,
           "xPositions": [0]
         },
         {
           "name": "hills_far",
           "index": 3,
-          "width": 2048,
+          "width": 1024,
           "height": 1024,
           "xPositions": [900]
         },
         {
           "name": "hills_far",
-          "index": 4,
-          "width": 2048,
+          "index": 5,
+          "width": 1024,
           "height": 1024,
           "xPositions": [1800]
         },
         {
           "name": "hills_far",
-          "index": 5,
-          "width": 2048,
+          "index": 6,
+          "width": 1024,
           "height": 1024,
           "xPositions": [2700]
-        },
-        {
-          "name": "hills_far",
-          "index": 6,
-          "width": 2048,
-          "height": 1024,
-          "xPositions": [3600]
         }
       ]
     },
