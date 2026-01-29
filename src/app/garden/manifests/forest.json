@@ -116,7 +116,7 @@
       "role": "FOREGROUND_3",
       "repeatX": false,
       "scale": 0.8,
-      "anchorY": 0.8,
+      "anchorY": 0.79,
       "opacity": 0.95,
       "assets": [
         {
@@ -214,7 +214,8 @@
           "index": 3,
           "width": 1024,
           "height": 1024,
-          "xPositions": [810, 3900]
+          "xPositions": [810, 3400],
+          "yOffset": 120
         },
         {
           "name": "floral_cluster",

@@ -61,6 +61,10 @@ export type LayerConfig = {
   zIndex?: number;
   role?: string;
   groupId?: string;
+  /** Logical biome start offset in world space. */
+  biomeStart?: number;
+  /** Logical biome width. */
+  biomeWidth?: number;
   /**
    * Preferred: baseline as 0..1 from bottom of scene.
    *   0 = bottom edge, 1 = top edge
@@ -460,8 +464,6 @@ export default function InfiniteParallaxGarden({
     const role = layer.role ?? "";
     const allowDebugWireframes = allowDebugForRole(role);
 
-    const parallaxShift = -localXPx * (1 - clamp(parallax, 0, 1));
-
     const computeBaseYpx = (): number => {
       if (typeof layer.baseYFromBottomPct === "number") {
         const fromBottom = clamp(layer.baseYFromBottomPct, 0, 1);
@@ -476,11 +478,45 @@ export default function InfiniteParallaxGarden({
 
     const baseYpx = computeBaseYpx();
 
-    const style: React.CSSProperties = {
+    const segmentLeftPx = segmentIndex * segmentWidthPx;
+    const biomeStartPxRaw =
+      typeof layer.biomeStart === "number"
+        ? layer.biomeStart * sceneScale
+        : 0;
+    const biomeWidthPx =
+      typeof layer.biomeWidth === "number"
+        ? layer.biomeWidth * sceneScale
+        : segmentWidthPx;
+    const parallaxBasePx =
+      typeof layer.biomeStart === "number" && typeof layer.biomeWidth === "number"
+        ? ((localXPx - biomeStartPxRaw) % biomeWidthPx + biomeWidthPx) %
+          biomeWidthPx
+        : localXPx;
+    const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
+    const clipLeftPx = biomeStartPxRaw;
+    const clipWidthPx = biomeWidthPx;
+    const segmentStyle: React.CSSProperties = {
       position: "absolute",
-      left: segmentIndex * segmentWidthPx,
+      left: segmentLeftPx,
       top: 0,
       width: segmentWidthPx,
+      height: effectiveHeight,
+      pointerEvents: "none",
+    };
+    const clipStyle: React.CSSProperties = {
+      position: "absolute",
+      left: clipLeftPx,
+      top: 0,
+      width: clipWidthPx,
+      height: effectiveHeight,
+      overflow: "hidden",
+      pointerEvents: "none",
+    };
+    const contentStyle: React.CSSProperties = {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      width: clipWidthPx,
       height: effectiveHeight,
       transform: `translateX(${parallaxShift}px)`,
       willChange: "transform",
@@ -517,7 +553,9 @@ export default function InfiniteParallaxGarden({
     );
 
     return (
-      <div key={`seg-${layer.id}-${segmentIndex}`} style={style}>
+      <div key={`seg-${layer.id}-${segmentIndex}`} style={segmentStyle}>
+        <div style={clipStyle}>
+          <div style={contentStyle}>
         {sprites.map((s, i) => {
           const anchorY = s.anchorY ?? 1;
           const logicalYOffset = s.yOffsetPx ?? 0;
@@ -533,6 +571,14 @@ export default function InfiniteParallaxGarden({
             const repeatStartPx = (s.repeatStartPx ?? 0) * sceneScale;
             const repeatWidthPx =
               (s.repeatWidthPx ?? segmentWidth) * sceneScale;
+            const stripStartPx =
+              typeof layer.biomeWidth === "number"
+                ? repeatStartPx - repeatWidthPx
+                : repeatStartPx;
+            const stripWidthPx =
+              typeof layer.biomeWidth === "number"
+                ? repeatWidthPx * 3
+                : repeatWidthPx;
             const wireId = `rep-${layer.id}-${segmentIndex}-${i}`;
             const shouldShowWireframe =
               allowDebugWireframes && activeWireframeId === wireId;
@@ -540,16 +586,16 @@ export default function InfiniteParallaxGarden({
 
             const stripStyle: React.CSSProperties = {
               position: "absolute",
-              left: repeatStartPx,
+              left: stripStartPx,
               top: baseYpx - h * anchorY + yOffsetPx,
-              width: repeatWidthPx,
+              width: stripWidthPx,
               height: h,
               backgroundImage: `url(${s.src})`,
               backgroundRepeat: "repeat-x",
               backgroundSize: `${w}px ${h}px`,
               backgroundPositionX: `${-(
                 segmentIndex * segmentWidthPx +
-                repeatStartPx
+                stripStartPx
               )}px`,
               imageRendering: "auto",
             };
@@ -560,9 +606,9 @@ export default function InfiniteParallaxGarden({
                   <div
                     style={{
                       position: "absolute",
-                      left: repeatStartPx,
+                      left: stripStartPx,
                       top: topY,
-                      width: repeatWidthPx,
+                      width: stripWidthPx,
                       height: h,
                       pointerEvents: "auto",
                       background: "transparent",
@@ -708,6 +754,8 @@ export default function InfiniteParallaxGarden({
             );
           });
         })}
+          </div>
+        </div>
       </div>
     );
   };

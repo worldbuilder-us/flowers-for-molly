@@ -56,6 +56,8 @@ export function buildLayersFromBiome(
         baseYFromBottomPct: number;
         opacity: number;
         curve?: CurveConfig;
+        biomeStart: number;
+        biomeWidth: number;
         sprites: SpriteSpec[];
       }
     >();
@@ -93,6 +95,8 @@ export function buildLayersFromBiome(
           baseYFromBottomPct,
           opacity: effectiveOpacity,
           curve,
+          biomeStart: xOffset,
+          biomeWidth,
           sprites: [],
         };
         layerBuckets.set(key, bucket);
@@ -100,6 +104,7 @@ export function buildLayersFromBiome(
 
       const spriteScale = groupScale * scaleMultiplier;
       const groupFolder = joinPath(assetBasePath, group.folder);
+      const localPositions = xPositions ?? [];
       const sprite: SpriteSpec = {
         src: `${groupFolder}/${name}_${index}.png`,
         width,
@@ -108,18 +113,20 @@ export function buildLayersFromBiome(
         yOffsetPx: baseYOffsetPx + yOffset,
         scale: spriteScale,
         repeatX,
-        repeatStartPx: repeatX && repeatWithinBiome ? xOffset : undefined,
+        repeatStartPx: repeatX
+          ? repeatWithinBiome
+            ? 0
+            : xOffset
+          : undefined,
         repeatWidthPx: repeatX && repeatWithinBiome ? biomeWidth : undefined,
-        xPositions: repeatX
-          ? undefined
-          : (xPositions ?? []).map((x) => x + xOffset),
+        xPositions: repeatX ? undefined : localPositions,
         blurPx,
         debug: {
           name,
           index,
           groupId: group.id,
           role: group.role,
-          xPositionsLocal: xPositions,
+          xPositionsLocal: localPositions,
         },
       };
 
@@ -136,6 +143,8 @@ export function buildLayersFromBiome(
         curve: bucket.curve,
         role: group.role,
         groupId: group.id,
+        biomeStart: bucket.biomeStart,
+        biomeWidth: bucket.biomeWidth,
         sprites: bucket.sprites,
       });
     }

@@ -272,7 +272,7 @@
           "index": 5,
           "width": 3048,
           "height": 1950,
-          "xPositions": [900, 1400]
+          "xPositions": [1100, 1400]
         }
       ]
     },
@@ -320,8 +320,8 @@
       "folder": "meadow_background/hills_far",
       "role": "BACKGROUND_FAR",
       "repeatX": false,
-      "scale": 0.5,
-      "anchorY": 0.35,
+      "scale": 0.55,
+      "anchorY": 0.4,
       "baseYOffsetPx": 0,
       "opacity": 0.25,
       "assets": [
