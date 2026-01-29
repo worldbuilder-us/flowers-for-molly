@@ -11,25 +11,7 @@ import React, {
 } from "react";
 import Image from "next/image";
 
-/**
- * InfiniteParallaxGarden
- * ------------------------------------------------------------
- * A horizontally scrollable, seamless (wrap-around) panorama with
- * multi-layer parallax. Designed as the homepage "garden" scene.
- *
- * Responsiveness model:
- * - Treat `segmentWidth`, sprite sizes, xPositions, and offsets as *logical*
- *   coordinates.
- * - Use a base logical scene height (BASE_SCENE_HEIGHT).
- * - Compute `sceneScale = effectiveHeight / BASE_SCENE_HEIGHT`.
- * - All logical geometry is multiplied by `sceneScale` so the composition
- *   stays consistent across desktop and mobile.
- */
-
 const BASE_SCENE_HEIGHT = 1024; // logical reference height
-
-// Tune this to control how "fast" the walk feels.
-// Smaller = slower, smoother motion.
 const SCROLL_SPEED = 0.15;
 
 // -----------------------------
@@ -46,10 +28,22 @@ export type SpriteSpec = {
   /** Logical scale factor applied on top of width/height. */
   scale?: number;
   repeatX?: boolean;
+  /** Optional repeat strip start in logical units. */
+  repeatStartPx?: number;
+  /** Optional repeat strip width in logical units. */
+  repeatWidthPx?: number;
   /** Logical X positions within a single segment. */
   xPositions?: number[];
   /** Optional CSS blur in px. */
   blurPx?: number;
+  /** Debug metadata for wireframes. */
+  debug?: {
+    name: string;
+    index: number;
+    groupId: string;
+    role: string;
+    xPositionsLocal?: number[];
+  };
 };
 
 export type LayerCurveConfig = {
@@ -65,6 +59,12 @@ export type LayerConfig = {
   id: string;
   parallax: number;
   zIndex?: number;
+  role?: string;
+  groupId?: string;
+  /** Logical biome start offset in world space. */
+  biomeStart?: number;
+  /** Logical biome width. */
+  biomeWidth?: number;
   /**
    * Preferred: baseline as 0..1 from bottom of scene.
    *   0 = bottom edge, 1 = top edge
@@ -83,9 +83,43 @@ export type LayerConfig = {
 export type GardenViewport = {
   /** Logical world offset in the [0, segmentWidth) space. */
   offsetX: number;
+  /** Logical viewport width in units matching segmentWidth. */
+  logicalW: number;
   /** Actual rendered viewport dimensions in CSS px. */
   viewportW: number;
   viewportH: number;
+};
+
+/**
+ * PointerDebugInfo
+ * ------------------------------------------------------------
+ * Emitted on pointer move when debug is active.
+ * Gives multiple coordinate systems for the point under the cursor
+ * within the infinite scene.
+ */
+export type PointerDebugInfo = {
+  /** Browser screen-space coordinates (CSS px). */
+  clientX: number;
+  clientY: number;
+  /** Position inside the scroll container (CSS px). */
+  containerX: number;
+  containerY: number;
+  /** Logical / scene metrics. */
+  sceneScale: number;
+  segmentWidth: number;
+  segmentWidthPx: number;
+  /** Horizontal scroll offset in CSS px. */
+  scrollLeft: number;
+  /** Local X within the middle segment in CSS px. */
+  localXPx: number;
+  /** Logical X position at the pointer, wrapped to [0, segmentWidth). */
+  worldLogicalX: number;
+  /** Integer repeat index of the segment the pointer is in. */
+  segmentRepeat: number;
+  /** Same as worldLogicalX but named explicitly for "segment" debugging. */
+  segmentLocalX: number;
+  /** Last reported viewport offsetX (logical), for context. */
+  viewportLogicalOffsetX: number;
 };
 
 export type GardenProps = {
@@ -110,11 +144,32 @@ export type GardenProps = {
   className?: string;
   /** Optional callback when viewport changes. */
   onViewportChange?: (v: GardenViewport) => void;
-  /** When true, swap images for outlined boxes with labels. */
-  debugWireframes?: boolean;
+  /** When true, show wireframes for foreground layers on hover. */
+  debugWireframesForeground?: boolean;
+  /** When true, show wireframes for background/middle/sky layers on hover. */
+  debugWireframesBackground?: boolean;
+  /** When true, clicking an asset pins its wireframe until cleared. */
+  debugWireframesPinMode?: boolean;
+  /**
+   * Optional: emit detailed pointer metrics for debug overlays.
+   * When undefined, pointer debug is disabled.
+   * When called with `null`, it means pointer left the garden.
+   */
+  onPointerDebugChange?: (info: PointerDebugInfo | null) => void;
 };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const FOREGROUND_ROLES = new Set([
+  "FOREGROUND_1",
+  "FOREGROUND_2",
+  "FOREGROUND_3",
+]);
+const BACKGROUND_ROLES = new Set([
+  "MIDDLEGROUND",
+  "BACKGROUND_NEAR",
+  "BACKGROUND_FAR",
+  "SKYBOX",
+]);
 
 export default function InfiniteParallaxGarden({
   segmentWidth = 4096, // logical
@@ -124,9 +179,34 @@ export default function InfiniteParallaxGarden({
   wheelToHorizontal = true,
   className,
   onViewportChange,
-  debugWireframes = false,
+  debugWireframesForeground = false,
+  debugWireframesBackground = false,
+  debugWireframesPinMode = false,
+  onPointerDebugChange,
 }: GardenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [hoveredWireframeId, setHoveredWireframeId] = useState<string | null>(
+    null
+  );
+  const [pinnedWireframeId, setPinnedWireframeId] = useState<string | null>(
+    null
+  );
+
+  const allowDebugForRole = useCallback(
+    (role: string) =>
+      (debugWireframesForeground && FOREGROUND_ROLES.has(role)) ||
+      (debugWireframesBackground && BACKGROUND_ROLES.has(role)),
+    [debugWireframesForeground, debugWireframesBackground]
+  );
+
+  useEffect(() => {
+    if (!debugWireframesForeground && !debugWireframesBackground) {
+      setHoveredWireframeId(null);
+      setPinnedWireframeId(null);
+    }
+  }, [debugWireframesForeground, debugWireframesBackground]);
+
+  const activeWireframeId = pinnedWireframeId ?? hoveredWireframeId;
 
   /**
    * If segmentHeight is not provided, we fill the parent (height: 100%)
@@ -162,6 +242,12 @@ export default function InfiniteParallaxGarden({
   const middleStartPx = segmentWidthPx; // [A][B][C]
 
   const [scrollLeft, setScrollLeft] = useState(0);
+
+  /**
+   * Keep track of the last logical viewport offset so pointer debug can
+   * reference it without re-deriving.
+   */
+  const lastLogicalOffsetRef = useRef(0);
 
   /**
    * Initialize scroll position so we start in the middle segment at
@@ -256,14 +342,20 @@ export default function InfiniteParallaxGarden({
 
     const w = el.clientWidth;
     const h = el.clientHeight;
+    const logicalW = w / sceneScale;
 
-    const worldOffsetPx = scrollLeft - middleStartPx + localXPx;
-    let logicalOffsetX = worldOffsetPx / sceneScale;
+    let logicalOffsetX = localXPx / sceneScale;
 
     logicalOffsetX %= segmentWidth;
     if (logicalOffsetX < 0) logicalOffsetX += segmentWidth;
 
-    onViewportChange({ offsetX: logicalOffsetX, viewportW: w, viewportH: h });
+    lastLogicalOffsetRef.current = logicalOffsetX;
+    onViewportChange({
+      offsetX: logicalOffsetX,
+      logicalW,
+      viewportW: w,
+      viewportH: h,
+    });
   }, [
     onViewportChange,
     scrollLeft,
@@ -287,14 +379,90 @@ export default function InfiniteParallaxGarden({
   }, [onViewportChange, notifyViewport]);
 
   /**
+   * Pointer → debug info
+   * ------------------------------------------------------------
+   * Emits detailed coordinate info when onPointerDebugChange is provided.
+   * Works for both mouse and touch thanks to PointerEvents.
+   */
+  const handlePointerMove = useCallback(
+    (ev: React.PointerEvent<HTMLDivElement>) => {
+      if (!onPointerDebugChange) return;
+      const el = scrollRef.current;
+      if (!el || sceneScale === 0) {
+        onPointerDebugChange(null);
+        return;
+      }
+
+      const rect = el.getBoundingClientRect();
+      const containerX = ev.clientX - rect.left;
+      const containerY = ev.clientY - rect.top;
+
+      // If pointer is outside the container, treat as "no debug".
+      if (
+        containerX < 0 ||
+        containerX > rect.width ||
+        containerY < 0 ||
+        containerY > rect.height
+      ) {
+        onPointerDebugChange(null);
+        return;
+      }
+
+      // World X in scroll pixels from left edge of [A][B][C]
+      const worldPx = scrollLeft + containerX;
+      // Offset from canonical middle segment origin
+      const worldPxFromMiddle = worldPx - middleStartPx;
+      const worldLogical = worldPxFromMiddle / sceneScale;
+
+      // Segment repeat index (can be negative)
+      const segmentRepeat = Math.floor(worldLogical / segmentWidth);
+
+      // Wrap logical X into [0, segmentWidth)
+      const wrappedLogical =
+        ((worldLogical % segmentWidth) + segmentWidth) % segmentWidth;
+
+      onPointerDebugChange({
+        clientX: ev.clientX,
+        clientY: ev.clientY,
+        containerX,
+        containerY,
+        sceneScale,
+        segmentWidth,
+        segmentWidthPx,
+        scrollLeft,
+        localXPx,
+        worldLogicalX: wrappedLogical,
+        segmentRepeat,
+        segmentLocalX: wrappedLogical,
+        viewportLogicalOffsetX: lastLogicalOffsetRef.current,
+      });
+    },
+    [
+      onPointerDebugChange,
+      sceneScale,
+      scrollLeft,
+      middleStartPx,
+      segmentWidth,
+      segmentWidthPx,
+      localXPx,
+    ]
+  );
+
+  const handlePointerLeave = useCallback(() => {
+    if (onPointerDebugChange) {
+      onPointerDebugChange(null);
+    }
+  }, [onPointerDebugChange]);
+
+  /**
    * Render a single segment of a layer.
    * All sprite geometry is converted from logical units to CSS px
    * using `sceneScale`, so the composition remains consistent.
    */
   const renderLayerSegment = (layer: LayerConfig, segmentIndex: number) => {
     const { sprites, parallax, opacity = 1, curve } = layer;
-
-    const parallaxShift = -localXPx * (1 - clamp(parallax, 0, 1));
+    const role = layer.role ?? "";
+    const allowDebugWireframes = allowDebugForRole(role);
 
     const computeBaseYpx = (): number => {
       if (typeof layer.baseYFromBottomPct === "number") {
@@ -310,11 +478,45 @@ export default function InfiniteParallaxGarden({
 
     const baseYpx = computeBaseYpx();
 
-    const style: React.CSSProperties = {
+    const segmentLeftPx = segmentIndex * segmentWidthPx;
+    const biomeStartPxRaw =
+      typeof layer.biomeStart === "number"
+        ? layer.biomeStart * sceneScale
+        : 0;
+    const biomeWidthPx =
+      typeof layer.biomeWidth === "number"
+        ? layer.biomeWidth * sceneScale
+        : segmentWidthPx;
+    const parallaxBasePx =
+      typeof layer.biomeStart === "number" && typeof layer.biomeWidth === "number"
+        ? ((localXPx - biomeStartPxRaw) % biomeWidthPx + biomeWidthPx) %
+          biomeWidthPx
+        : localXPx;
+    const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
+    const clipLeftPx = biomeStartPxRaw;
+    const clipWidthPx = biomeWidthPx;
+    const segmentStyle: React.CSSProperties = {
       position: "absolute",
-      left: segmentIndex * segmentWidthPx,
+      left: segmentLeftPx,
       top: 0,
       width: segmentWidthPx,
+      height: effectiveHeight,
+      pointerEvents: "none",
+    };
+    const clipStyle: React.CSSProperties = {
+      position: "absolute",
+      left: clipLeftPx,
+      top: 0,
+      width: clipWidthPx,
+      height: effectiveHeight,
+      overflow: "hidden",
+      pointerEvents: "none",
+    };
+    const contentStyle: React.CSSProperties = {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      width: clipWidthPx,
       height: effectiveHeight,
       transform: `translateX(${parallaxShift}px)`,
       willChange: "transform",
@@ -328,7 +530,7 @@ export default function InfiniteParallaxGarden({
     const curvePhase = curve?.phaseRad ?? 0;
     const periodsPerSegment = curve?.periodsPerSegment ?? 1;
 
-    const WireLabel = ({ text }: { text: string }) => (
+    const WireLabel = ({ lines }: { lines: string[] }) => (
       <div
         style={{
           position: "absolute",
@@ -344,12 +546,16 @@ export default function InfiniteParallaxGarden({
           whiteSpace: "nowrap",
         }}
       >
-        {text}
+        {lines.map((line, idx) => (
+          <div key={idx}>{line}</div>
+        ))}
       </div>
     );
 
     return (
-      <div key={`seg-${layer.id}-${segmentIndex}`} style={style}>
+      <div key={`seg-${layer.id}-${segmentIndex}`} style={segmentStyle}>
+        <div style={clipStyle}>
+          <div style={contentStyle}>
         {sprites.map((s, i) => {
           const anchorY = s.anchorY ?? 1;
           const logicalYOffset = s.yOffsetPx ?? 0;
@@ -362,42 +568,94 @@ export default function InfiniteParallaxGarden({
           const yOffsetPx = logicalYOffset * sceneScale;
 
           if (s.repeatX) {
-            if (debugWireframes) {
-              const wfStyle: React.CSSProperties = {
-                position: "absolute",
-                left: 0,
-                top: baseYpx - h * anchorY + yOffsetPx,
-                width: segmentWidthPx,
-                height: h,
-                outline: "2px dashed rgba(0, 0, 200, 0.8)",
-                background: "rgba(255, 255, 200, 0.08)",
-              };
-              return (
-                <div key={`repwf-${i}`} style={wfStyle}>
-                  <WireLabel
-                    text={`${layer.id} • src: ${s.width}×${
-                      s.height
-                    }px • rendered: ${Math.round(w)}×${Math.round(
-                      h
-                    )} • parallax: ${parallax}`}
-                  />
-                </div>
-              );
-            }
+            const repeatStartPx = (s.repeatStartPx ?? 0) * sceneScale;
+            const repeatWidthPx =
+              (s.repeatWidthPx ?? segmentWidth) * sceneScale;
+            const stripStartPx =
+              typeof layer.biomeWidth === "number"
+                ? repeatStartPx - repeatWidthPx
+                : repeatStartPx;
+            const stripWidthPx =
+              typeof layer.biomeWidth === "number"
+                ? repeatWidthPx * 3
+                : repeatWidthPx;
+            const wireId = `rep-${layer.id}-${segmentIndex}-${i}`;
+            const shouldShowWireframe =
+              allowDebugWireframes && activeWireframeId === wireId;
+            const topY = baseYpx - h * anchorY + yOffsetPx;
 
             const stripStyle: React.CSSProperties = {
               position: "absolute",
-              left: 0,
+              left: stripStartPx,
               top: baseYpx - h * anchorY + yOffsetPx,
-              width: segmentWidthPx,
+              width: stripWidthPx,
               height: h,
               backgroundImage: `url(${s.src})`,
               backgroundRepeat: "repeat-x",
               backgroundSize: `${w}px ${h}px`,
-              backgroundPositionX: `${-segmentIndex * segmentWidthPx}px`,
+              backgroundPositionX: `${-(
+                segmentIndex * segmentWidthPx +
+                stripStartPx
+              )}px`,
               imageRendering: "auto",
             };
-            return <div key={`rep-${i}`} style={stripStyle} />;
+            return (
+              <React.Fragment key={`rep-${i}`}>
+                <div style={stripStyle} />
+                {allowDebugWireframes && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: stripStartPx,
+                      top: topY,
+                      width: stripWidthPx,
+                      height: h,
+                      pointerEvents: "auto",
+                      background: "transparent",
+                    }}
+                    onPointerEnter={() => setHoveredWireframeId(wireId)}
+                    onPointerLeave={() => setHoveredWireframeId(null)}
+                    onClick={() => {
+                      if (!debugWireframesPinMode) return;
+                      setPinnedWireframeId((prev) =>
+                        prev === wireId ? null : wireId
+                      );
+                    }}
+                  >
+                    {shouldShowWireframe && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          outline: "2px dashed rgba(0, 0, 200, 0.8)",
+                          background: "rgba(255, 255, 200, 0.08)",
+                        }}
+                      >
+                        <WireLabel
+                          lines={[
+                            `${s.debug?.name ?? "asset"}_${
+                              s.debug?.index ?? "?"
+                            }`,
+                            `group: ${s.debug?.groupId ?? "unknown"} • role: ${
+                              s.debug?.role ?? "unknown"
+                            }`,
+                            `layer: ${layer.id} • parallax: ${parallax}`,
+                            `src: ${s.width}×${s.height}px • render: ${Math.round(
+                              w
+                            )}×${Math.round(h)}px`,
+                            `repeat: start=${(
+                              s.repeatStartPx ?? 0
+                            ).toFixed(1)} width=${(
+                              s.repeatWidthPx ?? segmentWidth
+                            ).toFixed(1)} (logical)`,
+                          ]}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </React.Fragment>
+            );
           }
 
           const xs = s.xPositions ?? [];
@@ -416,33 +674,10 @@ export default function InfiniteParallaxGarden({
 
             const topY = baseYpx - h * anchorY + yOffsetPx + curveYOffset;
 
-            if (debugWireframes) {
-              const wfStyle: React.CSSProperties = {
-                position: "absolute",
-                left: leftX,
-                top: topY,
-                width: w,
-                height: h,
-                outline: "1px solid rgba(255, 180, 0, 0.9)",
-                background: "rgba(255, 180, 0, 0.08)",
-              };
-              return (
-                <div key={`sprwf-${i}-${j}`} style={wfStyle}>
-                  <WireLabel
-                    text={`${layer.id} • src: ${s.width}×${
-                      s.height
-                    }px • rendered: ${Math.round(w)}×${Math.round(
-                      h
-                    )} • scale: ${spriteLogicalScale.toFixed(
-                      2
-                    )}x • sceneScale: ${sceneScale.toFixed(
-                      2
-                    )} • parallax: ${parallax}`}
-                  />
-                </div>
-              );
-            }
-
+            const wireId = `spr-${layer.id}-${segmentIndex}-${i}-${j}`;
+            const shouldShowWireframe =
+              allowDebugWireframes && activeWireframeId === wireId;
+            const localX = s.debug?.xPositionsLocal?.[j];
             const spriteStyle: React.CSSProperties = {
               position: "absolute",
               left: leftX,
@@ -453,26 +688,82 @@ export default function InfiniteParallaxGarden({
             };
 
             return (
-              <Image
-                key={`spr-${i}-${j}`}
-                src={s.src}
-                alt=""
-                width={Math.round(w)}
-                height={Math.round(h)}
-                style={spriteStyle}
-                draggable={false}
-                priority={false}
-                sizes="100vw"
-              />
+              <React.Fragment key={`spr-${i}-${j}`}>
+                <Image
+                  src={s.src}
+                  alt=""
+                  width={Math.round(w)}
+                  height={Math.round(h)}
+                  style={spriteStyle}
+                  draggable={false}
+                  priority={false}
+                  sizes="100vw"
+                />
+                {allowDebugWireframes && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: leftX,
+                      top: topY,
+                      width: w,
+                      height: h,
+                      outline: shouldShowWireframe
+                        ? "1px solid rgba(255, 180, 0, 0.9)"
+                        : "1px solid transparent",
+                      background: shouldShowWireframe
+                        ? "rgba(255, 180, 0, 0.08)"
+                        : "transparent",
+                      pointerEvents: "auto",
+                    }}
+                    onPointerEnter={() => setHoveredWireframeId(wireId)}
+                    onPointerLeave={() => setHoveredWireframeId(null)}
+                    onClick={() => {
+                      if (!debugWireframesPinMode) return;
+                      setPinnedWireframeId((prev) =>
+                        prev === wireId ? null : wireId
+                      );
+                    }}
+                  >
+                    {shouldShowWireframe && (
+                      <WireLabel
+                        lines={[
+                          `${s.debug?.name ?? "asset"}_${
+                            s.debug?.index ?? "?"
+                          }`,
+                          `group: ${s.debug?.groupId ?? "unknown"} • role: ${
+                            s.debug?.role ?? "unknown"
+                          }`,
+                          `layer: ${layer.id} • parallax: ${parallax}`,
+                          `src: ${s.width}×${s.height}px • render: ${Math.round(
+                            w
+                          )}×${Math.round(h)}px`,
+                          `x local: ${
+                            typeof localX === "number"
+                              ? localX.toFixed(1)
+                              : "n/a"
+                          } • x world: ${xLogical.toFixed(1)}`,
+                          `segment: ${segmentIndex} • sceneScale: ${sceneScale.toFixed(
+                            3
+                          )}`,
+                        ]}
+                      />
+                    )}
+                  </div>
+                )}
+              </React.Fragment>
             );
           });
         })}
+          </div>
+        </div>
       </div>
     );
   };
 
   const renderLayer = (layer: LayerConfig) => {
     const z = layer.zIndex ?? 0;
+    const role = layer.role ?? "";
+    const allowDebugWireframes = allowDebugForRole(role);
     const layerStyle: React.CSSProperties = {
       position: "absolute",
       left: 0,
@@ -480,6 +771,7 @@ export default function InfiniteParallaxGarden({
       width: segmentWidthPx * 3,
       height: effectiveHeight,
       zIndex: z,
+      pointerEvents: allowDebugWireframes ? "auto" : "none",
     };
 
     return (
@@ -500,8 +792,6 @@ export default function InfiniteParallaxGarden({
     overscrollBehavior: "none",
     WebkitOverflowScrolling: "touch",
     scrollbarWidth: "none", // Firefox
-    // NOTE: no touchAction override and no manual touch handlers.
-    // Mobile browsers can now do their native horizontal scrolling.
   };
 
   return (
@@ -510,6 +800,9 @@ export default function InfiniteParallaxGarden({
       className={className}
       style={containerStyle}
       onScroll={handleScroll}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerLeave}
     >
       <div
         style={{

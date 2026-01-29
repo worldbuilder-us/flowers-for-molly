@@ -266,11 +266,11 @@ export default function StoryDotsOverlay({
     (key: string, storyId: string) => {
       setHoverId(key);
       setTriggeredSpirals((prev) =>
-        prev[storyId] ? prev : { ...prev, [storyId]: true }
+        prev[storyId] ? prev : { ...prev, [storyId]: true },
       );
       playRandomSfx();
     },
-    [playRandomSfx]
+    [playRandomSfx],
   );
 
   const onLeave = useCallback(() => setHoverId(null), []);
@@ -345,7 +345,7 @@ export default function StoryDotsOverlay({
                 )}
               </div>
             );
-          })
+          }),
         )}
       </div>
     </div>

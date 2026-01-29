@@ -1,0 +1,392 @@
+{
+  "id": "meadow",
+  "label": "Meadow",
+  "segmentWidth": 4096,
+  "lengthInSegments": 1,
+  "assetBasePath": "/garden",
+  "groups": [
+    {
+      "id": "flora_fg1_g1",
+      "folder": "meadow_foreground/flora_group_1",
+      "role": "FOREGROUND_1",
+      "scale": 1.25,
+      "anchorY": 0.35,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "flower",
+          "index": 1,
+          "width": 520,
+          "height": 600,
+          "xPositions": [100]
+        },
+        {
+          "name": "flower",
+          "index": 2,
+          "width": 520,
+          "height": 520,
+          "xPositions": [1520, 3120]
+        }
+      ]
+    },
+    {
+      "id": "flora_fg2_g2",
+      "folder": "meadow_foreground/flora_group_2",
+      "role": "FOREGROUND_1",
+      "scale": 1.0,
+      "anchorY": 0.1,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "flower",
+          "index": 1,
+          "width": 520,
+          "height": 700,
+          "xPositions": [400, 2200, 3400]
+        },
+        {
+          "name": "flower",
+          "index": 2,
+          "width": 520,
+          "height": 520,
+          "xPositions": [1600]
+        }
+      ]
+    },
+    {
+      "id": "flora_fg2_g5",
+      "folder": "meadow_foreground/flora_group_5",
+      "role": "FOREGROUND_2",
+      "scale": 0.8,
+      "anchorY": 0.2,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "flower",
+          "index": 1,
+          "width": 520,
+          "height": 700,
+          "xPositions": [1640, 3080, 4040]
+        },
+        {
+          "name": "flower",
+          "index": 2,
+          "width": 520,
+          "height": 520,
+          "xPositions": [40, 1880, 3880]
+        }
+      ]
+    },
+    {
+      "id": "flora_fg3_g3",
+      "folder": "meadow_foreground/flora_group_3",
+      "role": "FOREGROUND_3",
+      "scale": 0.8,
+      "anchorY": 0,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "flower",
+          "index": 1,
+          "width": 520,
+          "height": 700,
+          "xPositions": [120, 1320, 3120, 3720]
+        },
+        {
+          "name": "flower",
+          "index": 2,
+          "width": 520,
+          "height": 520,
+          "xPositions": [680, 960, 1560, 2760, 3360, 3960]
+        }
+      ]
+    },
+    {
+      "id": "flora_fg3_g4",
+      "folder": "meadow_foreground/flora_group_4",
+      "role": "FOREGROUND_1",
+      "scale": 1.5,
+      "anchorY": 0.25,
+      "baseYOffsetPx": 0,
+      "opacity": 0.9,
+      "assets": [
+        {
+          "name": "flower",
+          "index": 1,
+          "width": 520,
+          "height": 700,
+          "xPositions": [820, 1420, 3220, 3820]
+        },
+        {
+          "name": "flower",
+          "index": 2,
+          "width": 360,
+          "height": 360,
+          "xPositions": [100, 2300],
+          "yOffset": 200
+        },
+        {
+          "name": "flower",
+          "index": 3,
+          "width": 480,
+          "height": 480,
+          "xPositions": [1140],
+          "yOffset": 250
+        }
+      ]
+    },
+    {
+      "id": "mid_ground",
+      "folder": "meadow_background/mid_ground",
+      "role": "MIDDLEGROUND",
+      "repeatX": true,
+      "repeatWithinBiome": true,
+      "scale": 0.6,
+      "anchorY": 0.4,
+      "baseYOffsetPx": 50,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "mid_grass",
+          "index": 7,
+          "width": 2000,
+          "height": 2000
+        }
+      ]
+    },
+    {
+      "id": "mid_ground",
+      "folder": "meadow_background/scenery",
+      "role": "MIDDLEGROUND",
+      "repeatX": false,
+      "scale": 0.6,
+      "anchorY": 0.1,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "stream",
+          "index": 0,
+          "width": 600,
+          "height": 1000,
+          "xPositions": [500],
+          "yOffset": 290
+        },
+        {
+          "name": "stone_path",
+          "index": 0,
+          "width": 600,
+          "height": 1000,
+          "xPositions": [2400],
+          "yOffset": 300
+        },
+        {
+          "name": "moss",
+          "index": 0,
+          "width": 120,
+          "height": 80,
+          "xPositions": [500],
+          "yOffset": 225
+        },
+        {
+          "name": "moss",
+          "index": 0,
+          "width": 150,
+          "height": 100,
+          "xPositions": [550],
+          "yOffset": 220
+        },
+        {
+          "name": "elm_tree",
+          "index": 1,
+          "width": 400,
+          "height": 400,
+          "xPositions": [2590],
+          "yOffset": 120
+        },
+        {
+          "name": "pine_tree",
+          "index": 1,
+          "width": 200,
+          "height": 200,
+          "xPositions": [2420],
+          "yOffset": 175
+        },
+        {
+          "name": "bench",
+          "index": 0,
+          "width": 250,
+          "height": 180,
+          "xPositions": [2275],
+          "yOffset": 280
+        },
+        {
+          "name": "church",
+          "index": 0,
+          "width": 400,
+          "height": 500,
+          "xPositions": [650],
+          "yOffset": 10
+        },
+        {
+          "name": "elm_tree",
+          "index": 1,
+          "width": 400,
+          "height": 400,
+          "xPositions": [300],
+          "yOffset": 120
+        },
+        {
+          "name": "pine_tree",
+          "index": 1,
+          "width": 400,
+          "height": 400,
+          "xPositions": [780],
+          "yOffset": 85
+        }
+      ]
+    },
+    {
+      "id": "hills_near",
+      "folder": "meadow_background/hills_near",
+      "role": "BACKGROUND_NEAR",
+      "repeatX": false,
+      "scale": 0.55,
+      "anchorY": 0.71,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "hills_near",
+          "index": 4,
+          "width": 3048,
+          "height": 1950,
+          "xPositions": [800, 3000]
+        },
+        {
+          "name": "hills_near",
+          "index": 5,
+          "width": 3048,
+          "height": 1950,
+          "xPositions": [1100, 1400]
+        }
+      ]
+    },
+    {
+      "id": "hills_near_2",
+      "folder": "meadow_background/scenery",
+      "role": "BACKGROUND_NEAR",
+      "repeatX": false,
+      "scale": 0.5,
+      "anchorY": 0.1,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "church",
+          "index": 1,
+          "width": 1200,
+          "height": 820,
+          "xPositions": [2850],
+          "yOffset": 80
+        }
+      ]
+    },
+    {
+      "id": "hills_near",
+      "folder": "meadow_background/hills_near",
+      "role": "BACKGROUND_NEAR",
+      "repeatX": false,
+      "scale": 0.3,
+      "anchorY": 0.38,
+      "baseYOffsetPx": 0,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "hills_near",
+          "index": 6,
+          "width": 2048,
+          "height": 1800,
+          "xPositions": [200, 1800]
+        }
+      ]
+    },
+    {
+      "id": "hills_far",
+      "folder": "meadow_background/hills_far",
+      "role": "BACKGROUND_FAR",
+      "repeatX": false,
+      "scale": 0.55,
+      "anchorY": 0.4,
+      "baseYOffsetPx": 0,
+      "opacity": 0.25,
+      "assets": [
+        {
+          "name": "clouds",
+          "index": 0,
+          "width": 1600,
+          "height": 1600,
+          "xPositions": [300, 1200, 2000, 2700, 3900]
+        },
+        {
+          "name": "clouds",
+          "index": 1,
+          "width": 1200,
+          "height": 800,
+          "xPositions": [600, 1800, 2500, 3300, 3600],
+          "yOffset": 250
+        },
+        {
+          "name": "hills_far",
+          "index": 2,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [0]
+        },
+        {
+          "name": "hills_far",
+          "index": 3,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [900]
+        },
+        {
+          "name": "hills_far",
+          "index": 5,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [1800]
+        },
+        {
+          "name": "hills_far",
+          "index": 6,
+          "width": 1024,
+          "height": 1024,
+          "xPositions": [2700]
+        }
+      ]
+    },
+    {
+      "id": "sky",
+      "folder": "meadow_background/sky",
+      "role": "SKYBOX",
+      "repeatX": true,
+      "repeatWithinBiome": true,
+      "scale": 1,
+      "anchorY": 0,
+      "opacity": 0.8,
+      "assets": [
+        {
+          "name": "sky",
+          "index": 5,
+          "width": 2048,
+          "height": 1024
+        }
+      ]
+    }
+  ]
+}

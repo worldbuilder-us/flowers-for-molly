@@ -9,14 +9,16 @@ import React, {
   useState,
 } from "react";
 import Header from "./components/Header";
-import InfiniteParallaxGarden from "./components/InfiniteParallaxGarden";
+import InfiniteParallaxGarden, {
+  type PointerDebugInfo,
+} from "./components/InfiniteParallaxGarden";
 import StoryDotsOverlay from "./components/StoryDotsOverlay";
 import StoryModal, { StoryListItem } from "./components/StoryModal";
 import styles from "./Page.module.css";
-import { meadowBiome, buildLayersFromBiome } from "./garden/biomes";
+import { getWorldConfig } from "./garden/biomeLoader";
 
 const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
-  "flowers for molly theme 0.1.mp3"
+  "flowers for molly theme 0.1.mp3",
 )}`;
 const BACKGROUND_MUSIC_BASE_VOLUME = 0.2;
 const BACKGROUND_MUSIC_FADE_DURATION = 4; // seconds
@@ -26,17 +28,32 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [viewport, setViewport] = useState<{
     offsetX: number;
+    logicalW: number;
     viewportW: number;
     viewportH: number;
   }>({
     offsetX: 0,
+    logicalW: 0,
     viewportW: 0,
     viewportH: 0,
   });
   const [active, setActive] = useState<StoryListItem | null>(null);
-  const [debugWireframes, setDebugWireframes] = useState(false);
 
-  const layers = useMemo(() => buildLayersFromBiome(meadowBiome), []);
+  const [debugWireframesForeground, setDebugWireframesForeground] =
+    useState(false);
+  const [debugWireframesBackground, setDebugWireframesBackground] =
+    useState(false);
+  const [debugWireframesPinMode, setDebugWireframesPinMode] = useState(false);
+  const [debugPointer, setDebugPointer] = useState(false);
+  const [pointerDebug, setPointerDebug] = useState<PointerDebugInfo | null>(
+    null,
+  );
+  const [isMuted, setIsMuted] = useState(false);
+
+  const worldConfig = useMemo(() => getWorldConfig(), []);
+  const layers = worldConfig.layers;
+  const activeBiome = worldConfig.layout.biomes[0];
+  const activeBiomeName = activeBiome?.id ?? "meadow";
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasStartedRef = useRef(false);
@@ -51,9 +68,14 @@ export default function Page() {
       const audio = new Audio(BACKGROUND_MUSIC_SRC);
       audio.loop = true;
       audio.volume = 0;
+      audio.muted = isMuted;
 
       const handleTimeUpdate = () => {
         if (!audio.duration || Number.isNaN(audio.duration)) return;
+        if (audio.muted) {
+          audio.volume = 0;
+          return;
+        }
 
         const t = audio.currentTime;
         const d = audio.duration;
@@ -71,14 +93,14 @@ export default function Page() {
         if (timeRemaining < BACKGROUND_MUSIC_FADE_DURATION) {
           const progress = Math.max(
             0,
-            timeRemaining / BACKGROUND_MUSIC_FADE_DURATION
+            timeRemaining / BACKGROUND_MUSIC_FADE_DURATION,
           );
           volume = BACKGROUND_MUSIC_BASE_VOLUME * progress;
         }
 
         audio.volume = Math.max(
           0,
-          Math.min(BACKGROUND_MUSIC_BASE_VOLUME, volume)
+          Math.min(BACKGROUND_MUSIC_BASE_VOLUME, volume),
         );
       };
 
@@ -98,12 +120,12 @@ export default function Page() {
     ];
 
     interactionEvents.forEach((evt) =>
-      window.addEventListener(evt, startMusic, { once: true })
+      window.addEventListener(evt, startMusic, { once: true }),
     );
 
     return () => {
       interactionEvents.forEach((evt) =>
-        window.removeEventListener(evt, startMusic as EventListener)
+        window.removeEventListener(evt, startMusic as EventListener),
       );
       if (audioRef.current) {
         audioRef.current.pause();
@@ -113,6 +135,15 @@ export default function Page() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+      if (isMuted) {
+        audioRef.current.volume = 0;
+      }
+    }
+  }, [isMuted]);
 
   useEffect(() => {
     let cancelled = false;
@@ -138,23 +169,57 @@ export default function Page() {
   }, []);
 
   const onViewportChange = useCallback(
-    (v: { offsetX: number; viewportW: number; viewportH: number }) => {
+    (v: {
+      offsetX: number;
+      logicalW: number;
+      viewportW: number;
+      viewportH: number;
+    }) => {
       setViewport(v);
     },
-    []
+    [],
   );
 
-  const segmentWidth = 4096;
+  const segmentWidth = worldConfig.layout.segmentWidth;
+
+  // If pointer debug is turned off, clear any lingering pointer debug info
+  useEffect(() => {
+    if (!debugPointer) {
+      setPointerDebug(null);
+    }
+  }, [debugPointer]);
 
   return (
     <>
       <main>
-        {!debugWireframes && <Header />}
+        {!debugWireframesForeground && !debugWireframesBackground && <Header />}
         <div
           className={styles.gardenContainer}
           style={{ position: "relative" }}
         >
-          {/* <div
+          <button
+            type="button"
+            className={styles.muteButton}
+            onClick={() => setIsMuted((prev) => !prev)}
+            aria-label={isMuted ? "Unmute music" : "Mute music"}
+            title={isMuted ? "Unmute music" : "Mute music"}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              {isMuted ? (
+                <>
+                  <path d="M4 9h4l5-4v14l-5-4H4z" />
+                  <path d="M16 8l4 4m0-4l-4 4" strokeWidth="2" />
+                </>
+              ) : (
+                <>
+                  <path d="M4 9h4l5-4v14l-5-4H4z" />
+                  <path d="M16 8a4 4 0 010 8" fill="none" strokeWidth="2" />
+                  <path d="M18.5 6a7 7 0 010 12" fill="none" strokeWidth="2" />
+                </>
+              )}
+            </svg>
+          </button>
+          <div
             style={{
               position: "absolute",
               top: 100,
@@ -173,6 +238,8 @@ export default function Page() {
             }}
           >
             <div style={{ fontWeight: 600, marginBottom: 6 }}>Debug</div>
+
+            {/* wireframes toggles */}
             <label
               style={{
                 display: "flex",
@@ -183,18 +250,73 @@ export default function Page() {
             >
               <input
                 type="checkbox"
-                checked={debugWireframes}
-                onChange={(e) => setDebugWireframes(e.target.checked)}
+                checked={debugWireframesForeground}
+                onChange={(e) => setDebugWireframesForeground(e.target.checked)}
               />
-              Wireframe sprites
+              Wireframe foreground
             </label>
-          </div> */}
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                marginTop: 6,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={debugWireframesBackground}
+                onChange={(e) => setDebugWireframesBackground(e.target.checked)}
+              />
+              Wireframe background
+            </label>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                marginTop: 6,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={debugWireframesPinMode}
+                onChange={(e) => setDebugWireframesPinMode(e.target.checked)}
+              />
+              Pin wireframe on click
+            </label>
+
+            {/* pointer debug toggle */}
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                marginTop: 6,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={debugPointer}
+                onChange={(e) => setDebugPointer(e.target.checked)}
+              />
+              Pointer debug
+            </label>
+          </div>
 
           <InfiniteParallaxGarden
-            segmentWidth={4096}
+            segmentWidth={segmentWidth}
             layers={layers}
-            debugWireframes={debugWireframes}
+            debugWireframesForeground={debugWireframesForeground}
+            debugWireframesBackground={debugWireframesBackground}
+            debugWireframesPinMode={debugWireframesPinMode}
             onViewportChange={onViewportChange}
+            initialOffsetX={activeBiome?.startOffset ?? 0}
+            // Only collect pointer debug info while pointer debug is on
+            onPointerDebugChange={debugPointer ? setPointerDebug : undefined}
           />
 
           {/* dots overlay */}
@@ -205,6 +327,56 @@ export default function Page() {
               viewport={viewport}
               onDotClick={(s) => setActive(s)}
             />
+          )}
+
+          {/* Pointer debug tooltip (follows pointer, mouse + touch) */}
+          {debugPointer && pointerDebug && (
+            <div
+              style={{
+                position: "fixed",
+                left: pointerDebug.clientX + 12,
+                top: pointerDebug.clientY + 12,
+                zIndex: 100000,
+                background: "rgba(0,0,0,0.85)",
+                color: "#fff",
+                padding: "6px 8px",
+                borderRadius: 6,
+                fontSize: 11,
+                lineHeight: 1.3,
+                maxWidth: 280,
+                pointerEvents: "none",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+              }}
+            >
+              <div>
+                screen:{" "}
+                {`${Math.round(pointerDebug.clientX)}, ${Math.round(
+                  pointerDebug.clientY,
+                )}`}
+              </div>
+              <div>
+                garden:{" "}
+                {`${Math.round(pointerDebug.containerX)}, ${Math.round(
+                  pointerDebug.containerY,
+                )}`}
+              </div>
+              <div>
+                logicalX (scene):{" "}
+                {`${pointerDebug.worldLogicalX.toFixed(1)} / ${
+                  pointerDebug.segmentWidth
+                }`}
+              </div>
+              <div>
+                segment repeat: {pointerDebug.segmentRepeat} • localX:{" "}
+                {pointerDebug.segmentLocalX.toFixed(1)}
+              </div>
+              <div>
+                viewport offsetX:{" "}
+                {pointerDebug.viewportLogicalOffsetX.toFixed(1)}
+              </div>
+              <div>sceneScale: {pointerDebug.sceneScale.toFixed(3)}</div>
+              <div>biome: {activeBiomeName}</div>
+            </div>
           )}
         </div>
 

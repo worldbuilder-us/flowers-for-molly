@@ -1,0 +1,224 @@
+{
+  "id": "forest_to_meadow",
+  "label": "Forest to Meadow",
+  "segmentWidth": 4096,
+  "lengthInSegments": 1,
+  "assetBasePath": "/garden",
+  "groups": [
+    {
+      "id": "sky_transition",
+      "folder": "biomes/transitions/sky",
+      "role": "SKYBOX",
+      "repeatX": true,
+      "repeatWithinBiome": true,
+      "scale": 1,
+      "anchorY": 0,
+      "opacity": 0.9,
+      "assets": [
+        {
+          "name": "sky_transition_4",
+          "index": 2,
+          "width": 1456,
+          "height": 816
+        }
+      ]
+    },
+    {
+      "id": "hills_far_meadow",
+      "folder": "meadow_background/hills_far",
+      "role": "BACKGROUND_FAR",
+      "repeatX": false,
+      "scale": 0.55,
+      "anchorY": 0.35,
+      "opacity": 0.45,
+      "assets": [
+        {
+          "name": "hills_far",
+          "index": 4,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [200]
+        },
+        {
+          "name": "hills_far",
+          "index": 5,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [1600]
+        },
+        {
+          "name": "hills_far",
+          "index": 6,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [3000]
+        }
+      ]
+    },
+    {
+      "id": "hills_far_forest",
+      "folder": "biomes/forest/background/hills_far",
+      "role": "BACKGROUND_FAR",
+      "repeatX": false,
+      "scale": 0.55,
+      "anchorY": 0.35,
+      "opacity": 0.25,
+      "assets": [
+        {
+          "name": "hills_far",
+          "index": 3,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [800]
+        },
+        {
+          "name": "hills_far",
+          "index": 4,
+          "width": 2048,
+          "height": 1024,
+          "xPositions": [2400]
+        }
+      ]
+    },
+    {
+      "id": "mid_ground_meadow",
+      "folder": "meadow_background/mid_ground",
+      "role": "MIDDLEGROUND",
+      "repeatX": true,
+      "repeatWithinBiome": true,
+      "scale": 0.6,
+      "anchorY": 0.3,
+      "baseYOffsetPx": 50,
+      "opacity": 0.85,
+      "assets": [
+        {
+          "name": "mid_grass",
+          "index": 0,
+          "width": 2000,
+          "height": 2000
+        }
+      ]
+    },
+    {
+      "id": "mid_ground_forest",
+      "folder": "biomes/forest/background/mid_ground",
+      "role": "MIDDLEGROUND",
+      "repeatX": true,
+      "repeatWithinBiome": true,
+      "scale": 0.6,
+      "anchorY": 0.3,
+      "baseYOffsetPx": 40,
+      "opacity": 0.5,
+      "assets": [
+        {
+          "name": "mid_grass",
+          "index": 1,
+          "width": 1080,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "meadow_flowers",
+      "folder": "meadow_foreground/flora_group_1",
+      "role": "FOREGROUND_1",
+      "repeatX": false,
+      "scale": 1.2,
+      "anchorY": 0.25,
+      "opacity": 1,
+      "assets": [
+        {
+          "name": "flower",
+          "index": 1,
+          "width": 520,
+          "height": 600,
+          "xPositions": [200, 1200, 2600, 3600]
+        },
+        {
+          "name": "flower",
+          "index": 2,
+          "width": 520,
+          "height": 520,
+          "xPositions": [600, 1800, 3000]
+        },
+        {
+          "name": "flower",
+          "index": 4,
+          "width": 220,
+          "height": 220,
+          "xPositions": [900, 2100, 3300],
+          "yOffset": 220
+        },
+        {
+          "name": "flower",
+          "index": 5,
+          "width": 220,
+          "height": 220,
+          "xPositions": [1500, 2400],
+          "yOffset": 180
+        }
+      ]
+    },
+    {
+      "id": "forest_understory",
+      "folder": "biomes/forest/foreground/flora_group_1",
+      "role": "FOREGROUND_1",
+      "repeatX": false,
+      "scale": 0.95,
+      "anchorY": 0.12,
+      "opacity": 0.7,
+      "assets": [
+        {
+          "name": "ferns",
+          "index": 2,
+          "width": 1024,
+          "height": 611,
+          "xPositions": [700, 2700]
+        },
+        {
+          "name": "shrubs",
+          "index": 2,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [3200]
+        }
+      ]
+    },
+    {
+      "id": "forest_trunks",
+      "folder": "biomes/forest/foreground/flora_group_4",
+      "role": "FOREGROUND_3",
+      "repeatX": false,
+      "scale": 0.8,
+      "anchorY": 0.05,
+      "opacity": 0.7,
+      "assets": [
+        {
+          "name": "tree_trunk",
+          "index": 2,
+          "width": 1080,
+          "height": 960,
+          "xPositions": [1200]
+        }
+      ]
+    },
+    {
+      "id": "trees_back",
+      "folder": "biomes/forest/foreground/flora_group_5",
+      "role": "BACKGROUND_NEAR",
+      "repeatX": false,
+      "scale": 0.6,
+      "anchorY": 0.2,
+      "opacity": 0.6,
+      "assets": [
+        {
+          "name": "elm_tree",
+          "index": 1,
+          "width": 2048,
+          "height": 2048,
+          "xPositions": [600]
+        }
+      ]
+    }
+  ]
+}
