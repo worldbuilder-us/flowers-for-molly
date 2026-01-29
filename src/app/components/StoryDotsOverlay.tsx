@@ -59,7 +59,7 @@ type StoryDotsOverlayProps = {
  *   gently outward, with randomness so the helix is visible but
  *   not rigid.
  */
-const ParticleSpiral = React.memo(function ParticleSpiral({
+function ParticleSpiral({
   dotRadius,
   seed,
 }: {
@@ -177,15 +177,15 @@ const ParticleSpiral = React.memo(function ParticleSpiral({
       })}
     </div>
   );
-});
+}
 
 export default function StoryDotsOverlay({
   stories,
   segmentWidth,
   viewport,
   onDotClick,
-  pMin = 0.125,
-  pMax = 0.25,
+  pMin = 0.35,
+  pMax = 0.95,
 }: StoryDotsOverlayProps) {
   const dots = useMemo<Dot[]>(() => {
     const vh = Math.max(300, viewport.viewportH || 700);
@@ -211,12 +211,6 @@ export default function StoryDotsOverlay({
   const [triggeredSpirals, setTriggeredSpirals] = useState<
     Record<string, boolean>
   >({});
-  const [activeSpirals, setActiveSpirals] = useState<Record<string, boolean>>(
-    {}
-  );
-  const spiralTimeoutsRef = React.useRef<Map<string, number>>(new Map());
-  const triggeredSpiralsRef = React.useRef<Record<string, boolean>>({});
-  const SPIRAL_LIFETIME_MS = 12000;
 
   // Preload SFX one time on the client
   const sfxPlayersRef = React.useRef<HTMLAudioElement[] | null>(null);
@@ -246,10 +240,6 @@ export default function StoryDotsOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  React.useEffect(() => {
-    triggeredSpiralsRef.current = triggeredSpirals;
-  }, [triggeredSpirals]);
-
   const playRandomSfx = React.useCallback(() => {
     const players = sfxPlayersRef.current;
     if (!players || players.length === 0) return;
@@ -267,53 +257,23 @@ export default function StoryDotsOverlay({
 
   // Logical world offset within one segment; we use this with parallax=1
   // so dots are pinned to world coordinates across the full segment.
-  const sceneScale =
-    viewport.logicalW > 0 ? viewport.viewportW / viewport.logicalW : 1;
-  const offsetX = viewport.offsetX;
-  const logicalW = Math.max(1, viewport.logicalW || segmentWidth);
-  const buffer = logicalW * 0.5;
-  const visibleStart = viewport.offsetX - buffer;
-  const visibleEnd = viewport.offsetX + logicalW + buffer;
+  const offsetMod =
+    ((viewport.offsetX % segmentWidth) + segmentWidth) % segmentWidth;
+
+  const baseLeft = -segmentWidth;
 
   const onEnter = useCallback(
     (key: string, storyId: string) => {
       setHoverId(key);
-      const alreadyTriggered = !!triggeredSpiralsRef.current[storyId];
-      if (!alreadyTriggered) {
-        setTriggeredSpirals((prev) =>
-          prev[storyId] ? prev : { ...prev, [storyId]: true }
-        );
-        setActiveSpirals((prev) =>
-          prev[storyId] ? prev : { ...prev, [storyId]: true }
-        );
-        if (!spiralTimeoutsRef.current.has(storyId)) {
-          const timeoutId = window.setTimeout(() => {
-            spiralTimeoutsRef.current.delete(storyId);
-            setActiveSpirals((prev) => {
-              if (!prev[storyId]) return prev;
-              const next = { ...prev };
-              delete next[storyId];
-              return next;
-            });
-          }, SPIRAL_LIFETIME_MS);
-          spiralTimeoutsRef.current.set(storyId, timeoutId);
-        }
-      }
+      setTriggeredSpirals((prev) =>
+        prev[storyId] ? prev : { ...prev, [storyId]: true },
+      );
       playRandomSfx();
     },
-    [playRandomSfx]
+    [playRandomSfx],
   );
 
   const onLeave = useCallback(() => setHoverId(null), []);
-
-  React.useEffect(() => {
-    return () => {
-      spiralTimeoutsRef.current.forEach((timeoutId) => {
-        window.clearTimeout(timeoutId);
-      });
-      spiralTimeoutsRef.current.clear();
-    };
-  }, []);
 
   return (
     <div
@@ -326,8 +286,8 @@ export default function StoryDotsOverlay({
       <div
         className={styles.tiles}
         style={{
-          left: 0,
-          width: "100%",
+          left: baseLeft,
+          width: segmentWidth * 3,
           // tiles container stays non-interactive; only child buttons are
           // clickable so drags over empty space scroll the garden.
           pointerEvents: "none",
@@ -335,18 +295,14 @@ export default function StoryDotsOverlay({
       >
         {[-1, 0, 1].flatMap((tile) =>
           dots.map((d) => {
-            const worldX = d.x + tile * segmentWidth;
-            if (worldX < visibleStart || worldX > visibleEnd) {
-              return null;
-            }
-            const left = (worldX - offsetX) * sceneScale - d.r;
+            const parallaxShift = offsetMod;
+            const left = d.x + tile * segmentWidth - d.r - parallaxShift;
             const top = d.y - d.r;
             const key = `${tile}:${d.id}`;
             const triggerKey = d.id;
 
             const isHover = hoverId === key;
             const hasTriggered = !!triggeredSpirals[triggerKey];
-            const isActiveSpiral = !!activeSpirals[triggerKey];
 
             return (
               <div
@@ -384,12 +340,12 @@ export default function StoryDotsOverlay({
                   </div>
                 )}
 
-                {hasTriggered && isActiveSpiral && (
+                {hasTriggered && (
                   <ParticleSpiral dotRadius={d.r} seed={hash32(d.id)} />
                 )}
               </div>
             );
-          })
+          }),
         )}
       </div>
     </div>

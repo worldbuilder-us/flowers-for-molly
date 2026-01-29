@@ -5,19 +5,16 @@
   inset: 0;
   pointer-events: auto;
   z-index: 9999;
-  contain: layout paint;
 }
 
 .tiles {
   position: absolute;
   top: 0;
   height: 100%;
-  will-change: transform;
 }
 
 .dotWrapper {
   position: absolute;
-  contain: layout paint;
 }
 
 /* Pulsating dot itself */
@@ -36,7 +33,6 @@
   border-width: 4px;
 
   animation: storyDotPulse 2.4s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 
 .dotButton:hover {
