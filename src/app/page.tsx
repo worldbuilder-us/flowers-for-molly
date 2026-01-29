@@ -48,6 +48,7 @@ export default function Page() {
   const [pointerDebug, setPointerDebug] = useState<PointerDebugInfo | null>(
     null,
   );
+  const [isMuted, setIsMuted] = useState(false);
 
   const worldConfig = useMemo(() => getWorldConfig(), []);
   const layers = worldConfig.layers;
@@ -67,9 +68,14 @@ export default function Page() {
       const audio = new Audio(BACKGROUND_MUSIC_SRC);
       audio.loop = true;
       audio.volume = 0;
+      audio.muted = isMuted;
 
       const handleTimeUpdate = () => {
         if (!audio.duration || Number.isNaN(audio.duration)) return;
+        if (audio.muted) {
+          audio.volume = 0;
+          return;
+        }
 
         const t = audio.currentTime;
         const d = audio.duration;
@@ -131,6 +137,15 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+      if (isMuted) {
+        audioRef.current.volume = 0;
+      }
+    }
+  }, [isMuted]);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -182,6 +197,28 @@ export default function Page() {
           className={styles.gardenContainer}
           style={{ position: "relative" }}
         >
+          <button
+            type="button"
+            className={styles.muteButton}
+            onClick={() => setIsMuted((prev) => !prev)}
+            aria-label={isMuted ? "Unmute music" : "Mute music"}
+            title={isMuted ? "Unmute music" : "Mute music"}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              {isMuted ? (
+                <>
+                  <path d="M4 9h4l5-4v14l-5-4H4z" />
+                  <path d="M16 8l4 4m0-4l-4 4" strokeWidth="2" />
+                </>
+              ) : (
+                <>
+                  <path d="M4 9h4l5-4v14l-5-4H4z" />
+                  <path d="M16 8a4 4 0 010 8" fill="none" strokeWidth="2" />
+                  <path d="M18.5 6a7 7 0 010 12" fill="none" strokeWidth="2" />
+                </>
+              )}
+            </svg>
+          </button>
           <div
             style={{
               position: "absolute",
@@ -283,14 +320,14 @@ export default function Page() {
           />
 
           {/* dots overlay */}
-          {/* {!loading && stories.length > 0 && (
+          {!loading && stories.length > 0 && (
             <StoryDotsOverlay
               stories={stories}
               segmentWidth={segmentWidth}
               viewport={viewport}
               onDotClick={(s) => setActive(s)}
             />
-          )} */}
+          )}
 
           {/* Pointer debug tooltip (follows pointer, mouse + touch) */}
           {debugPointer && pointerDebug && (
