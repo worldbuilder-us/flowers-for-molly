@@ -33,7 +33,10 @@
           "index": 3,
           "width": 200,
           "height": 200,
-          "xPositions": [720, 3120],
+          "xPositions": [
+            720,
+            3120
+          ],
           "yOffset": 320
         },
         {
