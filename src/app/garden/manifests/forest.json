@@ -113,45 +113,45 @@
     {
       "id": "trees_back",
       "folder": "foreground/flora_group_5",
-      "role": "BACKGROUND_NEAR",
+      "role": "FOREGROUND_3",
       "repeatX": false,
-      "scale": 0.25,
-      "anchorY": 0.28,
-      "opacity": 0.9,
+      "scale": 0.8,
+      "anchorY": 0.8,
+      "opacity": 0.95,
       "assets": [
         {
           "name": "pine_tree",
           "index": 1,
-          "width": 2048,
-          "height": 2048,
+          "width": 1248,
+          "height": 1248,
           "xPositions": [300, 750, 900, 1250]
         },
         {
           "name": "hickory_tree",
           "index": 1,
-          "width": 2048,
-          "height": 2048,
+          "width": 1648,
+          "height": 1648,
           "xPositions": [1100, 230, 850, 1800]
         },
         {
           "name": "hickory_tree",
           "index": 2,
-          "width": 2048,
-          "height": 2048,
+          "width": 1848,
+          "height": 1848,
           "xPositions": [1900, 0, 104, 1562]
         },
         {
           "name": "chestnut_tree",
           "index": 1,
-          "width": 2048,
-          "height": 2048,
-          "xPositions": [2700, 465, 1250]
+          "width": 1548,
+          "height": 1548,
+          "xPositions": [2700, 465]
         },
         {
           "name": "elm_tree",
           "index": 1,
-          "width": 2048,
-          "height": 2048,
+          "width": 1948,
+          "height": 1948,
           "xPositions": [3500, 13, 800, 2200]
         }
       ]
@@ -191,7 +191,7 @@
       "folder": "foreground/flora_group_1",
       "role": "FOREGROUND_1",
       "repeatX": false,
-      "scale": 0.4,
+      "scale": 0.47,
       "anchorY": 0.12,
       "opacity": 1,
       "assets": [
@@ -200,35 +200,35 @@
           "index": 1,
           "width": 2048,
           "height": 2048,
-          "xPositions": [400, 2200]
+          "xPositions": [400, 2000]
         },
         {
           "name": "ferns",
           "index": 2,
           "width": 1024,
           "height": 611,
-          "xPositions": [1200, 3200]
+          "xPositions": [500, 3200]
         },
         {
           "name": "ferns",
           "index": 3,
           "width": 1024,
           "height": 1024,
-          "xPositions": [1800, 3600]
+          "xPositions": [810, 3900]
         },
         {
           "name": "floral_cluster",
           "index": 1,
           "width": 2048,
           "height": 2048,
-          "xPositions": [2500]
+          "xPositions": [500]
         },
         {
           "name": "floral_cluster",
           "index": 2,
           "width": 2048,
           "height": 2048,
-          "xPositions": [1500]
+          "xPositions": [1200]
         },
         {
           "name": "floral_cluster",
@@ -242,7 +242,7 @@
           "index": 4,
           "width": 2048,
           "height": 2048,
-          "xPositions": [2000]
+          "xPositions": [700]
         },
         {
           "name": "shrubs",
@@ -256,14 +256,14 @@
           "index": 2,
           "width": 2048,
           "height": 2048,
-          "xPositions": [1300, 3500]
+          "xPositions": [1300]
         },
         {
           "name": "bushes",
           "index": 1,
           "width": 1831,
           "height": 1733,
-          "xPositions": [900, 3100]
+          "xPositions": [3100]
         }
       ]
     },
@@ -272,7 +272,7 @@
       "folder": "foreground/flora_group_2",
       "role": "FOREGROUND_2",
       "repeatX": false,
-      "scale": 0.3,
+      "scale": 0.8,
       "anchorY": 0.1,
       "opacity": 1,
       "assets": [
@@ -288,7 +288,7 @@
           "index": 1,
           "width": 512,
           "height": 512,
-          "xPositions": [1900, 3500]
+          "xPositions": [1900, 240, 780, 3500]
         }
       ]
     },
@@ -300,40 +300,7 @@
       "scale": 0.35,
       "anchorY": 0.1,
       "opacity": 1,
-      "assets": [
-        {
-          "name": "rocks",
-          "index": 1,
-          "width": 512,
-          "height": 512,
-          "xPositions": [500, 2300],
-          "yOffset": -120
-        },
-        {
-          "name": "rocks",
-          "index": 2,
-          "width": 512,
-          "height": 512,
-          "xPositions": [1600],
-          "yOffset": -80
-        },
-        {
-          "name": "rocks",
-          "index": 3,
-          "width": 1024,
-          "height": 771,
-          "xPositions": [3000],
-          "yOffset": -100
-        },
-        {
-          "name": "rocks",
-          "index": 4,
-          "width": 1024,
-          "height": 662,
-          "xPositions": [3600],
-          "yOffset": -90
-        }
-      ]
+      "assets": []
     },
     {
       "id": "trunks_fg3",
@@ -343,24 +310,7 @@
       "scale": 0.5,
       "anchorY": 0.35,
       "opacity": 0.95,
-      "assets": [
-        {
-          "name": "branches",
-          "index": 1,
-          "width": 2048,
-          "height": 2048,
-          "xPositions": [900],
-          "yOffset": 150
-        },
-        {
-          "name": "branches",
-          "index": 2,
-          "width": 2048,
-          "height": 2048,
-          "xPositions": [2800],
-          "yOffset": 150
-        }
-      ]
+      "assets": []
     }
   ]
 }

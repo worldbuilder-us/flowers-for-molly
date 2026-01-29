@@ -74,9 +74,15 @@ export const BAND_LAYOUT: Record<LayerRole, BandLayout> = {
     defaultZIndex: 0,
   },
   BACKGROUND_NEAR: {
-    baseYFromBottomPct: 0.8,
+    baseYFromBottomPct: 0.81,
     defaultParallax: 0.025,
     defaultZIndex: -10,
+    defaultCurve: {
+      type: "sine",
+      amplitudePct: 0.005,
+      periodsPerSegment: 2,
+      phaseRad: Math.PI,
+    },
   },
   BACKGROUND_FAR: {
     baseYFromBottomPct: 0.9,

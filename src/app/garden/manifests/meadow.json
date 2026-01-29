@@ -10,7 +10,7 @@
       "folder": "meadow_foreground/flora_group_1",
       "role": "FOREGROUND_1",
       "scale": 1.25,
-      "anchorY": 0.25,
+      "anchorY": 0.35,
       "baseYOffsetPx": 0,
       "opacity": 1,
       "assets": [
@@ -19,22 +19,14 @@
           "index": 1,
           "width": 520,
           "height": 600,
-          "xPositions": [120, 360, 920, 1320, 2520, 3320, 3720]
+          "xPositions": [100]
         },
         {
           "name": "flower",
           "index": 2,
           "width": 520,
           "height": 520,
-          "xPositions": [320, 720, 1120, 1520, 2720, 3120, 3520, 3920]
-        },
-        {
-          "name": "flower",
-          "index": 4,
-          "width": 220,
-          "height": 220,
-          "xPositions": [460, 600, 3520],
-          "yOffset": 300
+          "xPositions": [1520, 3120]
         }
       ]
     },
@@ -42,7 +34,7 @@
       "id": "flora_fg2_g2",
       "folder": "meadow_foreground/flora_group_2",
       "role": "FOREGROUND_1",
-      "scale": 1.2,
+      "scale": 1.0,
       "anchorY": 0.1,
       "baseYOffsetPx": 0,
       "opacity": 1,
@@ -52,7 +44,7 @@
           "index": 1,
           "width": 520,
           "height": 700,
-          "xPositions": [400, 1400, 2200, 2800, 3400, 4000]
+          "xPositions": [400, 2200, 3400]
         },
         {
           "name": "flower",
@@ -67,7 +59,7 @@
       "id": "flora_fg2_g5",
       "folder": "meadow_foreground/flora_group_5",
       "role": "FOREGROUND_2",
-      "scale": 1,
+      "scale": 0.8,
       "anchorY": 0.2,
       "baseYOffsetPx": 0,
       "opacity": 1,
@@ -77,22 +69,14 @@
           "index": 1,
           "width": 520,
           "height": 700,
-          "xPositions": [200, 1160, 1640, 3080, 3560, 4040]
+          "xPositions": [1640, 3080, 4040]
         },
         {
           "name": "flower",
           "index": 2,
           "width": 520,
           "height": 520,
-          "xPositions": [40, 1000, 1480, 1880, 3400, 3880]
-        },
-        {
-          "name": "flower",
-          "index": 3,
-          "width": 220,
-          "height": 240,
-          "xPositions": [1675, 3470],
-          "yOffset": -50
+          "xPositions": [40, 1880, 3880]
         }
       ]
     },
@@ -118,13 +102,6 @@
           "width": 520,
           "height": 520,
           "xPositions": [680, 960, 1560, 2760, 3360, 3960]
-        },
-        {
-          "name": "flower",
-          "index": 3,
-          "width": 520,
-          "height": 520,
-          "xPositions": [1620, 2760]
         }
       ]
     },
@@ -132,8 +109,8 @@
       "id": "flora_fg3_g4",
       "folder": "meadow_foreground/flora_group_4",
       "role": "FOREGROUND_1",
-      "scale": 1.25,
-      "anchorY": 0.125,
+      "scale": 1.5,
+      "anchorY": 0.25,
       "baseYOffsetPx": 0,
       "opacity": 0.9,
       "assets": [
@@ -147,16 +124,17 @@
         {
           "name": "flower",
           "index": 2,
-          "width": 520,
-          "height": 520,
-          "xPositions": [100, 700, 1300, 3100, 3700]
+          "width": 360,
+          "height": 360,
+          "xPositions": [100, 2300],
+          "yOffset": 200
         },
         {
           "name": "flower",
           "index": 3,
-          "width": 180,
-          "height": 240,
-          "xPositions": [1140, 240],
+          "width": 480,
+          "height": 480,
+          "xPositions": [1140],
           "yOffset": 250
         }
       ]
@@ -277,8 +255,8 @@
       "folder": "meadow_background/hills_near",
       "role": "BACKGROUND_NEAR",
       "repeatX": false,
-      "scale": 0.6,
-      "anchorY": 0.7,
+      "scale": 0.55,
+      "anchorY": 0.71,
       "baseYOffsetPx": 0,
       "opacity": 1,
       "assets": [
@@ -288,6 +266,13 @@
           "width": 3048,
           "height": 1950,
           "xPositions": [800, 3000]
+        },
+        {
+          "name": "hills_near",
+          "index": 5,
+          "width": 3048,
+          "height": 1950,
+          "xPositions": [900, 1400]
         }
       ]
     },
@@ -307,7 +292,7 @@
           "width": 1200,
           "height": 820,
           "xPositions": [2850],
-          "yOffset": 140
+          "yOffset": 80
         }
       ]
     },
@@ -317,7 +302,7 @@
       "role": "BACKGROUND_NEAR",
       "repeatX": false,
       "scale": 0.3,
-      "anchorY": 0.4,
+      "anchorY": 0.38,
       "baseYOffsetPx": 0,
       "opacity": 1,
       "assets": [
@@ -326,7 +311,7 @@
           "index": 6,
           "width": 2048,
           "height": 1800,
-          "xPositions": [0, 1800]
+          "xPositions": [200, 1800]
         }
       ]
     },
