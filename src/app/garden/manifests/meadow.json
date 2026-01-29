@@ -30,30 +30,11 @@
         },
         {
           "name": "flower",
-          "index": 3,
-          "width": 200,
-          "height": 200,
-          "xPositions": [
-            720,
-            3120
-          ],
-          "yOffset": 320
-        },
-        {
-          "name": "flower",
           "index": 4,
           "width": 220,
           "height": 220,
           "xPositions": [460, 600, 3520],
           "yOffset": 300
-        },
-        {
-          "name": "flower",
-          "index": 5,
-          "width": 220,
-          "height": 220,
-          "xPositions": [750, 1470],
-          "yOffset": 150
         }
       ]
     },
@@ -79,14 +60,6 @@
           "width": 520,
           "height": 520,
           "xPositions": [1600]
-        },
-        {
-          "name": "flower",
-          "index": 3,
-          "width": 320,
-          "height": 320,
-          "xPositions": [360],
-          "yOffset": 200
         }
       ]
     },
@@ -99,14 +72,6 @@
       "baseYOffsetPx": 0,
       "opacity": 1,
       "assets": [
-        {
-          "name": "rock",
-          "index": 1,
-          "width": 520,
-          "height": 520,
-          "xPositions": [1000],
-          "yOffset": -200
-        },
         {
           "name": "flower",
           "index": 1,
@@ -160,22 +125,6 @@
           "width": 520,
           "height": 520,
           "xPositions": [1620, 2760]
-        },
-        {
-          "name": "rock",
-          "index": 1,
-          "width": 520,
-          "height": 520,
-          "xPositions": [1820],
-          "yOffset": -120
-        },
-        {
-          "name": "rock",
-          "index": 2,
-          "width": 520,
-          "height": 520,
-          "xPositions": [1680],
-          "yOffset": 250
         }
       ]
     },
@@ -274,15 +223,15 @@
           "yOffset": 220
         },
         {
-          "name": "willow",
-          "index": 0,
+          "name": "elm_tree",
+          "index": 1,
           "width": 400,
           "height": 400,
           "xPositions": [2590],
           "yOffset": 120
         },
         {
-          "name": "willow",
+          "name": "pine_tree",
           "index": 1,
           "width": 200,
           "height": 200,
@@ -306,15 +255,15 @@
           "yOffset": 10
         },
         {
-          "name": "willow",
-          "index": 0,
+          "name": "elm_tree",
+          "index": 1,
           "width": 400,
           "height": 400,
           "xPositions": [300],
           "yOffset": 120
         },
         {
-          "name": "willow",
+          "name": "pine_tree",
           "index": 1,
           "width": 400,
           "height": 400,

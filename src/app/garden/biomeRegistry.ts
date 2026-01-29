@@ -6,10 +6,8 @@ import forest from "./manifests/forest.json";
 import forestToMeadow from "./manifests/forest_to_meadow.json";
 
 export const BIOME_MANIFESTS: BiomeManifest[] = [
-  meadow,
-  // meadowToForest,
-  forest,
-  // forestToMeadow,
+  meadow as BiomeManifest,
+  forest as BiomeManifest,
 ];
 
 export const BIOME_ORDER = BIOME_MANIFESTS.map((b) => b.id);
