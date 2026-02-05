@@ -101,6 +101,10 @@
   margin-top: 0.75rem;
 }
 
+.poemNoBreak {
+  white-space: nowrap;
+}
+
 .poemLineEmphasis {
   line-height: 1.2;
   padding-top: 0.5rem;

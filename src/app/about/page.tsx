@@ -69,7 +69,8 @@ export default function AboutPage() {
               <p className={styles.poemLine}>Your children.</p>
               <p className={styles.poemLine}>The garden we started to grow.</p>
               <p className={styles.poemLine}>
-                I&lsquo;ll take them with me, I&lsquo;ll carry them from here.
+                I&lsquo;ll take them with me, I&lsquo;ll carry them{" "}
+                <span className={styles.poemNoBreak}>from here.</span>
               </p>
             </div>
           </section>

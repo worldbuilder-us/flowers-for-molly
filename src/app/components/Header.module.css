@@ -25,6 +25,20 @@
   gap: 1.75rem;
 }
 
+/* Mobile: center nav + restore blur */
+@media (max-width: 768px) {
+  .header {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .nav {
+    justify-content: center;
+    padding-right: 0;
+    width: 100%;
+  }
+}
+
 .link {
   position: relative;
   display: inline-flex;
