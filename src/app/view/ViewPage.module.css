@@ -27,6 +27,7 @@
 
 /* Grid: 3 columns × 4 rows on desktop, responsive below */
 .grid {
+  padding-top: 1.25rem;
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
