@@ -17,12 +17,6 @@
   color: #ffffff;
 }
 
-/* Apply backdrop blur only on non-garden pages */
-.headerBlur {
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
 .nav {
   display: flex;
   align-items: center;

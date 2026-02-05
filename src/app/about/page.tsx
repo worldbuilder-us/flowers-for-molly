@@ -19,7 +19,9 @@ export default function AboutPage() {
             <span className={styles.aboutTitleWord}>ARTWORK</span>
           </h1>
 
-          <section className={styles.descriptionSection}>
+          <section
+            className={`${styles.descriptionSection} ${styles.aboutBodyBold}`}
+          >
             <p>
               <em>Flowers for Molly</em> is a collaborative and generative
               artistic tribute to honor and celebrate the life of our dearest
@@ -49,7 +51,7 @@ export default function AboutPage() {
             className={styles.poemSection}
             aria-label="Commemorative poem"
           >
-            <div className={styles.poemText}>
+            <div className={`${styles.poemText} ${styles.aboutBodyBold}`}>
               <p className={styles.poemLine}>
                 The trees will remember your name.
               </p>

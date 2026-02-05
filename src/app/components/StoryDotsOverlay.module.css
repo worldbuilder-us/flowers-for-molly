@@ -51,7 +51,7 @@
   top: -34px;
   padding: 6px 10px;
   background: #ffffff;
-  border: 2px solid #000000;
+  border: none;
   border-radius: 10px;
   white-space: nowrap;
   color: black;
@@ -114,7 +114,7 @@
   15% {
     transform: translate(calc(var(--hx) * 0.2), calc(var(--hy) * 0.2))
       scale(0.4);
-    opacity: calc(var(--depthAlpha) * 0.4);
+    opacity: 0;
   }
   45% {
     transform: translate(var(--hx), var(--hy)) scale(0.8);

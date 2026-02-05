@@ -75,6 +75,13 @@
           "width": 520,
           "height": 760,
           "xPositions": [110, 935, 1430, 1730, 2250]
+        },
+        {
+          "name": "shrubs",
+          "index": 1,
+          "width": 920,
+          "height": 760,
+          "xPositions": [1130, 1930, 3700]
         }
       ]
     },

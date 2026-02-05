@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState, useCallback } from "react";
+import { goldenbookFont } from "../fonts";
 import styles from "./StoryDotsOverlay.module.css";
 import type { GardenViewport } from "./InfiniteParallaxGarden";
 import type { StoryListItem } from "./StoryModal";
@@ -325,12 +326,11 @@ export default function StoryDotsOverlay({
                     width: d.r * 2,
                     height: d.r * 2,
                   }}
-                  title={d.author}
                 />
 
                 {isHover && (
                   <div
-                    className={styles.tooltip}
+                    className={`${styles.tooltip} ${goldenbookFont.className}`}
                     style={{
                       // tooltip purely visual; don't block clicks/scroll
                       pointerEvents: "none",

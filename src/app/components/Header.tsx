@@ -70,16 +70,8 @@ function isActive(pathname: string, href: string): boolean {
 export default function Header() {
   const pathname = usePathname() || "/";
   const items = getNavForPath(pathname);
-  const isGarden = pathname === "/";
 
-  const headerClassName = [
-    styles.header,
-    montserratFont.className,
-    // Apply blur only when NOT on the garden scene
-    !isGarden ? styles.headerBlur : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const headerClassName = [styles.header, montserratFont.className].join(" ");
 
   return (
     <header className={headerClassName}>

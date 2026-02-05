@@ -1,0 +1,63 @@
+/* src/app/components/DandelionParticles.module.css */
+
+.particleLayer {
+  position: absolute;
+  transform: translate(-5%, -5%);
+  width: 420px;
+  height: 220px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.particleDot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.8);
+
+  /* default values if JS props haven't set them yet */
+  --dx: 0px;
+  --dy: 0px;
+  --depthScale: 1;
+  --twist: 15deg;
+  --depthAlpha: 1;
+
+  animation-name: dandelionParticle;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+/*
+ * 0%   : at the dot, tiny, invisible
+ * 40%  : reaches its helix position (implied tornado)
+ * 100% : drifts gently away from helix, fades out
+ *
+ * Because every particle starts at (0,0) and moves linearly toward its
+ * own helix position, the spiral appears to "grow" from the dot rather
+ * than exploding from the already-formed shape.
+ */
+@keyframes dandelionParticle {
+  0% {
+    transform: translate(0, 0) scale(0.1);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(calc(var(--hx) * 0.2), calc(var(--hy) * 0.2))
+      scale(0.4);
+    opacity: 0;
+  }
+  45% {
+    transform: translate(var(--hx), var(--hy)) scale(0.8);
+    opacity: var(--depthAlpha);
+  }
+  100% {
+    transform: translate(
+        calc(var(--hx) + var(--driftX)),
+        calc(var(--hy) + var(--driftY))
+      )
+      scale(var(--depthScale));
+    opacity: 0;
+  }
+}

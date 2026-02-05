@@ -12,6 +12,11 @@ export const goldenbookFont = localFont({
       weight: "500",
       style: "normal",
     },
+    {
+      path: "../../public/fonts/Goldenbook-Bold.woff",
+      weight: "700",
+      style: "normal",
+    },
   ],
   variable: "--font-goldenbook",
 });

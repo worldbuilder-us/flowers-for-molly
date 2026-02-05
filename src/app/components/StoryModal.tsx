@@ -50,11 +50,13 @@ export default function StoryModal({
         onClick={(e) => e.stopPropagation()}
         className={`${styles.modal} ${goldenbookFont.className}`}
       >
-        {/* Decorative frame layers */}
+        {/* Decorative frame layers (temporarily disabled) */}
+        {/*
         <div className={styles.borderLeft} aria-hidden="true" />
         <div className={styles.borderRight} aria-hidden="true" />
         <div className={styles.borderBottom} aria-hidden="true" />
         <div className={styles.borderTop} aria-hidden="true" />
+        */}
 
         {/* Inner content, padded away from the decorative borders */}
         <div className={styles.inner}>

@@ -2,12 +2,14 @@
 
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 // import type p5 from 'p5';
 // import { sketch } from '@/p5/sketch';
 import Header from "../../components/Header";
+import { goldenbookFont, montserratFont } from "../../fonts";
+import styles from "../StoryDetailPage.module.css";
 
 type Story = {
   _id: string;
@@ -80,59 +82,36 @@ export default function StoryPage() {
         }}
       /> */}
 
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          minHeight: "calc(100vh - 80px)",
-          paddingTop: "6rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <div style={{ width: "100%", maxWidth: 900, padding: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <main className={`${styles.storyMain} ${goldenbookFont.className}`}>
+        <div className={styles.storyContent}>
+          <div className={styles.headerRow}>
             <button
               onClick={() => router.back()}
-              style={{
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid rgba(0,0,0,0.08)",
-                background: "transparent",
-                cursor: "pointer",
-              }}
+              className={`${styles.backButton} ${montserratFont.className}`}
             >
               ← Back
             </button>
 
-            <h2 style={{ margin: 0, fontSize: "1.25rem" }}>
+            <h2 className={styles.headerTitle}>
               {loading ? "Loading…" : story ? story.authorName : "Not found"}
             </h2>
 
-            <div style={{ marginLeft: "auto" }}>
-              <Link
-                href="/view"
-                style={{ textDecoration: "none", color: "#333" }}
-              >
-                View index
-              </Link>
-            </div>
+            <Link href="/view" className={styles.indexLink}>
+              View index
+            </Link>
           </div>
 
           {/* Meta / contact */}
           {!loading && story && (
-            <div style={{ marginTop: 8, color: "#fff", fontSize: "0.95rem" }}>
+            <div className={styles.metaRow}>
               {story.authorEmail ? (
-                <a
-                  href={`mailto:${story.authorEmail}`}
-                  style={{ color: "#fff" }}
-                >
+                <a href={`mailto:${story.authorEmail}`}>
                   {story.authorEmail}
                 </a>
               ) : null}
               {story.importedAt ? (
-                <span style={{ marginLeft: 10 }}>
+                <span>
+                  {" "}
                   · Imported {new Date(story.importedAt).toLocaleDateString()}
                 </span>
               ) : null}
@@ -140,24 +119,9 @@ export default function StoryPage() {
           )}
 
           {/* Story panel */}
-          <div
-            style={{
-              marginTop: 16,
-              border: "1px solid rgba(0,0,0,0.08)",
-              borderRadius: 12,
-              background: "transparent",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
-              maxHeight: "65vh",
-              overflow: "auto",
-              padding: "18px 20px",
-              lineHeight: 1.5,
-              fontSize: "1.05rem",
-              whiteSpace: "pre-wrap", // preserve line breaks
-              wordWrap: "break-word",
-            }}
-          >
+          <div className={styles.storyPanel}>
             {loading ? (
-              <div style={{ opacity: 0.6 }}>Loading story…</div>
+              <div className={styles.loadingText}>Loading story…</div>
             ) : story ? (
               // Prefer Markdown? Swap to a renderer later.
               // For now, keep original spacing and most formatting:
@@ -167,7 +131,7 @@ export default function StoryPage() {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }
