@@ -215,7 +215,6 @@ export default function InfiniteParallaxGarden({
   const [measuredH, setMeasuredH] = useState<number | null>(null);
 
   useLayoutEffect(() => {
-    if (segmentHeight) return;
     const el = scrollRef.current;
     if (!el) return;
 
@@ -274,15 +273,27 @@ export default function InfiniteParallaxGarden({
     if (!el) return;
     let x = el.scrollLeft;
 
-    const leftBoundary = middleStartPx * 0.5;
-    const rightBoundary = middleStartPx * 1.5;
-
-    if (x < leftBoundary) {
-      x += segmentWidthPx;
-      el.scrollLeft = x;
-    } else if (x > rightBoundary) {
-      x -= segmentWidthPx;
-      el.scrollLeft = x;
+    const viewportW = el.clientWidth;
+    if (viewportW > 0 && segmentWidthPx > viewportW) {
+      const min = middleStartPx;
+      const range = segmentWidthPx - viewportW;
+      const normalized =
+        ((x - min) % range + range) % range;
+      const wrapped = min + normalized;
+      if (Math.abs(wrapped - x) > 0.5) {
+        x = wrapped;
+        el.scrollLeft = x;
+      }
+    } else {
+      const leftBoundary = middleStartPx;
+      const rightBoundary = middleStartPx * 2;
+      if (x < leftBoundary) {
+        x += segmentWidthPx;
+        el.scrollLeft = x;
+      } else if (x > rightBoundary) {
+        x -= segmentWidthPx;
+        el.scrollLeft = x;
+      }
     }
     setScrollLeft(el.scrollLeft);
   }, [middleStartPx, segmentWidthPx]);
@@ -487,11 +498,7 @@ export default function InfiniteParallaxGarden({
       typeof layer.biomeWidth === "number"
         ? layer.biomeWidth * sceneScale
         : segmentWidthPx;
-    const parallaxBasePx =
-      typeof layer.biomeStart === "number" && typeof layer.biomeWidth === "number"
-        ? ((localXPx - biomeStartPxRaw) % biomeWidthPx + biomeWidthPx) %
-          biomeWidthPx
-        : localXPx;
+    const parallaxBasePx = localXPx;
     const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
     const clipLeftPx = biomeStartPxRaw;
     const clipWidthPx = biomeWidthPx;
@@ -571,14 +578,9 @@ export default function InfiniteParallaxGarden({
             const repeatStartPx = (s.repeatStartPx ?? 0) * sceneScale;
             const repeatWidthPx =
               (s.repeatWidthPx ?? segmentWidth) * sceneScale;
-            const stripStartPx =
-              typeof layer.biomeWidth === "number"
-                ? repeatStartPx - repeatWidthPx
-                : repeatStartPx;
-            const stripWidthPx =
-              typeof layer.biomeWidth === "number"
-                ? repeatWidthPx * 3
-                : repeatWidthPx;
+            const stripStartPx = repeatStartPx;
+            const stripWidthPx = repeatWidthPx;
+            const boundedRepeat = typeof s.repeatWidthPx === "number";
             const wireId = `rep-${layer.id}-${segmentIndex}-${i}`;
             const shouldShowWireframe =
               allowDebugWireframes && activeWireframeId === wireId;
@@ -587,7 +589,7 @@ export default function InfiniteParallaxGarden({
             const stripStyle: React.CSSProperties = {
               position: "absolute",
               left: stripStartPx,
-              top: baseYpx - h * anchorY + yOffsetPx,
+              top: topY,
               width: stripWidthPx,
               height: h,
               backgroundImage: `url(${s.src})`,
@@ -599,6 +601,96 @@ export default function InfiniteParallaxGarden({
               )}px`,
               imageRendering: "auto",
             };
+
+            if (boundedRepeat) {
+              const innerLeft = stripStartPx - stripWidthPx;
+              const innerWidth = stripWidthPx * 3;
+              const clipStyle: React.CSSProperties = {
+                position: "absolute",
+                left: stripStartPx,
+                top: topY,
+                width: stripWidthPx,
+                height: h,
+                overflow: "hidden",
+                pointerEvents: "none",
+                transform: `translateX(${-parallaxShift}px)`,
+              };
+              const innerStyle: React.CSSProperties = {
+                position: "absolute",
+                left: innerLeft,
+                top: 0,
+                width: innerWidth,
+                height: h,
+                backgroundImage: `url(${s.src})`,
+                backgroundRepeat: "repeat-x",
+                backgroundSize: `${w}px ${h}px`,
+                backgroundPositionX: `${-(
+                  segmentIndex * segmentWidthPx +
+                  innerLeft
+                )}px`,
+                imageRendering: "auto",
+                transform: `translateX(${parallaxShift}px)`,
+              };
+              return (
+                <React.Fragment key={`rep-${i}`}>
+                  <div style={clipStyle}>
+                    <div style={innerStyle} />
+                  </div>
+                  {allowDebugWireframes && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: stripStartPx,
+                        top: topY,
+                        width: stripWidthPx,
+                        height: h,
+                        pointerEvents: "auto",
+                        background: "transparent",
+                      }}
+                      onPointerEnter={() => setHoveredWireframeId(wireId)}
+                      onPointerLeave={() => setHoveredWireframeId(null)}
+                      onClick={() => {
+                        if (!debugWireframesPinMode) return;
+                        setPinnedWireframeId((prev) =>
+                          prev === wireId ? null : wireId
+                        );
+                      }}
+                    >
+                      {shouldShowWireframe && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            outline: "2px dashed rgba(0, 0, 200, 0.8)",
+                            background: "rgba(255, 255, 200, 0.08)",
+                          }}
+                        >
+                          <WireLabel
+                            lines={[
+                              `${s.debug?.name ?? "asset"}_${
+                                s.debug?.index ?? "?"
+                              }`,
+                              `group: ${s.debug?.groupId ?? "unknown"} • role: ${
+                                s.debug?.role ?? "unknown"
+                              }`,
+                              `layer: ${layer.id} • parallax: ${parallax}`,
+                              `src: ${s.width}×${s.height}px • render: ${Math.round(
+                                w
+                              )}×${Math.round(h)}px`,
+                              `repeat: start=${(
+                                s.repeatStartPx ?? 0
+                              ).toFixed(1)} width=${(
+                                s.repeatWidthPx ?? segmentWidth
+                              ).toFixed(1)} (logical)`,
+                            ]}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            }
             return (
               <React.Fragment key={`rep-${i}`}>
                 <div style={stripStyle} />

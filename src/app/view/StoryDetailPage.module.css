@@ -1,0 +1,145 @@
+/* src/app/view/StoryDetailPage.module.css */
+
+.storyMain {
+  min-height: 100vh;
+  padding-top: 4rem;
+  padding-bottom: 3rem;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #000;
+  background-image: url("/gradients/bg-gradient-pages.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.storyContent {
+  width: 100%;
+  max-width: 64ch;
+  margin: 0 1.5rem;
+  padding: 2.5rem 2rem;
+
+  text-align: center;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.backButton {
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: transparent;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.indexLink {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.indexLink:hover {
+  color: #ffffff;
+}
+
+.metaRow {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.metaRow a {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.storyPanel {
+  margin-top: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  max-height: 65vh;
+  overflow: auto;
+  padding: 1.25rem 1.5rem;
+  line-height: 1.6;
+  font-size: 1.05rem;
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.loadingText {
+  opacity: 0.7;
+}
+
+/* ----------------------------------------
+ * Responsive adjustments
+ * -------------------------------------- */
+
+@media (max-width: 1024px) {
+  .storyContent {
+    max-width: 52ch;
+    margin: 0 1.25rem;
+    padding: 2.25rem 1.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .storyMain {
+    align-items: flex-start;
+    padding-top: 5rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .storyContent {
+    max-width: 100%;
+    margin: 0 1rem;
+    padding: 2rem 1.25rem 2.25rem;
+    text-align: left;
+  }
+
+  .headerRow {
+    align-items: flex-start;
+  }
+
+  .headerTitle {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .storyMain {
+    padding-top: 4.75rem;
+    padding-bottom: 2rem;
+  }
+
+  .storyContent {
+    margin: 0 0.75rem;
+    padding: 1.75rem 1rem 2rem;
+  }
+}

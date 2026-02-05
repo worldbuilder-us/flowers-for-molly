@@ -49,6 +49,10 @@
   font-weight: 500;
 }
 
+.aboutBodyBold {
+  font-weight: 700;
+}
+
 .descriptionSection p {
   margin: 0 0 1rem 0;
 }
@@ -95,6 +99,10 @@
 /* vertical spacing between lines (acts like your <br/> gaps) */
 .poemLine + .poemLine {
   margin-top: 0.75rem;
+}
+
+.poemNoBreak {
+  white-space: nowrap;
 }
 
 .poemLineEmphasis {

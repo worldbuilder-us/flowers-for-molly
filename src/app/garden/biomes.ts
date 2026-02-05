@@ -56,8 +56,6 @@ export function buildLayersFromBiome(
         baseYFromBottomPct: number;
         opacity: number;
         curve?: CurveConfig;
-        biomeStart: number;
-        biomeWidth: number;
         sprites: SpriteSpec[];
       }
     >();
@@ -89,14 +87,12 @@ export function buildLayersFromBiome(
       let bucket = layerBuckets.get(key);
       if (!bucket) {
         bucket = {
-          id: `${group.id}-${layers.length}-${layerBuckets.size}`,
+          id: `${biome.id}-${group.id}-${layers.length}-${layerBuckets.size}`,
           parallax: effectiveParallax,
           zIndex: effectiveZ,
           baseYFromBottomPct,
           opacity: effectiveOpacity,
           curve,
-          biomeStart: xOffset,
-          biomeWidth,
           sprites: [],
         };
         layerBuckets.set(key, bucket);
@@ -105,6 +101,9 @@ export function buildLayersFromBiome(
       const spriteScale = groupScale * scaleMultiplier;
       const groupFolder = joinPath(assetBasePath, group.folder);
       const localPositions = xPositions ?? [];
+      const worldPositions = repeatX
+        ? undefined
+        : localPositions.map((x) => x + xOffset);
       const sprite: SpriteSpec = {
         src: `${groupFolder}/${name}_${index}.png`,
         width,
@@ -115,11 +114,11 @@ export function buildLayersFromBiome(
         repeatX,
         repeatStartPx: repeatX
           ? repeatWithinBiome
-            ? 0
-            : xOffset
+            ? xOffset
+            : 0
           : undefined,
         repeatWidthPx: repeatX && repeatWithinBiome ? biomeWidth : undefined,
-        xPositions: repeatX ? undefined : localPositions,
+        xPositions: worldPositions,
         blurPx,
         debug: {
           name,
@@ -143,8 +142,6 @@ export function buildLayersFromBiome(
         curve: bucket.curve,
         role: group.role,
         groupId: group.id,
-        biomeStart: bucket.biomeStart,
-        biomeWidth: bucket.biomeWidth,
         sprites: bucket.sprites,
       });
     }

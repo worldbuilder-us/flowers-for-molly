@@ -5,6 +5,7 @@ import * as React from "react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
+import DandelionButton from "../components/DandelionButton";
 import { goldenbookFont, montserratFont } from "../fonts";
 import styles from "./SubmitPage.module.css";
 
@@ -98,7 +99,7 @@ export default function SubmitPage() {
           <section
             className={`${styles.introSection} ${goldenbookFont.className}`}
           >
-            <p>
+            <p className={styles.introLead}>
               In the field below, please share a story (or two, three, or more),
               a favorite memory, your favorite qualities, or an anecdote that
               comes to mind when you think of her. It can be anything—old tales,
@@ -161,13 +162,13 @@ export default function SubmitPage() {
             </div>
 
             <div className={styles.actionsRow}>
-              <button
+              <DandelionButton
                 type="submit"
                 disabled={submitting}
                 className={`${styles.submitButton} ${montserratFont.className}`}
               >
                 {submitting ? "Submitting…" : "Submit"}
-              </button>
+              </DandelionButton>
             </div>
           </form>
         </div>

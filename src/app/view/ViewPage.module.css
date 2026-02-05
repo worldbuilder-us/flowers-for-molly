@@ -7,7 +7,7 @@
   box-sizing: border-box;
 
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 
   background-color: #000;
@@ -27,6 +27,7 @@
 
 /* Grid: 3 columns × 4 rows on desktop, responsive below */
 .grid {
+  padding-top: 1.25rem;
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -42,6 +43,20 @@
 @media (max-width: 640px) {
   .grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .viewMain {
+    padding-top: 5rem;
+    padding-bottom: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .viewMain {
+    padding-top: 4.75rem;
+    padding-bottom: 2rem;
   }
 }
 
@@ -75,29 +90,13 @@
   cursor: pointer;
 
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
-  transition: transform 160ms ease, box-shadow 160ms ease;
-}
-
-/* Gradient overlay for mix-blend-mode: color-burn on hover */
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url("/gradients/bg-gradient-pages.png");
-  background-size: cover;
-  background-position: center;
-  mix-blend-mode: color-burn;
-  opacity: 0;
-  transition: opacity 160ms ease;
-}
-
-.card:hover::before {
-  opacity: 1;
+  transition: background 160ms ease;
 }
 
 .card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  background-image: url("/gradients/bg-gradient-pages.png");
+  background-size: cover;
+  background-position: center;
 }
 
 .cardBody {
@@ -120,6 +119,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.card:hover .cardAuthor {
+  color: #ffffff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
 
 .cardSnippet {
@@ -145,6 +149,15 @@
   letter-spacing: 0.08em;
 }
 
+.cardParticles {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translate(0, -50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* Pager */
 .pager {
   margin-top: 24px;
@@ -160,15 +173,13 @@
   border: none;
   cursor: pointer;
 
-  padding: 10px;
   width: 44px;
   height: 32px;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
 
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  border: 0px solid rgba(255, 255, 255, 0.8);
   border-radius: 12px;
 }
 
@@ -176,7 +187,7 @@
   display: block;
 
   /* Ensures the SVG does not add stray whitespace */
-  width: 18px; /* smaller for better optical centering */
+  width: 18px;
   height: 12px;
 
   /* SVGs have baseline alignment by default; this fixes that */

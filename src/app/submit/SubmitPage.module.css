@@ -2,8 +2,8 @@
 
 .submitMain {
   min-height: 100vh;
-  padding-top: 0rem;
-  padding-bottom: 4rem; /* fix invalid 'rem' and give breathing room */
+  padding-top: 4rem;
+  padding-bottom: 3rem;
   box-sizing: border-box;
 
   display: flex;
@@ -18,7 +18,7 @@
 
 .submitContent {
   width: 100%;
-  max-width: 45%; /* desktop: keep narrow, book-like column */
+  max-width: 64ch;
   margin: 0 1.5rem;
   padding: 2.5rem 2rem;
 
@@ -29,12 +29,12 @@
 
 /* Header: two stacked words */
 .submitTitle {
-  margin: 0 0 5rem 0;
+  margin: 0 0 2.5rem 0;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
-  font-size: clamp(4.5rem, 8vw, 10rem);
-  line-height: 0.825;
+  font-size: clamp(4rem, 8vw, 7rem);
+  line-height: 0.9;
 }
 
 .submitTitleWord {
@@ -43,10 +43,14 @@
 
 /* Intro copy */
 .introSection {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   line-height: 1.5;
   font-weight: 500;
   max-width: 100%;
+}
+
+.introLead {
+  font-weight: 700;
 }
 
 .introSection p {
@@ -72,7 +76,7 @@
 /* Form layout */
 .form {
   width: 100%;
-  margin-top: 3rem;
+  margin-top: 2.5rem;
 }
 
 /* two-column row on desktop, single column on small screens */
@@ -174,8 +178,14 @@
 /* Medium screens: widen content slightly */
 @media (max-width: 1024px) {
   .submitContent {
-    max-width: 70%;
-    padding: 2.5rem 1.75rem;
+    max-width: 52ch;
+    margin: 0 1.25rem;
+    padding: 2.25rem 1.75rem;
+  }
+
+  .introSection {
+    font-size: 1.1rem;
+    line-height: 1.6;
   }
 }
 
@@ -184,22 +194,45 @@
   .submitMain {
     align-items: flex-start;
     padding-top: 5rem;
-    padding-bottom: 3rem;
+    padding-bottom: 2.5rem;
   }
 
   .submitContent {
     max-width: 100%;
-    margin: 0 1.25rem;
-    padding: 2rem 1.25rem;
-    text-align: left; /* easier to read on narrow screens */
+    margin: 0 1rem;
+    padding: 2rem 1.25rem 2.25rem;
+    text-align: left;
   }
 
   .submitTitle {
-    margin-bottom: 3rem;
-    font-size: clamp(3rem, 14vw, 4.5rem);
+    margin-bottom: 2rem;
+    font-size: clamp(2.6rem, 9vw, 3.4rem);
+    text-align: left;
   }
 
   .introSection {
-    font-size: 1.15rem;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .input,
+  .textarea {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .submitMain {
+    padding-top: 4.75rem;
+    padding-bottom: 2rem;
+  }
+
+  .submitContent {
+    margin: 0 0.75rem;
+    padding: 1.75rem 1rem 2rem;
+  }
+
+  .submitTitle {
+    font-size: clamp(2.2rem, 9vw, 3rem);
   }
 }
