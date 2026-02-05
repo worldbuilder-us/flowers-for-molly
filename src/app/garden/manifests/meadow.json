@@ -9,7 +9,7 @@
       "id": "flora_fg1_g1",
       "folder": "meadow_foreground/flora_group_1",
       "role": "FOREGROUND_1",
-      "scale": 1.25,
+      "scale": 1.35,
       "anchorY": 0.35,
       "baseYOffsetPx": 0,
       "opacity": 1,
@@ -27,6 +27,22 @@
           "width": 520,
           "height": 520,
           "xPositions": [1520, 3120]
+        },
+        {
+          "name": "floral_cluster",
+          "index": 1,
+          "width": 512,
+          "height": 512,
+          "xPositions": [1900, 1520, 2800, 3020],
+          "yOffset": 380
+        },
+        {
+          "name": "floral_cluster",
+          "index": 2,
+          "width": 512,
+          "height": 512,
+          "xPositions": [900, 2100, 1820, 2600, 3520],
+          "yOffset": 320
         }
       ]
     },
@@ -34,7 +50,7 @@
       "id": "flora_fg2_g2",
       "folder": "meadow_foreground/flora_group_2",
       "role": "FOREGROUND_1",
-      "scale": 1.0,
+      "scale": 1.8,
       "anchorY": 0.1,
       "baseYOffsetPx": 0,
       "opacity": 1,
@@ -44,14 +60,21 @@
           "index": 1,
           "width": 520,
           "height": 700,
-          "xPositions": [400, 2200, 3400]
+          "xPositions": [400, 582, 1620, 1830, 2200, 2734, 3400]
         },
         {
           "name": "flower",
           "index": 2,
           "width": 520,
           "height": 520,
-          "xPositions": [1600]
+          "xPositions": [180, 620, 935, 1600, 1930, 2500]
+        },
+        {
+          "name": "saplings",
+          "index": 1,
+          "width": 520,
+          "height": 760,
+          "xPositions": [110, 935, 1430, 1730, 2250]
         }
       ]
     },
