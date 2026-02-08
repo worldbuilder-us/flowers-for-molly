@@ -11,6 +11,7 @@ max_images = None  # set to an int to limit images
 dry_run = False  # True = no render, just write dry-run plan
 validate_output = True  # only overwrite if render output looks valid
 min_output_bytes = 2048  # minimum file size to consider a render non-empty
+preserve_input_resolution = True  # match output resolution to input image size
 
 # Directory of this .blend file
 base_dir = os.path.dirname(bpy.data.filepath)
@@ -271,9 +272,6 @@ for job in jobs:
             planned_ops.append(f"Out={output_path}")
             planned_ops.append("")
 
-            is_far_hills = output_sub_name.lower() == "far_hills"
-            res_x, res_y = (2048, 1024) if is_far_hills else (1080, 1080)
-
             if dry_run:
                 continue
 
@@ -287,10 +285,6 @@ for job in jobs:
                     bpy.context.window.scene = scene
                 except Exception:
                     bpy.context.scene = scene
-
-                scene.render.resolution_x = res_x
-                scene.render.resolution_y = res_y
-                scene.render.resolution_percentage = 100
 
                 node_tree = resolve_node_tree(scene_name, scene)
                 if not node_tree:
@@ -312,6 +306,15 @@ for job in jobs:
 
                 img = bpy.data.images.load(input_path)
                 img_node.image = img
+
+                if preserve_input_resolution:
+                    try:
+                        width, height = img.size
+                        scene.render.resolution_x = int(width)
+                        scene.render.resolution_y = int(height)
+                        scene.render.resolution_percentage = 100
+                    except Exception as e:
+                        log(f"WARN: Could not read image size for {input_path}: {e}")
 
                 randomize_nodes(glare_node)
 
