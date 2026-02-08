@@ -238,7 +238,6 @@
           "xPositions": [450],
           "yOffset": 340
         },
-
         {
           "name": "stone_path",
           "index": 0,
@@ -366,6 +365,14 @@
           "height": 400,
           "xPositions": [3220],
           "yOffset": 80
+        },
+        {
+          "name": "floral_cluster",
+          "index": 5,
+          "width": 512,
+          "height": 512,
+          "xPositions": [3820],
+          "yOffset": 250
         }
       ]
     },
