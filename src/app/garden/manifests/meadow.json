@@ -132,6 +132,22 @@
           "width": 520,
           "height": 520,
           "xPositions": [680, 960, 1560, 2760, 3360, 3960]
+        },
+        {
+          "name": "cornflower",
+          "index": 0,
+          "width": 400,
+          "height": 400,
+          "xPositions": [1100],
+          "yOffset": -50
+        },
+        {
+          "name": "peonies",
+          "index": 0,
+          "width": 400,
+          "height": 400,
+          "xPositions": [1900],
+          "yOffset": -30
         }
       ]
     },
@@ -207,6 +223,15 @@
           "yOffset": 290
         },
         {
+          "name": "butterfly",
+          "index": 0,
+          "width": 300,
+          "height": 300,
+          "xPositions": [450],
+          "yOffset": 340
+        },
+
+        {
           "name": "stone_path",
           "index": 0,
           "width": 600,
@@ -263,6 +288,14 @@
           "yOffset": 10
         },
         {
+          "name": "rock",
+          "index": 4,
+          "width": 280,
+          "height": 250,
+          "xPositions": [500],
+          "yOffset": 188
+        },
+        {
           "name": "elm_tree",
           "index": 1,
           "width": 400,
@@ -277,6 +310,30 @@
           "height": 400,
           "xPositions": [780],
           "yOffset": 85
+        },
+        {
+          "name": "sunflower",
+          "index": 0,
+          "width": 150,
+          "height": 150,
+          "xPositions": [770],
+          "yOffset": 228
+        },
+        {
+          "name": "stormking",
+          "index": 0,
+          "width": 550,
+          "height": 500,
+          "xPositions": [1550],
+          "yOffset": 0
+        },
+        {
+          "name": "bumblebee",
+          "index": 0,
+          "width": 300,
+          "height": 300,
+          "xPositions": [1980],
+          "yOffset": 180
         }
       ]
     },
