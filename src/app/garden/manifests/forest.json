@@ -120,6 +120,14 @@
       "opacity": 0.95,
       "assets": [
         {
+          "name": "floral_cluster",
+          "index": 3,
+          "width": 240,
+          "height": 180,
+          "xPositions": [1360],
+          "yOffset": 150
+        },
+        {
           "name": "pine_tree",
           "index": 1,
           "width": 1248,
@@ -148,11 +156,59 @@
           "xPositions": [2700, 465]
         },
         {
+          "name": "floral_cluster",
+          "index": 3,
+          "width": 480,
+          "height": 540,
+          "xPositions": [2530],
+          "yOffset": 180
+        },
+        {
+          "name": "floral_cluster",
+          "index": 3,
+          "width": 480,
+          "height": 500,
+          "xPositions": [2830],
+          "yOffset": 200
+        },
+        {
           "name": "elm_tree",
           "index": 1,
           "width": 1948,
           "height": 1948,
           "xPositions": [3000, 13, 800, 2200]
+        },
+        {
+          "name": "floral_cluster",
+          "index": 2,
+          "width": 360,
+          "height": 320,
+          "xPositions": [1690],
+          "yOffset": 260
+        },
+        {
+          "name": "rocksmoss",
+          "index": 0,
+          "width": 512,
+          "height": 512,
+          "xPositions": [630],
+          "yOffset": 240
+        },
+        {
+          "name": "orlaya",
+          "index": 0,
+          "width": 120,
+          "height": 120,
+          "xPositions": [1200],
+          "yOffset": 120
+        },
+        {
+          "name": "rocksflowers",
+          "index": 0,
+          "width": 512,
+          "height": 512,
+          "xPositions": [1230],
+          "yOffset": 320
         }
       ]
     },
