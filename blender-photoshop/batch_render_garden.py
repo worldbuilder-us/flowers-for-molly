@@ -25,10 +25,10 @@ repo_root = os.path.abspath(os.path.join(base_dir, ".."))
 
 # Node trees to use per job (adjust to your actual mapping)
 NODE_TREES_BY_SCENE = {
-    "meadow-flowers": "Compositing Nodetree.001",
-    "meadow-background": "Compositing Nodetree.002",
+    "meadow-flowers": "Compositing Nodetree.005",
+    "meadow-background": "Compositing Nodetree.004",
     "forest-flowers": "Compositing Nodetree.003",
-    "forest-background": "Compositing Nodetree.004",
+    "forest-background": "Compositing Nodetree.002",
     # "<other-scene>": "Compositing Nodetree.005",
 }
 
