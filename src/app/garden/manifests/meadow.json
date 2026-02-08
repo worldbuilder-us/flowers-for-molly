@@ -43,6 +43,14 @@
           "height": 512,
           "xPositions": [900, 2100, 1820, 2600, 3520],
           "yOffset": 320
+        },
+        {
+          "name": "rock",
+          "index": 1,
+          "width": 400,
+          "height": 400,
+          "xPositions": [3720],
+          "yOffset": 200
         }
       ]
     },
@@ -237,7 +245,7 @@
           "width": 600,
           "height": 1000,
           "xPositions": [2400],
-          "yOffset": 300
+          "yOffset": 250
         },
         {
           "name": "moss",
@@ -334,6 +342,30 @@
           "height": 300,
           "xPositions": [1980],
           "yOffset": 180
+        },
+        {
+          "name": "blazingstar",
+          "index": 0,
+          "width": 200,
+          "height": 200,
+          "xPositions": [2550],
+          "yOffset": 320
+        },
+        {
+          "name": "rocksflowers",
+          "index": 0,
+          "width": 400,
+          "height": 400,
+          "xPositions": [2620],
+          "yOffset": 300
+        },
+        {
+          "name": "willow",
+          "index": 0,
+          "width": 400,
+          "height": 400,
+          "xPositions": [3220],
+          "yOffset": 80
         }
       ]
     },
