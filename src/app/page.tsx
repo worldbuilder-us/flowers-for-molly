@@ -48,6 +48,7 @@ export default function Page() {
   const [pointerDebug, setPointerDebug] = useState<PointerDebugInfo | null>(
     null,
   );
+  const debugMode = process.env.NEXT_PUBLIC_DEBUG_MODE === "true";
   const [isMuted, setIsMuted] = useState(false);
 
   const worldConfig = useMemo(() => getWorldConfig(), []);
@@ -219,93 +220,93 @@ export default function Page() {
               )}
             </svg>
           </button>
-          <div
-            style={{
-              position: "absolute",
-              top: 100,
-              right: 12,
-              zIndex: 99999,
-              padding: "10px 12px",
-              background: "rgba(0,0,0,0.4)",
-              color: "#fff",
-              borderRadius: 8,
-              fontSize: 13,
-              lineHeight: 1.3,
-              backdropFilter: "blur(2px)",
-              WebkitBackdropFilter: "blur(2px)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-              userSelect: "none",
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>Debug</div>
+          {debugMode && (
+            <div
+              style={{
+                position: "absolute",
+                top: 100,
+                right: 12,
+                zIndex: 99999,
+                padding: "10px 12px",
+                background: "rgba(0,0,0,0.4)",
+                color: "#fff",
+                borderRadius: 8,
+                fontSize: 13,
+                lineHeight: 1.3,
+                backdropFilter: "blur(2px)",
+                WebkitBackdropFilter: "blur(2px)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                userSelect: "none",
+              }}
+            >
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>Debug</div>
 
-            {/* wireframes toggles */}
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={debugWireframesForeground}
-                onChange={(e) => setDebugWireframesForeground(e.target.checked)}
-              />
-              Wireframe foreground
-            </label>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                marginTop: 6,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={debugWireframesBackground}
-                onChange={(e) => setDebugWireframesBackground(e.target.checked)}
-              />
-              Wireframe background
-            </label>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                marginTop: 6,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={debugWireframesPinMode}
-                onChange={(e) => setDebugWireframesPinMode(e.target.checked)}
-              />
-              Pin wireframe on click
-            </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={debugWireframesForeground}
+                  onChange={(e) => setDebugWireframesForeground(e.target.checked)}
+                />
+                Wireframe foreground
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  marginTop: 6,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={debugWireframesBackground}
+                  onChange={(e) => setDebugWireframesBackground(e.target.checked)}
+                />
+                Wireframe background
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  marginTop: 6,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={debugWireframesPinMode}
+                  onChange={(e) => setDebugWireframesPinMode(e.target.checked)}
+                />
+                Pin wireframe on click
+              </label>
 
-            {/* pointer debug toggle */}
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                marginTop: 6,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={debugPointer}
-                onChange={(e) => setDebugPointer(e.target.checked)}
-              />
-              Pointer debug
-            </label>
-          </div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  marginTop: 6,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={debugPointer}
+                  onChange={(e) => setDebugPointer(e.target.checked)}
+                />
+                Pointer debug
+              </label>
+            </div>
+          )}
 
           <InfiniteParallaxGarden
             segmentWidth={segmentWidth}
@@ -316,7 +317,9 @@ export default function Page() {
             onViewportChange={onViewportChange}
             initialOffsetX={activeBiome?.startOffset ?? 0}
             // Only collect pointer debug info while pointer debug is on
-            onPointerDebugChange={debugPointer ? setPointerDebug : undefined}
+            onPointerDebugChange={
+              debugMode && debugPointer ? setPointerDebug : undefined
+            }
           />
 
           {/* dots overlay */}
@@ -330,7 +333,7 @@ export default function Page() {
           )}
 
           {/* Pointer debug tooltip (follows pointer, mouse + touch) */}
-          {debugPointer && pointerDebug && (
+          {debugMode && debugPointer && pointerDebug && (
             <div
               style={{
                 position: "fixed",
