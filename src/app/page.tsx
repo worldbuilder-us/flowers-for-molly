@@ -18,7 +18,7 @@ import styles from "./Page.module.css";
 import { getWorldConfig } from "./garden/biomeLoader";
 
 const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
-  "flowers for molly theme 0.1.mp3",
+  "flowers for molly theme.mp3",
 )}`;
 const BACKGROUND_MUSIC_BASE_VOLUME = 0.2;
 const BACKGROUND_MUSIC_FADE_DURATION = 4; // seconds
@@ -252,7 +252,9 @@ export default function Page() {
                 <input
                   type="checkbox"
                   checked={debugWireframesForeground}
-                  onChange={(e) => setDebugWireframesForeground(e.target.checked)}
+                  onChange={(e) =>
+                    setDebugWireframesForeground(e.target.checked)
+                  }
                 />
                 Wireframe foreground
               </label>
@@ -268,7 +270,9 @@ export default function Page() {
                 <input
                   type="checkbox"
                   checked={debugWireframesBackground}
-                  onChange={(e) => setDebugWireframesBackground(e.target.checked)}
+                  onChange={(e) =>
+                    setDebugWireframesBackground(e.target.checked)
+                  }
                 />
                 Wireframe background
               </label>
