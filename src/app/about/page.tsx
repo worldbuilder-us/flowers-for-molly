@@ -26,7 +26,7 @@ export default function AboutPage() {
               <em>Flowers for Molly</em> is a collaborative and generative
               artistic tribute to honor and celebrate the life of our dearest
               Molly Dowd. Built from the shared stories, memories, and moments
-              offered by Molly&lsquo;s friends and family, we can weave the past
+              offered by Molly&rsquo;s friends and family, we can weave the past
               into the present, preserving her legacy in the years to come.
             </p>
 
@@ -69,7 +69,7 @@ export default function AboutPage() {
               <p className={styles.poemLine}>Your children.</p>
               <p className={styles.poemLine}>The garden we started to grow.</p>
               <p className={styles.poemLine}>
-                I&lsquo;ll take them with me, I&lsquo;ll carry them{" "}
+                I&rsquo;ll take them with me, I&rsquo;ll carry them{" "}
                 <span className={styles.poemNoBreak}>from here.</span>
               </p>
             </div>

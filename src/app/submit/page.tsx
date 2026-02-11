@@ -78,7 +78,7 @@ export default function SubmitPage() {
       router.push(`/view/${json.id}`);
     } catch (err) {
       setError(
-        (err as Error)?.message || "Something went wrong while submitting."
+        (err as Error)?.message || "Something went wrong while submitting.",
       );
     } finally {
       setSubmitting(false);
@@ -100,8 +100,8 @@ export default function SubmitPage() {
             className={`${styles.introSection} ${goldenbookFont.className}`}
           >
             <p className={styles.introLead}>
-              In the field below, please share a story (or two, three, or more),
-              a favorite memory, your favorite qualities, or an anecdote that
+              In the field below, please share a story (or two, or three), a
+              favorite memory, your favorite qualities, or an anecdote that
               comes to mind when you think of her. It can be anything—old tales,
               new tales, bits about her personality, her little
               idiosyncrasies—whatever holds meaning for you. The more, the
@@ -109,8 +109,8 @@ export default function SubmitPage() {
             </p>
 
             <p>
-              Once you’ve added your story, hit share and watch it come to life
-              as it’s added to the whole.
+              Once you&rsquo;ve added your story, hit submit, and it&rsquo;ll be
+              added to the garden.
             </p>
           </section>
 
