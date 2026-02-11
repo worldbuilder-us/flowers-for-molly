@@ -273,27 +273,17 @@ export default function InfiniteParallaxGarden({
     if (!el) return;
     let x = el.scrollLeft;
 
-    const viewportW = el.clientWidth;
-    if (viewportW > 0 && segmentWidthPx > viewportW) {
-      const min = middleStartPx;
-      const range = segmentWidthPx - viewportW;
-      const normalized =
-        ((x - min) % range + range) % range;
-      const wrapped = min + normalized;
-      if (Math.abs(wrapped - x) > 0.5) {
-        x = wrapped;
-        el.scrollLeft = x;
-      }
-    } else {
-      const leftBoundary = middleStartPx;
-      const rightBoundary = middleStartPx * 2;
-      if (x < leftBoundary) {
-        x += segmentWidthPx;
-        el.scrollLeft = x;
-      } else if (x > rightBoundary) {
-        x -= segmentWidthPx;
-        el.scrollLeft = x;
-      }
+    // Same wrap logic as 10d3fff: keep the viewport anchored around the
+    // middle segment, but allow it to straddle the boundary without seams.
+    const leftBoundary = middleStartPx * 0.5;
+    const rightBoundary = middleStartPx * 1.5;
+
+    if (x < leftBoundary) {
+      x += segmentWidthPx;
+      el.scrollLeft = x;
+    } else if (x > rightBoundary) {
+      x -= segmentWidthPx;
+      el.scrollLeft = x;
     }
     setScrollLeft(el.scrollLeft);
   }, [middleStartPx, segmentWidthPx]);
@@ -340,6 +330,16 @@ export default function InfiniteParallaxGarden({
     const x = (scrollLeft - middleStartPx) % segmentWidthPx;
     return x < 0 ? x + segmentWidthPx : x;
   }, [scrollLeft, middleStartPx, segmentWidthPx]);
+
+  /**
+   * Continuous world X relative to the middle segment origin (CSS px).
+   * This avoids modulo wrap for parallax so layers stay seamless
+   * when the viewport straddles the world boundary.
+   */
+  const worldXPx = useMemo(
+    () => scrollLeft - middleStartPx,
+    [scrollLeft, middleStartPx]
+  );
 
   /**
    * Report viewport to consumers (e.g. StoryDotsOverlay) using:
@@ -498,7 +498,7 @@ export default function InfiniteParallaxGarden({
       typeof layer.biomeWidth === "number"
         ? layer.biomeWidth * sceneScale
         : segmentWidthPx;
-    const parallaxBasePx = localXPx;
+    const parallaxBasePx = worldXPx;
     const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
     const clipLeftPx = biomeStartPxRaw;
     const clipWidthPx = biomeWidthPx;
