@@ -18,7 +18,7 @@
   background: #ffffff;
   border-radius: 22px;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
+  overflow: visible;
   display: flex;
 }
 
@@ -33,9 +33,40 @@
   flex-direction: column;
   flex: 1;
   padding-top: 36px;
-  padding-right: 36px; /* away from right vines */
-  padding-bottom: 36px; /* away from bottom flowers */
-  padding-left: 36px; /* away from left vines */
+  padding-right: 44px; /* away from right ornaments */
+  padding-bottom: 44px; /* away from bottom ornaments */
+  padding-left: 44px; /* away from left ornaments */
+}
+
+/* Random ornament stickers */
+
+.ornament {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  object-fit: contain;
+  opacity: 0.95;
+  /* filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18)); */
+}
+
+.ornamentTop {
+  transform: translate(-50%, -50%);
+}
+
+.ornamentBottom {
+  transform: translate(-50%, 50%);
+}
+
+.ornamentCornerBr {
+  transform: translate(50%, 50%);
+}
+
+.ornamentLeft {
+  transform: translate(-50%, -50%);
+}
+
+.ornamentRight {
+  transform: translate(50%, -50%);
 }
 
 /* Decorative borders (flower / vine imagery) */
