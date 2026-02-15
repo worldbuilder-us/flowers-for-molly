@@ -191,9 +191,37 @@
 /* Small screens tweaks */
 
 @media (max-width: 640px) {
+  .backdrop {
+    padding: 32px;
+  }
+
+  .ornament {
+    transform-origin: center;
+  }
+
+  .ornamentTop {
+    transform: translate(-50%, -50%) scale(0.75);
+  }
+
+  .ornamentBottom {
+    transform: translate(-50%, 50%) scale(0.75);
+  }
+
+  .ornamentCornerBr {
+    transform: translate(50%, 50%) scale(0.75);
+  }
+
+  .ornamentLeft {
+    transform: translate(-50%, -50%) scale(0.66);
+  }
+
+  .ornamentRight {
+    transform: translate(50%, -50%) scale(0.66);
+  }
+
   .modal {
-    width: 94vw;
-    max-height: 82vh;
+    width: 100%;
+    max-height: 100%;
     border-radius: 18px;
   }
 
