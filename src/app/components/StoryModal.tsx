@@ -61,12 +61,27 @@ function sampleSlots(slots: OrnamentSlot[], count: number): OrnamentSlot[] {
 function buildOrnaments(): Array<{ slot: OrnamentSlot; src: string }> {
   const result: Array<{ slot: OrnamentSlot; src: string }> = [];
   const sides: OrnamentSide[] = ["top", "bottom", "left", "right"];
+  const usedBySide: Record<OrnamentSide, Set<string>> = {
+    top: new Set(),
+    bottom: new Set(),
+    left: new Set(),
+    right: new Set(),
+  };
+
+  const pickImageForSide = (side: OrnamentSide): string => {
+    const used = usedBySide[side];
+    const available = ORNAMENT_IMAGES.filter((src) => !used.has(src));
+    const pool = available.length ? available : ORNAMENT_IMAGES;
+    const src = pool[randomInt(pool.length)];
+    used.add(src);
+    return src;
+  };
 
   const mandatorySlot = ORNAMENT_SLOTS.find(
     (slot) => slot.id === "bottom-right",
   );
   if (mandatorySlot) {
-    const src = ORNAMENT_IMAGES[randomInt(ORNAMENT_IMAGES.length)];
+    const src = pickImageForSide(mandatorySlot.side);
     result.push({ slot: mandatorySlot, src });
   }
 
@@ -77,7 +92,7 @@ function buildOrnaments(): Array<{ slot: OrnamentSlot; src: string }> {
     const count = randomInt(3); // 0-2 additional slots per side
     const picked = sampleSlots(sideSlots, count);
     for (const slot of picked) {
-      const src = ORNAMENT_IMAGES[randomInt(ORNAMENT_IMAGES.length)];
+      const src = pickImageForSide(side);
       result.push({ slot, src });
     }
   }

@@ -18,7 +18,7 @@
   background: #ffffff;
   border-radius: 22px;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
+  overflow: visible;
   display: flex;
 }
 
@@ -42,7 +42,7 @@
 
 .ornament {
   position: absolute;
-  z-index: 2;
+  z-index: 10;
   pointer-events: none;
   object-fit: contain;
   opacity: 0.95;
