@@ -222,11 +222,11 @@ export default function Page() {
                 <p>Left and right arrow keys to scroll</p>
                 <svg viewBox="0 0 280 80" role="img" aria-hidden="true">
                   <g className={styles.arrowKeyLeft}>
-                    <rect x="26" y="12" width="90" height="56" rx="12" />
+                    {/* <rect x="26" y="12" width="90" height="56" rx="12" /> */}
                     <path d="M74 40H48m0 0l10-10m-10 10l10 10" />
                   </g>
                   <g className={styles.arrowKeyRight}>
-                    <rect x="164" y="12" width="90" height="56" rx="12" />
+                    {/* <rect x="164" y="12" width="90" height="56" rx="12" /> */}
                     <path d="M206 40h26m0 0l-10-10m10 10l-10 10" />
                   </g>
                 </svg>
