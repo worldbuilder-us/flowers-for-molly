@@ -74,6 +74,7 @@
   height: 220px;
   pointer-events: none;
   overflow: visible;
+  contain: layout;
 }
 
 /* Tiny particles; animated via keyframes using CSS vars */
@@ -95,6 +96,7 @@
   animation-name: storyDotParticle;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
+  will-change: transform, opacity;
 }
 
 /*

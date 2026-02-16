@@ -157,6 +157,8 @@ export type GardenProps = {
    * When called with `null`, it means pointer left the garden.
    */
   onPointerDebugChange?: (info: PointerDebugInfo | null) => void;
+  /** Optional callback fired once after the first real user scroll. */
+  onFirstUserScroll?: () => void;
 };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -184,9 +186,13 @@ export default function InfiniteParallaxGarden({
   debugWireframesBackground = false,
   debugWireframesPinMode = false,
   onPointerDebugChange,
+  onFirstUserScroll,
 }: GardenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollLeftRef = useRef(0);
+  const lastObservedScrollLeftRef = useRef<number | null>(null);
+  const hasInitializedScrollRef = useRef(false);
+  const hasReportedFirstScrollRef = useRef(false);
   const rafRef = useRef<number | null>(null);
   const keyRafRef = useRef<number | null>(null);
   const keyDirRef = useRef<-1 | 0 | 1>(0);
@@ -267,6 +273,8 @@ export default function InfiniteParallaxGarden({
 
     el.scrollLeft = target;
     setScrollLeft(target);
+    lastObservedScrollLeftRef.current = target;
+    hasInitializedScrollRef.current = true;
   }, [initialOffsetX, segmentWidth, middleStartPx, sceneScale]);
 
   /**
@@ -291,13 +299,27 @@ export default function InfiniteParallaxGarden({
       el.scrollLeft = x;
     }
     scrollLeftRef.current = el.scrollLeft;
+    const previousScroll = lastObservedScrollLeftRef.current;
+    lastObservedScrollLeftRef.current = el.scrollLeft;
+
+    if (
+      onFirstUserScroll &&
+      hasInitializedScrollRef.current &&
+      !hasReportedFirstScrollRef.current &&
+      typeof previousScroll === "number" &&
+      Math.abs(el.scrollLeft - previousScroll) > 0.5
+    ) {
+      hasReportedFirstScrollRef.current = true;
+      onFirstUserScroll();
+    }
+
     if (rafRef.current == null) {
       rafRef.current = window.requestAnimationFrame(() => {
         rafRef.current = null;
         setScrollLeft(scrollLeftRef.current);
       });
     }
-  }, [middleStartPx, segmentWidthPx]);
+  }, [middleStartPx, onFirstUserScroll, segmentWidthPx]);
 
   /**
    * Map vertical wheel to horizontal scroll on desktop,

@@ -42,14 +42,13 @@ type Particle = {
   depth: number; // 0..1, drives size/alpha
 };
 
+type BurstState = Record<string, number>;
+
 type StoryDotsOverlayProps = {
   stories: StoryListItem[];
   segmentWidth: number;
   viewport: GardenViewport;
   onDotClick: (s: StoryListItem) => void;
-  /** Optional: min/max parallax range for dots */
-  pMin?: number;
-  pMax?: number;
 };
 
 /**
@@ -63,12 +62,14 @@ type StoryDotsOverlayProps = {
 function ParticleSpiral({
   dotRadius,
   seed,
+  particleCount,
 }: {
   dotRadius: number;
   seed: number;
+  particleCount: number;
 }) {
   const particles = React.useMemo<Particle[]>(() => {
-    const count = 250;
+    const count = particleCount;
     const helixLength = 240; // how far the helix runs along +X
     const rnd = rng01(seed ^ 0xabc123);
 
@@ -141,7 +142,7 @@ function ParticleSpiral({
     }
 
     return items;
-  }, [seed]);
+  }, [particleCount, seed]);
 
   return (
     <div
@@ -185,9 +186,10 @@ export default function StoryDotsOverlay({
   segmentWidth,
   viewport,
   onDotClick,
-  pMin = 0.35,
-  pMax = 0.95,
 }: StoryDotsOverlayProps) {
+  const BURST_TTL_MS = 12000;
+  const OFFSCREEN_CULL_PAD = 220;
+
   const dots = useMemo<Dot[]>(() => {
     const vh = Math.max(300, viewport.viewportH || 700);
     const topPad = Math.max(40, Math.round(vh * 0.08));
@@ -200,18 +202,15 @@ export default function StoryDotsOverlay({
       const y = topPad + Math.floor(rnd() * usableH);
       const r = 4 + Math.floor(rnd() * 6);
 
-      // We keep pMin/pMax as arguments for potential future tuning,
-      // but we lock parallax to 1 so dots are fixed in world space.
       const parallax = 1;
 
       return { id: s._id, x, y, r, author: s.authorName, story: s, parallax };
     });
-  }, [stories, segmentWidth, viewport.viewportH, pMin, pMax]);
+  }, [stories, segmentWidth, viewport.viewportH]);
 
   const [hoverId, setHoverId] = useState<string | null>(null);
-  const [triggeredSpirals, setTriggeredSpirals] = useState<
-    Record<string, boolean>
-  >({});
+  const [activeBursts, setActiveBursts] = useState<BurstState>({});
+  const burstTimersRef = React.useRef<Record<string, number>>({});
 
   // Preload SFX one time on the client
   const sfxPlayersRef = React.useRef<HTMLAudioElement[] | null>(null);
@@ -238,7 +237,6 @@ export default function StoryDotsOverlay({
       });
       sfxPlayersRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const playRandomSfx = React.useCallback(() => {
@@ -262,16 +260,40 @@ export default function StoryDotsOverlay({
     ((viewport.offsetX % segmentWidth) + segmentWidth) % segmentWidth;
 
   const baseLeft = -segmentWidth;
+  const viewportW = Math.max(320, viewport.viewportW || 0);
+  const particleCount = viewportW <= 768 ? 200 : 250;
+
+  React.useEffect(() => {
+    return () => {
+      const timers = burstTimersRef.current;
+      Object.values(timers).forEach((timerId) => window.clearTimeout(timerId));
+      burstTimersRef.current = {};
+    };
+  }, []);
 
   const onEnter = useCallback(
-    (key: string, storyId: string) => {
+    (key: string) => {
+      const token = Date.now();
       setHoverId(key);
-      setTriggeredSpirals((prev) =>
-        prev[storyId] ? prev : { ...prev, [storyId]: true },
-      );
+      setActiveBursts((prev) => ({ ...prev, [key]: token }));
+
+      const existingTimer = burstTimersRef.current[key];
+      if (typeof existingTimer === "number") {
+        window.clearTimeout(existingTimer);
+      }
+      burstTimersRef.current[key] = window.setTimeout(() => {
+        setActiveBursts((prev) => {
+          if (!(key in prev)) return prev;
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+        delete burstTimersRef.current[key];
+      }, BURST_TTL_MS);
+
       playRandomSfx();
     },
-    [playRandomSfx],
+    [BURST_TTL_MS, playRandomSfx],
   );
 
   const onLeave = useCallback(() => setHoverId(null), []);
@@ -300,10 +322,16 @@ export default function StoryDotsOverlay({
             const left = d.x + tile * segmentWidth - d.r - parallaxShift;
             const top = d.y - d.r;
             const key = `${tile}:${d.id}`;
-            const triggerKey = d.id;
+            const centerX = d.x + (tile - 1) * segmentWidth - parallaxShift;
+            if (
+              centerX < -OFFSCREEN_CULL_PAD ||
+              centerX > viewportW + OFFSCREEN_CULL_PAD
+            ) {
+              return null;
+            }
 
             const isHover = hoverId === key;
-            const hasTriggered = !!triggeredSpirals[triggerKey];
+            const burstToken = activeBursts[key];
 
             return (
               <div
@@ -319,7 +347,7 @@ export default function StoryDotsOverlay({
                 <button
                   aria-label={`Open story by ${d.author}`}
                   onClick={() => onDotClick(d.story)}
-                  onMouseEnter={() => onEnter(key, d.id)}
+                  onMouseEnter={() => onEnter(key)}
                   onMouseLeave={onLeave}
                   className={styles.dotButton}
                   style={{
@@ -340,8 +368,13 @@ export default function StoryDotsOverlay({
                   </div>
                 )}
 
-                {hasTriggered && (
-                  <ParticleSpiral dotRadius={d.r} seed={hash32(d.id)} />
+                {typeof burstToken === "number" && (
+                  <ParticleSpiral
+                    key={`${key}:${burstToken}`}
+                    dotRadius={d.r}
+                    seed={hash32(d.id)}
+                    particleCount={particleCount}
+                  />
                 )}
               </div>
             );

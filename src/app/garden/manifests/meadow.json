@@ -115,6 +115,14 @@
           "width": 520,
           "height": 520,
           "xPositions": [40, 1880, 3880]
+        },
+        {
+          "name": "blazingstar",
+          "index": 0,
+          "width": 400,
+          "height": 400,
+          "xPositions": [250],
+          "yOffset": 0
         }
       ]
     },
@@ -340,7 +348,7 @@
           "width": 300,
           "height": 300,
           "xPositions": [1980],
-          "yOffset": 180
+          "yOffset": 120
         },
         {
           "name": "blazingstar",
@@ -357,6 +365,14 @@
           "height": 400,
           "xPositions": [2620],
           "yOffset": 300
+        },
+        {
+          "name": "rocksflowers",
+          "index": 0,
+          "width": 420,
+          "height": 420,
+          "xPositions": [710],
+          "yOffset": 260
         },
         {
           "name": "willow",
