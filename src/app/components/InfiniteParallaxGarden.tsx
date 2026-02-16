@@ -13,6 +13,7 @@ import Image from "next/image";
 
 const BASE_SCENE_HEIGHT = 1024; // logical reference height
 const SCROLL_SPEED = 0.15;
+const KEY_SCROLL_PX_PER_S = 900;
 
 // -----------------------------
 // Types
@@ -185,6 +186,10 @@ export default function InfiniteParallaxGarden({
   onPointerDebugChange,
 }: GardenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollLeftRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const keyRafRef = useRef<number | null>(null);
+  const keyDirRef = useRef<-1 | 0 | 1>(0);
   const [hoveredWireframeId, setHoveredWireframeId] = useState<string | null>(
     null
   );
@@ -285,7 +290,13 @@ export default function InfiniteParallaxGarden({
       x -= segmentWidthPx;
       el.scrollLeft = x;
     }
-    setScrollLeft(el.scrollLeft);
+    scrollLeftRef.current = el.scrollLeft;
+    if (rafRef.current == null) {
+      rafRef.current = window.requestAnimationFrame(() => {
+        rafRef.current = null;
+        setScrollLeft(scrollLeftRef.current);
+      });
+    }
   }, [middleStartPx, segmentWidthPx]);
 
   /**
@@ -321,6 +332,84 @@ export default function InfiniteParallaxGarden({
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
   }, [wheelToHorizontal, handleScroll]);
+
+  useEffect(() => {
+    const isTypingTarget = (el: EventTarget | null) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName.toLowerCase();
+      return tag === "input" || tag === "textarea" || el.isContentEditable;
+    };
+
+    const step = (ts: number, lastTs: number) => {
+      const dir = keyDirRef.current;
+      if (!dir || !scrollRef.current) return lastTs;
+      const dt = Math.min(32, Math.max(0, ts - lastTs));
+      const delta = (KEY_SCROLL_PX_PER_S * dt * dir) / 1000;
+      scrollRef.current.scrollLeft += delta;
+      handleScroll();
+      return ts;
+    };
+
+    const startLoop = () => {
+      if (keyRafRef.current != null) return;
+      let last = performance.now();
+      const tick = (t: number) => {
+        last = step(t, last);
+        if (keyDirRef.current) {
+          keyRafRef.current = window.requestAnimationFrame(tick);
+        } else {
+          keyRafRef.current = null;
+        }
+      };
+      keyRafRef.current = window.requestAnimationFrame(tick);
+    };
+
+    const stopLoop = () => {
+      if (keyRafRef.current != null) {
+        cancelAnimationFrame(keyRafRef.current);
+        keyRafRef.current = null;
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (document.body.style.overflow === "hidden") return;
+      if (isTypingTarget(e.target)) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        keyDirRef.current = -1;
+        startLoop();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        keyDirRef.current = 1;
+        startLoop();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        keyDirRef.current = 0;
+        stopLoop();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      keyDirRef.current = 0;
+      stopLoop();
+    };
+  }, [handleScroll]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, []);
 
   /**
    * Local X position within the middle segment, in rendered CSS px.
@@ -500,6 +589,10 @@ export default function InfiniteParallaxGarden({
         : segmentWidthPx;
     const parallaxBasePx = worldXPx;
     const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
+    const viewportW = scrollRef.current?.clientWidth ?? 0;
+    const visibleLeftPx = scrollLeft;
+    const visibleRightPx = scrollLeft + viewportW;
+    const cullPadPx = 320;
     const clipLeftPx = biomeStartPxRaw;
     const clipWidthPx = biomeWidthPx;
     const segmentStyle: React.CSSProperties = {
@@ -756,6 +849,13 @@ export default function InfiniteParallaxGarden({
             const leftX = xPx - w * 0.5;
 
             const worldXpx = segmentIndex * segmentWidthPx + xPx;
+            const renderedXpx = worldXpx + parallaxShift;
+            if (
+              renderedXpx + w < visibleLeftPx - cullPadPx ||
+              renderedXpx - w > visibleRightPx + cullPadPx
+            ) {
+              return null;
+            }
             const t =
               (2 * Math.PI * periodsPerSegment * worldXpx) / segmentWidthPx +
               curvePhase;
@@ -789,7 +889,7 @@ export default function InfiniteParallaxGarden({
                   style={spriteStyle}
                   draggable={false}
                   priority={false}
-                  sizes="100vw"
+                  sizes={`${Math.round(w)}px`}
                 />
                 {allowDebugWireframes && (
                   <div
