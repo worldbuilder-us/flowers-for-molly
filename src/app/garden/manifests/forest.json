@@ -278,7 +278,8 @@
           "index": 1,
           "width": 2048,
           "height": 2048,
-          "xPositions": [500]
+          "xPositions": [500],
+          "yOffset": 120
         },
         {
           "name": "floral_cluster",
@@ -292,7 +293,8 @@
           "index": 3,
           "width": 2048,
           "height": 2048,
-          "xPositions": [1000]
+          "xPositions": [1000],
+          "yOffset": 200
         },
         {
           "name": "floral_cluster",
@@ -313,7 +315,8 @@
           "index": 2,
           "width": 2048,
           "height": 2048,
-          "xPositions": [1300]
+          "xPositions": [2400],
+          "yOffset": 150
         },
         {
           "name": "bushes",
