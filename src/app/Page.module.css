@@ -6,6 +6,119 @@
   z-index: 0;
 }
 
+.welcomeOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 900ms ease,
+    visibility 0ms linear 900ms;
+}
+
+.welcomeOverlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.64);
+}
+
+.welcomeOverlayHidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.welcomeInner {
+  position: relative;
+  margin-top: -8vh;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.35),
+    0 0 28px rgba(196, 227, 255, 0.24),
+    0 0 60px rgba(196, 227, 255, 0.12);
+}
+
+.welcomeTitle {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  text-transform: uppercase;
+  line-height: 2.95;
+  letter-spacing: 0.12em;
+}
+
+.welcomeSmall {
+  font-size: clamp(0.95rem, 2.1vw, 1.45rem);
+  font-weight: 500;
+}
+
+.welcomeLarge {
+  font-size: clamp(3.2rem, 7.8vw, 6rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0.08em;
+}
+
+.welcomeDates {
+  margin: 0.8rem 0 0;
+  font-size: clamp(0.95rem, 2.1vw, 1.45rem);
+  font-style: italic;
+  letter-spacing: 0.1em;
+}
+
+.welcomeHint {
+  margin: 20% auto 0;
+  width: min(280px, 62vw);
+}
+
+.welcomeHint svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.welcomeHint rect {
+  fill: rgba(255, 255, 255, 0.06);
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1.6;
+}
+
+.welcomeHint path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.7);
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arrowKeyLeft {
+  animation: keyBlink 2.1s ease-in-out infinite;
+  transform-origin: 71px 40px;
+}
+
+.arrowKeyRight {
+  animation: keyBlink 2.1s ease-in-out 1.05s infinite;
+  transform-origin: 209px 40px;
+}
+
+@keyframes keyBlink {
+  0%,
+  100% {
+    opacity: 0.28;
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+  45% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.55));
+  }
+}
+
 .muteButton {
   position: absolute;
   right: 16px;

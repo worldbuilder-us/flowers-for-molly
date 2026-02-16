@@ -16,6 +16,7 @@ import StoryDotsOverlay from "./components/StoryDotsOverlay";
 import StoryModal, { StoryListItem } from "./components/StoryModal";
 import styles from "./Page.module.css";
 import { getWorldConfig } from "./garden/biomeLoader";
+import { goldenbookFont } from "./fonts";
 
 const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
   "flowers for molly theme.mp3",
@@ -50,6 +51,7 @@ export default function Page() {
   );
   const debugMode = process.env.NEXT_PUBLIC_DEBUG_MODE === "true";
   const [isMuted, setIsMuted] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   const worldConfig = useMemo(() => getWorldConfig(), []);
   const layers = worldConfig.layers;
@@ -182,6 +184,9 @@ export default function Page() {
   );
 
   const segmentWidth = worldConfig.layout.segmentWidth;
+  const handleFirstUserScroll = useCallback(() => {
+    setHasScrolled(true);
+  }, []);
 
   // If pointer debug is turned off, clear any lingering pointer debug info
   useEffect(() => {
@@ -198,6 +203,36 @@ export default function Page() {
           className={styles.gardenContainer}
           style={{ position: "relative" }}
         >
+          <div
+            className={`${styles.welcomeOverlay} ${
+              hasScrolled ? styles.welcomeOverlayHidden : ""
+            } ${goldenbookFont.className}`}
+            aria-hidden={hasScrolled}
+          >
+            <div className={styles.welcomeInner}>
+              <h1 className={styles.welcomeTitle}>
+                <span className={styles.welcomeSmall}>FLOWERS FOR</span>
+                <span className={styles.welcomeLarge}>MOLLY DOWD</span>
+              </h1>
+              <p className={styles.welcomeDates}>1981-2024</p>
+              <div
+                className={styles.welcomeHint}
+                aria-label="Use left and right arrow keys to scroll"
+              >
+                <p>Left and right arrow keys to scroll</p>
+                <svg viewBox="0 0 280 80" role="img" aria-hidden="true">
+                  <g className={styles.arrowKeyLeft}>
+                    <rect x="26" y="12" width="90" height="56" rx="12" />
+                    <path d="M74 40H48m0 0l10-10m-10 10l10 10" />
+                  </g>
+                  <g className={styles.arrowKeyRight}>
+                    <rect x="164" y="12" width="90" height="56" rx="12" />
+                    <path d="M206 40h26m0 0l-10-10m10 10l-10 10" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
           <button
             type="button"
             className={styles.muteButton}
@@ -324,6 +359,7 @@ export default function Page() {
             onPointerDebugChange={
               debugMode && debugPointer ? setPointerDebug : undefined
             }
+            onFirstUserScroll={handleFirstUserScroll}
           />
 
           {/* dots overlay */}
