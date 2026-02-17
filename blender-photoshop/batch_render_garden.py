@@ -54,6 +54,7 @@ jobs = [
         "subfolder_mapping": {
             "hills_far": "far_hills",
         },
+        "skip_subfolders": {"scenery"},
     },
     {
         "scene": "forest-flowers",
