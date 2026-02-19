@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Header from "@/app/components/Header";
+import { useRouter } from "next/navigation";
 import { goldenbookFont, montserratFont } from "@/app/fonts";
 import styles from "./page.module.css";
 
@@ -31,8 +30,6 @@ const PAGE_SIZE = 25;
 
 export default function AdminStoriesPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const storyIdFromQuery = searchParams.get("story");
   const [filter, setFilter] = useState<StoryStatus | "all">("pending");
   const [stories, setStories] = useState<AdminStory[]>([]);
   const [page, setPage] = useState(1);
@@ -74,11 +71,8 @@ export default function AdminStoriesPage() {
       setTotalPages(Math.max(1, json.totalPages || 1));
 
       const first = nextStories[0] || null;
-      const requested = storyIdFromQuery
-        ? nextStories.find((s) => s._id === storyIdFromQuery)?._id
-        : null;
       if (!activeId || !nextStories.some((s) => s._id === activeId)) {
-        setActiveId(requested || first?._id || null);
+        setActiveId(first?._id || null);
       }
     } catch (err) {
       setError((err as Error).message || "Failed to load stories.");
@@ -95,7 +89,7 @@ export default function AdminStoriesPage() {
     loadStories(1, filter);
     setPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, storyIdFromQuery]);
+  }, [filter]);
 
   useEffect(() => {
     loadStories(page, filter);
@@ -156,7 +150,6 @@ export default function AdminStoriesPage() {
 
   return (
     <>
-      {/* <Header /> */}
       <main className={`${styles.main} ${goldenbookFont.className}`}>
         <section className={styles.topBar}>
           <h1 className={styles.title}>Story Review</h1>
