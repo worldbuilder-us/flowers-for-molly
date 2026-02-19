@@ -470,9 +470,10 @@
         {
           "name": "dennis",
           "index": 0,
-          "width": 240,
-          "height": 300,
-          "xPositions": [2280]
+          "width": 360,
+          "height": 400,
+          "xPositions": [2280],
+          "yOffset": 10
         },
         {
           "name": "clouds",
