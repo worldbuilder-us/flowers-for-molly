@@ -3,19 +3,18 @@
 
 import * as React from "react";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import DandelionButton from "../components/DandelionButton";
 import { goldenbookFont, montserratFont } from "../fonts";
 import styles from "./SubmitPage.module.css";
 
 export default function SubmitPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [story, setStory] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const storyRef = useRef<HTMLTextAreaElement | null>(null);
   const MAX_ROWS = 8;
@@ -55,6 +54,7 @@ export default function SubmitPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
 
     if (!name.trim() || !story.trim()) {
       setError("Please provide both your name and a story.");
@@ -75,7 +75,15 @@ export default function SubmitPage() {
         throw new Error(json?.error || `Submit failed (HTTP ${res.status})`);
       }
 
-      router.push(`/view/${json.id}`);
+      setName("");
+      setEmail("");
+      setStory("");
+      if (storyRef.current) {
+        storyRef.current.style.height = "auto";
+      }
+      setSuccessMessage(
+        "Thanks for sharing. Your story has been received and is now pending review before it appears in the garden.",
+      );
     } catch (err) {
       setError(
         (err as Error)?.message || "Something went wrong while submitting.",
@@ -110,11 +118,15 @@ export default function SubmitPage() {
 
             <p>
               Once you&rsquo;ve added your story, hit submit, and it&rsquo;ll be
-              added to the garden as a unique piece of content.
+              reviewed before it&rsquo;s added to the garden as a unique piece
+              of content.
             </p>
           </section>
 
           {error ? <div className={styles.errorBox}>{error}</div> : null}
+          {successMessage ? (
+            <div className={styles.successBox}>{successMessage}</div>
+          ) : null}
 
           <form
             onSubmit={handleSubmit}

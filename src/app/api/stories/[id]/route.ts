@@ -17,7 +17,10 @@ export async function GET(_req: Request, ctx: unknown) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const story = await Story.findById(normalizedId).lean();
+  const story = await Story.findOne({
+    _id: normalizedId,
+    status: "approved",
+  }).lean();
   if (!story) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
