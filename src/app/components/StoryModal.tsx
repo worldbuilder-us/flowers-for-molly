@@ -99,6 +99,23 @@ function buildOrnaments(): Array<{ slot: OrnamentSlot; src: string }> {
   return result;
 }
 
+function formatSeasonYear(dateValue?: string): string | null {
+  if (!dateValue) return null;
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const month = date.getUTCMonth();
+  const year = date.getUTCFullYear();
+
+  let season = "Winter";
+  if (month >= 2 && month <= 4) season = "Spring";
+  else if (month >= 5 && month <= 7) season = "Summer";
+  else if (month >= 8 && month <= 10) season = "Fall";
+
+  return `${season}, ${year}`;
+}
+
 export default function StoryModal({
   story,
   onClose,
@@ -120,10 +137,12 @@ export default function StoryModal({
     };
   }, [story, onClose]);
 
+  const storyId = story?._id;
   const ornaments = useMemo(
-    () => (story ? buildOrnaments() : []),
-    [story?._id],
+    () => (storyId ? buildOrnaments() : []),
+    [storyId],
   );
+  const seasonYear = formatSeasonYear(story?.importedAt);
 
   if (!story) return null;
 
@@ -170,10 +189,8 @@ export default function StoryModal({
           <header className={styles.header}>
             <div className={styles.author}>{story.authorName}</div>
 
-            {story.importedAt ? (
-              <div className={styles.date}>
-                {new Date(story.importedAt).toLocaleDateString()}
-              </div>
+            {seasonYear ? (
+              <div className={styles.date}>{seasonYear}</div>
             ) : (
               <div className={styles.dateSpacer} />
             )}
