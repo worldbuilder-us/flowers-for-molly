@@ -468,6 +468,13 @@
       "opacity": 0.25,
       "assets": [
         {
+          "name": "dennis",
+          "index": 0,
+          "width": 240,
+          "height": 300,
+          "xPositions": [2280]
+        },
+        {
           "name": "clouds",
           "index": 0,
           "width": 1600,
