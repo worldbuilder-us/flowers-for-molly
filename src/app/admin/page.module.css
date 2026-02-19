@@ -1,0 +1,188 @@
+.main {
+  min-height: calc(100vh - 72px);
+  padding: 18px 18px 28px;
+  color: #fff;
+  background: #000;
+  height: 100%;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.4rem, 2vw, 2rem);
+}
+
+.logout {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+  cursor: pointer;
+}
+
+.filters {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filterButton {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.filterActive {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.count {
+  margin: 0 0 0 auto;
+  opacity: 0.9;
+}
+
+.error {
+  color: #ffd6d6;
+  margin: 10px 0;
+}
+
+.grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.sidebar {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.25);
+  max-height: 65vh;
+  overflow: auto;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.storyListItem {
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 8px;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+}
+
+.storyListItemActive {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.storyListName {
+  font-weight: 700;
+}
+
+.storyListMeta {
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+
+.editorPane {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 12px;
+}
+
+.empty {
+  opacity: 0.9;
+}
+
+.fieldRow {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 8px 10px;
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.approve,
+.pending,
+.reject {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.approve {
+  background: rgba(59, 189, 84, 0.35);
+}
+
+.pending {
+  background: rgba(191, 171, 59, 0.28);
+}
+
+.reject {
+  background: rgba(200, 67, 67, 0.3);
+}
+
+.pager {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.pagerButton {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    max-height: 35vh;
+  }
+}

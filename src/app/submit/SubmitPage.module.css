@@ -73,6 +73,16 @@
   text-align: left;
 }
 
+.successBox {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(78, 167, 98, 0.18);
+  color: #e9ffe9;
+  border: 1px solid rgba(102, 214, 128, 0.55);
+  text-align: left;
+}
+
 /* Form layout */
 .form {
   width: 100%;
@@ -156,7 +166,10 @@
   letter-spacing: 0.08em;
 
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.12s ease, opacity 0.12s ease;
+  transition:
+    background 0.18s ease,
+    transform 0.12s ease,
+    opacity 0.12s ease;
 }
 
 .submitButton:hover:not(:disabled) {

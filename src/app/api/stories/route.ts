@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/mongoose";
 import { Story } from "@/models/Story";
+import { deriveStoryTextMetrics } from "@/lib/storyText";
+import { notifyPendingStory } from "@/lib/adminNotifications";
 
 // --- helpers reused from importer (minimal) ---
 function fnv1a32(str: string): number {
@@ -12,16 +14,6 @@ function fnv1a32(str: string): number {
   return hash >>> 0;
 }
 
-function stripMinimalMarkdown(md: string): string {
-  let s = md || "";
-  s = s.replace(/\[([^\]]+)\]\(mailto:[^)]+\)/gi, "$1"); // [text](mailto:..)
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");        // [text](url)
-  s = s.replace(/[*_]{1,3}([^*_]+)[*_]{1,3}/g, "$1");     // **bold** / _em_
-  s = s.replace(/^#+\s+/gm, "");                          // # headings
-  s = s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-  return s;
-}
-
 // GET /api/stories?page=1&limit=25
 export async function GET(req: Request) {
   await dbConnect();
@@ -31,10 +23,11 @@ export async function GET(req: Request) {
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") || 25)));
 
   const skip = (page - 1) * limit;
+  const publicQuery = { status: "approved" };
 
   const [total, stories] = await Promise.all([
-    Story.countDocuments({}),
-    Story.find({})
+    Story.countDocuments(publicQuery),
+    Story.find(publicQuery)
       .sort({ importedAt: 1, createdAt: 1, _id: 1 }) // stable order
       .skip(skip)
       .limit(limit)
@@ -84,13 +77,14 @@ export async function POST(req: Request) {
   }
 
   // Normalize text
-  const textPlain = stripMinimalMarkdown(textMarkdown).trim();
-  const storyLines = textPlain.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-  const paragraphCount = textMarkdown.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean).length;
-  const words = textPlain.match(/\b[\w’'-]+\b/g) ?? [];
-  const wordCount = words.length;
-  const charCount = textPlain.length;
-  const hasSalutation = /^dear\b/i.test(storyLines[0] ?? "");
+  const {
+    textPlain,
+    storyLines,
+    paragraphCount,
+    wordCount,
+    charCount,
+    hasSalutation,
+  } = deriveStoryTextMetrics(textMarkdown);
 
   const textKey = `${authorName.toLowerCase()}::${textPlain.toLowerCase()}`;
   const textHash32 = fnv1a32(textKey);
@@ -126,6 +120,15 @@ export async function POST(req: Request) {
       { upsert: true, new: true, setDefaultsOnInsert: true }
       // If you don't want updatedAt to bump on duplicates, add: , timestamps: false (Mongoose 7+)
     ).lean();
+
+    if (created?._id && created?.status === "pending") {
+      notifyPendingStory({
+        storyId: String(created._id),
+        authorName: created.authorName,
+      }).catch((err) => {
+        console.error("Pending story notification failed:", err);
+      });
+    }
 
     return NextResponse.json(
       {
