@@ -17,7 +17,7 @@
       "assets": [
         {
           "name": "sky",
-          "index": 5,
+          "index": 3,
           "width": 2048,
           "height": 1024
         }
@@ -120,6 +120,22 @@
       "opacity": 0.95,
       "assets": [
         {
+          "name": "hickory_tree",
+          "index": 2,
+          "width": 1848,
+          "height": 1848,
+          "xPositions": [654, 1562],
+          "yOffset": -150
+        },
+        {
+          "name": "pine_tree",
+          "index": 1,
+          "width": 1248,
+          "height": 1248,
+          "xPositions": [300, 1150],
+          "yOffset": -100
+        },
+        {
           "name": "floral_cluster",
           "index": 3,
           "width": 240,
@@ -128,32 +144,18 @@
           "yOffset": 150
         },
         {
-          "name": "pine_tree",
-          "index": 1,
-          "width": 1248,
-          "height": 1248,
-          "xPositions": [300, 750, 900, 1250]
-        },
-        {
           "name": "hickory_tree",
           "index": 1,
           "width": 1648,
           "height": 1648,
-          "xPositions": [1100, 230, 850, 1800]
-        },
-        {
-          "name": "hickory_tree",
-          "index": 2,
-          "width": 1848,
-          "height": 1848,
-          "xPositions": [1900, 0, 104, 1562]
+          "xPositions": [230, 1800]
         },
         {
           "name": "chestnut_tree",
           "index": 1,
           "width": 1548,
           "height": 1548,
-          "xPositions": [2700, 465]
+          "xPositions": [2700]
         },
         {
           "name": "floral_cluster",
@@ -176,7 +178,7 @@
           "index": 1,
           "width": 1948,
           "height": 1948,
-          "xPositions": [3000, 13, 800, 2200]
+          "xPositions": [3000, 13, 2200]
         },
         {
           "name": "floral_cluster",
@@ -248,9 +250,25 @@
       "role": "FOREGROUND_1",
       "repeatX": false,
       "scale": 0.47,
-      "anchorY": 0.12,
+      "anchorY": 0.02,
       "opacity": 1,
       "assets": [
+        {
+          "name": "treetrunk",
+          "index": 0,
+          "width": 2800,
+          "height": 2800,
+          "xPositions": [1680],
+          "yOffset": -480
+        },
+        {
+          "name": "theo-georgie",
+          "index": 0,
+          "width": 200,
+          "height": 200,
+          "xPositions": [2005],
+          "yOffset": 100
+        },
         {
           "name": "ferns",
           "index": 1,
