@@ -110,7 +110,7 @@ export default function SubmitPage() {
 
             <p>
               Once you&rsquo;ve added your story, hit submit, and it&rsquo;ll be
-              added to the garden.
+              added to the garden as a unique piece of content.
             </p>
           </section>
 
