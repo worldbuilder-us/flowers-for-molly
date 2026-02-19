@@ -219,7 +219,10 @@ export default function Page() {
                 className={styles.welcomeHint}
                 aria-label="Use left and right arrow keys to scroll"
               >
-                <p>Left and right arrow keys to scroll</p>
+                <p>Left and right arrows or touch to scroll.</p>
+                <p>
+                  Click/tap on the glowing spheres to interact with the piece.
+                </p>
                 <svg viewBox="0 0 280 80" role="img" aria-hidden="true">
                   <g className={styles.arrowKeyLeft}>
                     {/* <rect x="26" y="12" width="90" height="56" rx="12" /> */}
