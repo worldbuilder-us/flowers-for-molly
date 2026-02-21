@@ -262,14 +262,6 @@
           "yOffset": -480
         },
         {
-          "name": "theo-georgie",
-          "index": 0,
-          "width": 420,
-          "height": 420,
-          "xPositions": [2008],
-          "yOffset": 100
-        },
-        {
           "name": "ferns",
           "index": 1,
           "width": 2048,
