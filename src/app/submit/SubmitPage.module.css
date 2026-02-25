@@ -62,6 +62,10 @@
   margin-bottom: 2rem;
 }
 
+.introSecondary {
+  font-weight: 400;
+}
+
 /* Error box */
 .errorBox {
   margin-bottom: 1.5rem;

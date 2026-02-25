@@ -116,7 +116,7 @@ export default function SubmitPage() {
               better.
             </p>
 
-            <p>
+            <p className={styles.introSecondary}>
               Once you&rsquo;ve added your story, hit submit, and it&rsquo;ll be
               reviewed before it&rsquo;s added to the garden as a unique piece
               of content.
