@@ -14,6 +14,16 @@ import Image from "next/image";
 const BASE_SCENE_HEIGHT = 1024; // logical reference height
 const SCROLL_SPEED = 0.15;
 const KEY_SCROLL_PX_PER_S = 900;
+const COMPOSITOR_HINT_IDLE_MS = 180;
+const COMPOSITOR_HINT_SEGMENT_PAD_PX = 256;
+const SPRITE_CULL_PAD_PX = 320;
+const LOAD_HIGH_PRIORITY_PAD_PX = 96;
+const LOAD_EAGER_PAD_PX = 224;
+const PREFETCH_LOOKAHEAD_PX = 1440;
+const PREFETCH_CANDIDATE_LIMIT = 24;
+const PREFETCH_ENQUEUE_PER_VIEWPORT_UPDATE = 6;
+const PREFETCH_PUMP_INTERVAL_MS = 48;
+const PREFETCH_MAX_IN_FLIGHT = 1;
 
 // -----------------------------
 // Types
@@ -162,6 +172,155 @@ export type GardenProps = {
 };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const wrapMod = (v: number, mod: number) => {
+  if (!mod) return 0;
+  const x = v % mod;
+  return x < 0 ? x + mod : x;
+};
+
+type Perf01CullSummary = {
+  total: number;
+  rendered: number;
+  culledLeft: number;
+  culledRight: number;
+  leftBandRendered: number;
+};
+
+type Perf01WrapEvent = {
+  ts: number;
+  wrapDirection: "left" | "right";
+  preScrollLeftPx: number;
+  postScrollLeftPx: number;
+  preUnwrappedScrollLeftPx: number;
+  postUnwrappedScrollLeftPx: number;
+  leftBoundaryPx: number;
+  rightBoundaryPx: number;
+  segmentWidthPx: number;
+  preLogicalOffset: number;
+  postLogicalOffset: number;
+  preContinuousLogicalX: number;
+  postContinuousLogicalX: number;
+  domToRenderedStateGapPx: number;
+  culling: {
+    pre: Perf01CullSummary;
+    post: Perf01CullSummary;
+    overlapVisibleCount: number;
+    droppedVisibleCount: number;
+    newVisibleCount: number;
+  };
+};
+
+type Perf01CommitEvent = {
+  ts: number;
+  committedScrollLeftPx: number;
+  committedUnwrappedScrollLeftPx: number;
+  mode: "sync" | "raf";
+  pendingWrapId: number | null;
+};
+
+type Perf01ScrollSample = {
+  ts: number;
+  rawScrollLeftPx: number;
+  finalScrollLeftPx: number;
+  unwrappedScrollLeftPx: number;
+  logicalOffset: number;
+  wrapDirection: "none" | "left" | "right";
+};
+
+type Perf03ResizeEvent = {
+  ts: number;
+  prevSceneScale: number;
+  nextSceneScale: number;
+  prevWrappedLogicalOffset: number;
+  nextWrappedLogicalOffset: number;
+  prevContinuousLogicalX: number;
+  nextContinuousLogicalX: number;
+};
+
+type Perf01TraceStore = {
+  version: "PERF-01";
+  enabledAtISO: string;
+  notes: string[];
+  scrollSamples: Perf01ScrollSample[];
+  wrapEvents: Perf01WrapEvent[];
+  commitEvents: Perf01CommitEvent[];
+  resizeEvents: Perf03ResizeEvent[];
+};
+
+type Perf01Placement = {
+  id: string;
+  parallax: number;
+  worldXLogical: number;
+  widthLogical: number;
+};
+
+const PERF01_SCROLL_SAMPLE_MAX = 400;
+const PERF01_WRAP_EVENT_MAX = 120;
+const PERF01_COMMIT_EVENT_MAX = 120;
+const PERF03_RESIZE_EVENT_MAX = 120;
+
+const pushLimited = <T,>(arr: T[], item: T, max: number) => {
+  arr.push(item);
+  if (arr.length > max) {
+    arr.splice(0, arr.length - max);
+  }
+};
+
+const logicalOffsetFromScroll = (
+  scrollPx: number,
+  middleStartPx: number,
+  segmentWidthPx: number,
+  sceneScale: number
+) => {
+  if (!segmentWidthPx || !sceneScale) return 0;
+  return wrapMod(scrollPx - middleStartPx, segmentWidthPx) / sceneScale;
+};
+
+const unwrapDelta = (deltaWrappedPx: number, segmentWidthPx: number) => {
+  if (!segmentWidthPx) return deltaWrappedPx;
+  if (deltaWrappedPx > segmentWidthPx * 0.5) {
+    return deltaWrappedPx - segmentWidthPx;
+  }
+  if (deltaWrappedPx < -segmentWidthPx * 0.5) {
+    return deltaWrappedPx + segmentWidthPx;
+  }
+  return deltaWrappedPx;
+};
+
+const distanceToViewportPx = (
+  left: number,
+  right: number,
+  visibleLeft: number,
+  visibleRight: number
+) => {
+  if (right < visibleLeft) return visibleLeft - right;
+  if (left > visibleRight) return left - visibleRight;
+  return 0;
+};
+
+declare global {
+  interface Window {
+    __FFM_PERF01_TRACE__?: Perf01TraceStore;
+  }
+}
+
+type GardenGeometrySnapshot = {
+  sceneScale: number;
+  middleStartPx: number;
+  segmentWidthPx: number;
+  segmentWidth: number;
+};
+
+type ScrollFrameState = {
+  wrapped: number;
+  unwrapped: number;
+};
+
+type PrefetchCandidate = {
+  src: string;
+  distancePx: number;
+};
+
 const FOREGROUND_ROLES = new Set([
   "FOREGROUND_1",
   "FOREGROUND_2",
@@ -174,7 +333,7 @@ const BACKGROUND_ROLES = new Set([
   "SKYBOX",
 ]);
 
-export default function InfiniteParallaxGarden({
+function InfiniteParallaxGarden({
   segmentWidth = 4096, // logical
   segmentHeight,
   layers,
@@ -190,12 +349,28 @@ export default function InfiniteParallaxGarden({
 }: GardenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollLeftRef = useRef(0);
+  const unwrappedScrollLeftRef = useRef<number | null>(null);
+  const renderedScrollLeftRef = useRef(0);
   const lastObservedScrollLeftRef = useRef<number | null>(null);
   const hasInitializedScrollRef = useRef(false);
   const hasReportedFirstScrollRef = useRef(false);
+  const hasAppliedInitialSpawnRef = useRef(false);
+  const lastGeometryRef = useRef<GardenGeometrySnapshot | null>(null);
+  const perf01TraceEnabledRef = useRef(false);
+  const perf01TraceRef = useRef<Perf01TraceStore | null>(null);
+  const perf01PendingWrapIdRef = useRef<number | null>(null);
+  const perf01NextWrapIdRef = useRef(1);
   const rafRef = useRef<number | null>(null);
   const keyRafRef = useRef<number | null>(null);
   const keyDirRef = useRef<-1 | 0 | 1>(0);
+  const compositorHintTimerRef = useRef<number | null>(null);
+  const compositorHintsActiveRef = useRef(false);
+  const prefetchQueueRef = useRef<string[]>([]);
+  const prefetchQueuedSetRef = useRef<Set<string>>(new Set());
+  const prefetchedSrcSetRef = useRef<Set<string>>(new Set());
+  const prefetchInFlightRef = useRef(0);
+  const prefetchPumpIntervalRef = useRef<number | null>(null);
+  const [compositorHintsActive, setCompositorHintsActive] = useState(false);
   const [hoveredWireframeId, setHoveredWireframeId] = useState<string | null>(
     null
   );
@@ -217,12 +392,28 @@ export default function InfiniteParallaxGarden({
     }
   }, [debugWireframesForeground, debugWireframesBackground]);
 
+  const activateCompositorHints = useCallback(() => {
+    if (!compositorHintsActiveRef.current) {
+      compositorHintsActiveRef.current = true;
+      setCompositorHintsActive(true);
+    }
+    if (compositorHintTimerRef.current != null) {
+      window.clearTimeout(compositorHintTimerRef.current);
+    }
+    compositorHintTimerRef.current = window.setTimeout(() => {
+      compositorHintTimerRef.current = null;
+      compositorHintsActiveRef.current = false;
+      setCompositorHintsActive(false);
+    }, COMPOSITOR_HINT_IDLE_MS);
+  }, []);
+
   const activeWireframeId = pinnedWireframeId ?? hoveredWireframeId;
 
   /**
    * If segmentHeight is not provided, we fill the parent (height: 100%)
    * and use a ResizeObserver to measure the actual pixel height for scaling.
    */
+  const [measuredW, setMeasuredW] = useState<number | null>(null);
   const [measuredH, setMeasuredH] = useState<number | null>(null);
 
   useLayoutEffect(() => {
@@ -231,7 +422,9 @@ export default function InfiniteParallaxGarden({
 
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
+        const w = Math.round(entry.contentRect.width);
         const h = Math.round(entry.contentRect.height);
+        if (w > 0) setMeasuredW(w);
         if (h > 0) setMeasuredH(h);
       }
     });
@@ -247,11 +440,123 @@ export default function InfiniteParallaxGarden({
 
   // Rendered segment width in CSS px.
   const segmentWidthPx = segmentWidth * sceneScale;
+  const viewportWidthPx = measuredW ?? scrollRef.current?.clientWidth ?? 0;
 
   // Middle segment start in scroll coordinates.
   const middleStartPx = segmentWidthPx; // [A][B][C]
 
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [scrollFrame, setScrollFrame] = useState<ScrollFrameState>({
+    wrapped: 0,
+    unwrapped: 0,
+  });
+  const scrollLeft = scrollFrame.wrapped;
+  const unwrappedScrollLeft = scrollFrame.unwrapped;
+
+  const nonRepeatPlacements = useMemo<Perf01Placement[]>(() => {
+    const placements: Perf01Placement[] = [];
+    layers.forEach((layer) => {
+      const layerParallax = clamp(layer.parallax, 0, 1);
+      layer.sprites.forEach((sprite, spriteIdx) => {
+        if (sprite.repeatX) return;
+        const widthLogical = sprite.width * (sprite.scale ?? 1);
+        const xs = sprite.xPositions ?? [];
+        xs.forEach((xLogical, xIdx) => {
+          for (let segmentIndex = 0; segmentIndex < 3; segmentIndex++) {
+            placements.push({
+              id: `${layer.id}:${spriteIdx}:${xIdx}:seg${segmentIndex}`,
+              parallax: layerParallax,
+              worldXLogical: xLogical + segmentIndex * segmentWidth,
+              widthLogical,
+            });
+          }
+        });
+      });
+    });
+    return placements;
+  }, [layers, segmentWidth]);
+
+  const summarizeCull = useCallback(
+    (
+      visibleScrollPx: number,
+      viewportW: number,
+      parallaxBasePx: number
+    ): Perf01CullSummary & { visibleIds: Set<string> } => {
+      const visibleIds = new Set<string>();
+      const visibleLeftPx = visibleScrollPx;
+      const visibleRightPx = visibleScrollPx + viewportW;
+      const leftBandPx = visibleLeftPx + viewportW * 0.33;
+      let total = 0;
+      let rendered = 0;
+      let culledLeft = 0;
+      let culledRight = 0;
+      let leftBandRendered = 0;
+
+      nonRepeatPlacements.forEach((placement) => {
+        total += 1;
+        const wPx = placement.widthLogical * sceneScale;
+        const worldXpx = placement.worldXLogical * sceneScale;
+        const parallaxShift = -parallaxBasePx * (1 - placement.parallax);
+        const renderedXpx = worldXpx + parallaxShift;
+        const isCulledLeft =
+          renderedXpx + wPx < visibleLeftPx - SPRITE_CULL_PAD_PX;
+        const isCulledRight =
+          renderedXpx - wPx > visibleRightPx + SPRITE_CULL_PAD_PX;
+        if (isCulledLeft || isCulledRight) {
+          if (isCulledLeft) culledLeft += 1;
+          if (isCulledRight) culledRight += 1;
+          return;
+        }
+        rendered += 1;
+        visibleIds.add(placement.id);
+        const touchesLeftBand =
+          renderedXpx + wPx >= visibleLeftPx &&
+          renderedXpx - wPx <= leftBandPx;
+        if (touchesLeftBand) {
+          leftBandRendered += 1;
+        }
+      });
+
+      return { total, rendered, culledLeft, culledRight, leftBandRendered, visibleIds };
+    },
+    [nonRepeatPlacements, sceneScale]
+  );
+
+  useEffect(() => {
+    renderedScrollLeftRef.current = scrollLeft;
+  }, [scrollLeft]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const fromQuery =
+      new URLSearchParams(window.location.search).get("perfTrace") === "1";
+    const fromStorage = window.localStorage.getItem("perfTrace") === "1";
+    if (!fromQuery && !fromStorage) return;
+
+    const store: Perf01TraceStore = {
+      version: "PERF-01",
+      enabledAtISO: new Date().toISOString(),
+      notes: [
+        "Enable by adding ?perfTrace=1 or localStorage.perfTrace=1.",
+        "Read trace at window.__FFM_PERF01_TRACE__ in DevTools.",
+      ],
+      scrollSamples: [],
+      wrapEvents: [],
+      commitEvents: [],
+      resizeEvents: [],
+    };
+
+    window.__FFM_PERF01_TRACE__ = store;
+    perf01TraceEnabledRef.current = true;
+    perf01TraceRef.current = store;
+    console.info(
+      "[PERF-01] wrap/cull diagnostics enabled. Inspect window.__FFM_PERF01_TRACE__."
+    );
+
+    return () => {
+      perf01TraceEnabledRef.current = false;
+      perf01TraceRef.current = null;
+    };
+  }, []);
 
   /**
    * Keep track of the last logical viewport offset so pointer debug can
@@ -260,22 +565,96 @@ export default function InfiniteParallaxGarden({
   const lastLogicalOffsetRef = useRef(0);
 
   /**
-   * Initialize scroll position so we start in the middle segment at
-   * the requested *logical* offset.
+   * Initial positioning + resize reconciliation
+   * ------------------------------------------------------------
+   * - First mount: spawn at initialOffsetX (current intended behavior).
+   * - Later geometry changes (mobile UI bar, orientation, resize):
+   *   preserve current logical position instead of snapping back to spawn.
    */
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
 
-    const logicalInitial =
-      ((initialOffsetX % segmentWidth) + segmentWidth) % segmentWidth;
-    const target = middleStartPx + logicalInitial * sceneScale;
+    const geometry: GardenGeometrySnapshot = {
+      sceneScale,
+      middleStartPx,
+      segmentWidthPx,
+      segmentWidth,
+    };
 
-    el.scrollLeft = target;
-    setScrollLeft(target);
-    lastObservedScrollLeftRef.current = target;
-    hasInitializedScrollRef.current = true;
-  }, [initialOffsetX, segmentWidth, middleStartPx, sceneScale]);
+    if (!hasAppliedInitialSpawnRef.current) {
+      const logicalInitial = wrapMod(initialOffsetX, segmentWidth);
+      const target = middleStartPx + logicalInitial * sceneScale;
+
+      el.scrollLeft = target;
+      scrollLeftRef.current = target;
+      unwrappedScrollLeftRef.current = target;
+      renderedScrollLeftRef.current = target;
+      setScrollFrame({ wrapped: target, unwrapped: target });
+      lastObservedScrollLeftRef.current = target;
+      hasInitializedScrollRef.current = true;
+      hasAppliedInitialSpawnRef.current = true;
+      lastGeometryRef.current = geometry;
+      return;
+    }
+
+    const prevGeometry = lastGeometryRef.current;
+    lastGeometryRef.current = geometry;
+    if (!prevGeometry) return;
+
+    const geometryChanged =
+      prevGeometry.sceneScale !== sceneScale ||
+      prevGeometry.middleStartPx !== middleStartPx ||
+      prevGeometry.segmentWidthPx !== segmentWidthPx ||
+      prevGeometry.segmentWidth !== segmentWidth;
+    if (!geometryChanged) return;
+
+    const prevWrappedScrollLeft = scrollLeftRef.current || el.scrollLeft;
+    const prevUnwrappedScrollLeft =
+      unwrappedScrollLeftRef.current ?? prevWrappedScrollLeft;
+    const prevWrappedLogicalOffset = logicalOffsetFromScroll(
+      prevWrappedScrollLeft,
+      prevGeometry.middleStartPx,
+      prevGeometry.segmentWidthPx,
+      prevGeometry.sceneScale
+    );
+    const prevContinuousLogicalX =
+      (prevUnwrappedScrollLeft - prevGeometry.middleStartPx) /
+      prevGeometry.sceneScale;
+
+    const nextWrappedLogicalOffset = wrapMod(prevWrappedLogicalOffset, segmentWidth);
+    const nextWrappedScrollLeft =
+      middleStartPx + nextWrappedLogicalOffset * sceneScale;
+    const nextUnwrappedScrollLeft =
+      middleStartPx + prevContinuousLogicalX * sceneScale;
+
+    el.scrollLeft = nextWrappedScrollLeft;
+    scrollLeftRef.current = nextWrappedScrollLeft;
+    unwrappedScrollLeftRef.current = nextUnwrappedScrollLeft;
+    renderedScrollLeftRef.current = nextWrappedScrollLeft;
+    lastObservedScrollLeftRef.current = nextWrappedScrollLeft;
+    setScrollFrame({
+      wrapped: nextWrappedScrollLeft,
+      unwrapped: nextUnwrappedScrollLeft,
+    });
+
+    if (perf01TraceEnabledRef.current && perf01TraceRef.current) {
+      pushLimited(
+        perf01TraceRef.current.resizeEvents,
+        {
+          ts: performance.now(),
+          prevSceneScale: prevGeometry.sceneScale,
+          nextSceneScale: sceneScale,
+          prevWrappedLogicalOffset,
+          nextWrappedLogicalOffset,
+          prevContinuousLogicalX,
+          nextContinuousLogicalX:
+            (nextUnwrappedScrollLeft - middleStartPx) / sceneScale,
+        },
+        PERF03_RESIZE_EVENT_MAX
+      );
+    }
+  }, [initialOffsetX, middleStartPx, sceneScale, segmentWidth, segmentWidthPx]);
 
   /**
    * Wrap-around scroll behavior to maintain the infinite illusion.
@@ -284,7 +663,18 @@ export default function InfiniteParallaxGarden({
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    let x = el.scrollLeft;
+    activateCompositorHints();
+    const rawScrollLeft = el.scrollLeft;
+    const previousWrappedScrollLeft =
+      typeof lastObservedScrollLeftRef.current === "number"
+        ? lastObservedScrollLeftRef.current
+        : rawScrollLeft;
+    if (unwrappedScrollLeftRef.current == null) {
+      unwrappedScrollLeftRef.current = previousWrappedScrollLeft;
+    }
+
+    let x = rawScrollLeft;
+    let wrapDirection: "none" | "left" | "right" = "none";
 
     // Same wrap logic as 10d3fff: keep the viewport anchored around the
     // middle segment, but allow it to straddle the boundary without seams.
@@ -294,32 +684,189 @@ export default function InfiniteParallaxGarden({
     if (x < leftBoundary) {
       x += segmentWidthPx;
       el.scrollLeft = x;
+      wrapDirection = "left";
     } else if (x > rightBoundary) {
       x -= segmentWidthPx;
       el.scrollLeft = x;
+      wrapDirection = "right";
     }
-    scrollLeftRef.current = el.scrollLeft;
+
+    const wrappedScrollLeft = el.scrollLeft;
+    const wrappedDeltaPx = wrappedScrollLeft - previousWrappedScrollLeft;
+    const unwrappedDeltaPx = unwrapDelta(wrappedDeltaPx, segmentWidthPx);
+    const previousUnwrappedScrollLeft =
+      unwrappedScrollLeftRef.current ?? previousWrappedScrollLeft;
+    const nextUnwrappedScrollLeft =
+      previousUnwrappedScrollLeft + unwrappedDeltaPx;
+
+    scrollLeftRef.current = wrappedScrollLeft;
+    unwrappedScrollLeftRef.current = nextUnwrappedScrollLeft;
     const previousScroll = lastObservedScrollLeftRef.current;
-    lastObservedScrollLeftRef.current = el.scrollLeft;
+    lastObservedScrollLeftRef.current = wrappedScrollLeft;
+
+    if (perf01TraceEnabledRef.current && perf01TraceRef.current) {
+      const trace = perf01TraceRef.current;
+      pushLimited(
+        trace.scrollSamples,
+        {
+          ts: performance.now(),
+          rawScrollLeftPx: rawScrollLeft,
+          finalScrollLeftPx: wrappedScrollLeft,
+          unwrappedScrollLeftPx: nextUnwrappedScrollLeft,
+          logicalOffset: logicalOffsetFromScroll(
+            wrappedScrollLeft,
+            middleStartPx,
+            segmentWidthPx,
+            sceneScale
+          ),
+          wrapDirection,
+        },
+        PERF01_SCROLL_SAMPLE_MAX
+      );
+
+      if (wrapDirection !== "none") {
+        const viewportW = el.clientWidth;
+        // Use the same continuous parallax base for both pre/post visibility
+        // snapshots so this isolates the effect of the DOM wrap jump itself.
+        const wrapParallaxBasePx = nextUnwrappedScrollLeft - middleStartPx;
+        const preCull = summarizeCull(rawScrollLeft, viewportW, wrapParallaxBasePx);
+        const postCull = summarizeCull(
+          wrappedScrollLeft,
+          viewportW,
+          wrapParallaxBasePx
+        );
+        let overlapVisibleCount = 0;
+        preCull.visibleIds.forEach((id) => {
+          if (postCull.visibleIds.has(id)) overlapVisibleCount += 1;
+        });
+
+        const wrapId = perf01NextWrapIdRef.current++;
+        perf01PendingWrapIdRef.current = wrapId;
+        const preLogicalOffset = logicalOffsetFromScroll(
+          rawScrollLeft,
+          middleStartPx,
+          segmentWidthPx,
+          sceneScale
+        );
+        const postLogicalOffset = logicalOffsetFromScroll(
+          el.scrollLeft,
+          middleStartPx,
+          segmentWidthPx,
+          sceneScale
+        );
+        pushLimited(
+          trace.wrapEvents,
+          {
+            ts: performance.now(),
+            wrapDirection,
+            preScrollLeftPx: rawScrollLeft,
+            postScrollLeftPx: wrappedScrollLeft,
+            preUnwrappedScrollLeftPx: previousUnwrappedScrollLeft,
+            postUnwrappedScrollLeftPx: nextUnwrappedScrollLeft,
+            leftBoundaryPx: leftBoundary,
+            rightBoundaryPx: rightBoundary,
+            segmentWidthPx,
+            preLogicalOffset,
+            postLogicalOffset,
+            preContinuousLogicalX:
+              (previousUnwrappedScrollLeft - middleStartPx) / sceneScale,
+            postContinuousLogicalX:
+              (nextUnwrappedScrollLeft - middleStartPx) / sceneScale,
+            domToRenderedStateGapPx:
+              wrappedScrollLeft - renderedScrollLeftRef.current,
+            culling: {
+              pre: {
+                total: preCull.total,
+                rendered: preCull.rendered,
+                culledLeft: preCull.culledLeft,
+                culledRight: preCull.culledRight,
+                leftBandRendered: preCull.leftBandRendered,
+              },
+              post: {
+                total: postCull.total,
+                rendered: postCull.rendered,
+                culledLeft: postCull.culledLeft,
+                culledRight: postCull.culledRight,
+                leftBandRendered: postCull.leftBandRendered,
+              },
+              overlapVisibleCount,
+              droppedVisibleCount: Math.max(
+                0,
+                preCull.rendered - overlapVisibleCount
+              ),
+              newVisibleCount: Math.max(
+                0,
+                postCull.rendered - overlapVisibleCount
+              ),
+            },
+          },
+          PERF01_WRAP_EVENT_MAX
+        );
+      }
+    }
 
     if (
       onFirstUserScroll &&
       hasInitializedScrollRef.current &&
       !hasReportedFirstScrollRef.current &&
       typeof previousScroll === "number" &&
-      Math.abs(el.scrollLeft - previousScroll) > 0.5
+      Math.abs(wrappedScrollLeft - previousScroll) > 0.5
     ) {
       hasReportedFirstScrollRef.current = true;
       onFirstUserScroll();
     }
 
+    const recordCommitEvent = (mode: "sync" | "raf") => {
+      if (!perf01TraceEnabledRef.current || !perf01TraceRef.current) return;
+      pushLimited(
+        perf01TraceRef.current.commitEvents,
+        {
+          ts: performance.now(),
+          committedScrollLeftPx: scrollLeftRef.current,
+          committedUnwrappedScrollLeftPx:
+            unwrappedScrollLeftRef.current ?? scrollLeftRef.current,
+          mode,
+          pendingWrapId: perf01PendingWrapIdRef.current,
+        },
+        PERF01_COMMIT_EVENT_MAX
+      );
+    };
+
+    if (wrapDirection !== "none") {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      // Wrap jumps are large in pixel space; commit render state immediately
+      // so the next paint does not mix wrapped DOM position with stale state.
+      recordCommitEvent("sync");
+      perf01PendingWrapIdRef.current = null;
+      setScrollFrame({
+        wrapped: scrollLeftRef.current,
+        unwrapped: unwrappedScrollLeftRef.current ?? scrollLeftRef.current,
+      });
+      return;
+    }
+
     if (rafRef.current == null) {
       rafRef.current = window.requestAnimationFrame(() => {
         rafRef.current = null;
-        setScrollLeft(scrollLeftRef.current);
+        recordCommitEvent("raf");
+        perf01PendingWrapIdRef.current = null;
+        setScrollFrame({
+          wrapped: scrollLeftRef.current,
+          unwrapped: unwrappedScrollLeftRef.current ?? scrollLeftRef.current,
+        });
       });
     }
-  }, [middleStartPx, onFirstUserScroll, segmentWidthPx]);
+  }, [
+    activateCompositorHints,
+    middleStartPx,
+    onFirstUserScroll,
+    sceneScale,
+    segmentWidthPx,
+    summarizeCull,
+  ]);
 
   /**
    * Map vertical wheel to horizontal scroll on desktop,
@@ -430,6 +977,10 @@ export default function InfiniteParallaxGarden({
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
+      if (compositorHintTimerRef.current != null) {
+        window.clearTimeout(compositorHintTimerRef.current);
+        compositorHintTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -444,13 +995,125 @@ export default function InfiniteParallaxGarden({
 
   /**
    * Continuous world X relative to the middle segment origin (CSS px).
-   * This avoids modulo wrap for parallax so layers stay seamless
-   * when the viewport straddles the world boundary.
+   * This uses the unwrapped scroll accumulator so parallax remains
+   * continuous across DOM wrap jumps.
    */
   const worldXPx = useMemo(
-    () => scrollLeft - middleStartPx,
-    [scrollLeft, middleStartPx]
+    () => unwrappedScrollLeft - middleStartPx,
+    [unwrappedScrollLeft, middleStartPx]
   );
+
+  const prefetchCandidates = useMemo<PrefetchCandidate[]>(() => {
+    if (segmentWidthPx <= 0 || viewportWidthPx <= 0 || sceneScale <= 0) {
+      return [];
+    }
+
+    const visibleLeftPx = scrollLeft;
+    const visibleRightPx = scrollLeft + viewportWidthPx;
+    const prefetchLeftPx = visibleLeftPx - PREFETCH_LOOKAHEAD_PX;
+    const prefetchRightPx = visibleRightPx + PREFETCH_LOOKAHEAD_PX;
+    const parallaxBasePx = worldXPx;
+    const nearestBySrc = new Map<string, number>();
+
+    layers.forEach((layer) => {
+      const clampedParallax = clamp(layer.parallax, 0, 1);
+      const parallaxShift = -parallaxBasePx * (1 - clampedParallax);
+      layer.sprites.forEach((sprite) => {
+        if (sprite.repeatX) return;
+        const spriteScale = (sprite.scale ?? 1) * sceneScale;
+        const widthPx = sprite.width * spriteScale;
+        const xs = sprite.xPositions ?? [];
+        xs.forEach((xLogical) => {
+          const xPx = xLogical * sceneScale;
+          for (let segmentIndex = 0; segmentIndex < 3; segmentIndex += 1) {
+            const worldXpx = segmentIndex * segmentWidthPx + xPx;
+            const renderedCenterPx = worldXpx + parallaxShift;
+            const leftPx = renderedCenterPx - widthPx * 0.5;
+            const rightPx = renderedCenterPx + widthPx * 0.5;
+            if (rightPx < prefetchLeftPx || leftPx > prefetchRightPx) {
+              continue;
+            }
+            const distancePx = distanceToViewportPx(
+              leftPx,
+              rightPx,
+              visibleLeftPx,
+              visibleRightPx
+            );
+            if (distancePx === 0) continue;
+            const prevDistance = nearestBySrc.get(sprite.src);
+            if (prevDistance == null || distancePx < prevDistance) {
+              nearestBySrc.set(sprite.src, distancePx);
+            }
+          }
+        });
+      });
+    });
+
+    return [...nearestBySrc.entries()]
+      .sort((a, b) => a[1] - b[1])
+      .slice(0, PREFETCH_CANDIDATE_LIMIT)
+      .map(([src, distancePx]) => ({ src, distancePx }));
+  }, [layers, sceneScale, scrollLeft, segmentWidthPx, viewportWidthPx, worldXPx]);
+
+  useEffect(() => {
+    let enqueued = 0;
+    for (const candidate of prefetchCandidates) {
+      const { src } = candidate;
+      if (prefetchedSrcSetRef.current.has(src)) continue;
+      if (prefetchQueuedSetRef.current.has(src)) continue;
+      prefetchQueuedSetRef.current.add(src);
+      prefetchQueueRef.current.push(src);
+      enqueued += 1;
+      if (enqueued >= PREFETCH_ENQUEUE_PER_VIEWPORT_UPDATE) {
+        break;
+      }
+    }
+  }, [prefetchCandidates]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const startPrefetchDecode = (src: string) => {
+      prefetchInFlightRef.current += 1;
+      const img = new window.Image();
+      img.decoding = "async";
+      let done = false;
+      const finalize = () => {
+        if (done) return;
+        done = true;
+        prefetchedSrcSetRef.current.add(src);
+        prefetchInFlightRef.current = Math.max(0, prefetchInFlightRef.current - 1);
+      };
+      img.onload = finalize;
+      img.onerror = finalize;
+      img.src = src;
+      if (typeof img.decode === "function") {
+        img.decode().then(finalize).catch(finalize);
+      }
+    };
+
+    const pump = () => {
+      if (document.visibilityState !== "visible") return;
+      while (
+        prefetchInFlightRef.current < PREFETCH_MAX_IN_FLIGHT &&
+        prefetchQueueRef.current.length > 0
+      ) {
+        const nextSrc = prefetchQueueRef.current.shift();
+        if (!nextSrc) break;
+        prefetchQueuedSetRef.current.delete(nextSrc);
+        if (prefetchedSrcSetRef.current.has(nextSrc)) continue;
+        startPrefetchDecode(nextSrc);
+      }
+    };
+
+    const intervalId = window.setInterval(pump, PREFETCH_PUMP_INTERVAL_MS);
+    prefetchPumpIntervalRef.current = intervalId;
+    return () => {
+      window.clearInterval(intervalId);
+      if (prefetchPumpIntervalRef.current === intervalId) {
+        prefetchPumpIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   /**
    * Report viewport to consumers (e.g. StoryDotsOverlay) using:
@@ -480,8 +1143,6 @@ export default function InfiniteParallaxGarden({
     });
   }, [
     onViewportChange,
-    scrollLeft,
-    middleStartPx,
     localXPx,
     sceneScale,
     segmentWidth,
@@ -610,13 +1271,23 @@ export default function InfiniteParallaxGarden({
         ? layer.biomeWidth * sceneScale
         : segmentWidthPx;
     const parallaxBasePx = worldXPx;
-    const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
-    const viewportW = scrollRef.current?.clientWidth ?? 0;
+    const clampedParallax = clamp(parallax, 0, 1);
+    const parallaxShift = -parallaxBasePx * (1 - clampedParallax);
+    const viewportW = viewportWidthPx;
     const visibleLeftPx = scrollLeft;
     const visibleRightPx = scrollLeft + viewportW;
-    const cullPadPx = 320;
     const clipLeftPx = biomeStartPxRaw;
     const clipWidthPx = biomeWidthPx;
+    const segmentNearViewport =
+      segmentLeftPx + segmentWidthPx >
+        visibleLeftPx - COMPOSITOR_HINT_SEGMENT_PAD_PX &&
+      segmentLeftPx < visibleRightPx + COMPOSITOR_HINT_SEGMENT_PAD_PX;
+    // Promote only while actively scrolling and only for segments near view.
+    // This avoids keeping dozens of compositor layers pinned when idle.
+    const shouldHintTransform =
+      compositorHintsActive &&
+      segmentNearViewport &&
+      Math.abs(1 - clampedParallax) > 0.0005;
     const segmentStyle: React.CSSProperties = {
       position: "absolute",
       left: segmentLeftPx,
@@ -641,7 +1312,7 @@ export default function InfiniteParallaxGarden({
       width: clipWidthPx,
       height: effectiveHeight,
       transform: `translateX(${parallaxShift}px)`,
-      willChange: "transform",
+      willChange: shouldHintTransform ? "transform" : undefined,
       opacity,
       pointerEvents: "none",
     };
@@ -872,12 +1543,30 @@ export default function InfiniteParallaxGarden({
 
             const worldXpx = segmentIndex * segmentWidthPx + xPx;
             const renderedXpx = worldXpx + parallaxShift;
+            const renderedLeftPx = renderedXpx - w * 0.5;
+            const renderedRightPx = renderedXpx + w * 0.5;
             if (
-              renderedXpx + w < visibleLeftPx - cullPadPx ||
-              renderedXpx - w > visibleRightPx + cullPadPx
+              renderedRightPx < visibleLeftPx - SPRITE_CULL_PAD_PX ||
+              renderedLeftPx > visibleRightPx + SPRITE_CULL_PAD_PX
             ) {
               return null;
             }
+            const loadDistancePx = distanceToViewportPx(
+              renderedLeftPx,
+              renderedRightPx,
+              visibleLeftPx,
+              visibleRightPx
+            );
+            const loadingMode: "eager" | "lazy" =
+              loadDistancePx <= LOAD_EAGER_PAD_PX ? "eager" : "lazy";
+            const fetchPriorityMode: "high" | "auto" | "low" =
+              loadDistancePx <= LOAD_HIGH_PRIORITY_PAD_PX
+                ? "high"
+                : loadDistancePx <= LOAD_EAGER_PAD_PX
+                  ? "auto"
+                  : "low";
+            const decodingMode: "auto" | "async" =
+              loadDistancePx <= LOAD_HIGH_PRIORITY_PAD_PX ? "auto" : "async";
             const t =
               (2 * Math.PI * periodsPerSegment * worldXpx) / segmentWidthPx +
               curvePhase;
@@ -912,6 +1601,10 @@ export default function InfiniteParallaxGarden({
                   draggable={false}
                   priority={false}
                   sizes={`${Math.round(w)}px`}
+                  loading={loadingMode}
+                  fetchPriority={fetchPriorityMode}
+                  decoding={decodingMode}
+                  unoptimized
                 />
                 {allowDebugWireframes && (
                   <div
@@ -1030,3 +1723,8 @@ export default function InfiniteParallaxGarden({
     </div>
   );
 }
+
+const MemoizedInfiniteParallaxGarden = React.memo(InfiniteParallaxGarden);
+MemoizedInfiniteParallaxGarden.displayName = "InfiniteParallaxGarden";
+
+export default MemoizedInfiniteParallaxGarden;

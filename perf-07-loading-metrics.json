@@ -1,0 +1,315 @@
+{
+  "generatedAt": "2026-03-04T23:07:01.727Z",
+  "assumptions": {
+    "cullPadPx": 320,
+    "loadHighPriorityPadPx": 96,
+    "loadEagerPadPx": 224,
+    "prefetchLookaheadPx": 1440,
+    "prefetchEnqueuePerStep": 6,
+    "prefetchDecodesPerStep": 1,
+    "stepSizeLogical": 64,
+    "note": "Proxy simulation over meadow+forest non-repeat sprites; decoded memory uses PNG w*h*4 estimates."
+  },
+  "world": {
+    "segmentWidth": 8192,
+    "uniqueNonRepeatSources": 74
+  },
+  "profiles": [
+    {
+      "profile": "mobile",
+      "viewportWidth": 480,
+      "before": {
+        "viewportWidth": 480,
+        "steps": 129,
+        "decodeBurstMB": {
+          "avg": 3.98,
+          "p95": 20.45,
+          "max": 184.42,
+          "warmAvg": 2.58,
+          "warmP95": 18.25,
+          "warmMax": 32,
+          "stepsOver8MB": 14,
+          "warmStepsOver8MB": 13
+        },
+        "newlyVisibleSourcesPerStep": {
+          "avg": 1.57,
+          "p95": 4,
+          "max": 31,
+          "warmAvg": 1.35,
+          "warmP95": 4,
+          "warmMax": 5
+        },
+        "renderedSpritesPerStep": {
+          "avg": 34.18,
+          "p95": 52,
+          "max": 53
+        },
+        "priorityBucketsPerStep": {
+          "high": {
+            "avg": 34.18,
+            "p95": 52,
+            "max": 53
+          },
+          "eager": {
+            "avg": 34.18,
+            "p95": 52,
+            "max": 53
+          },
+          "lazy": {
+            "avg": 0,
+            "p95": 0,
+            "max": 0
+          }
+        },
+        "decodedMB": {
+          "onDemand": 512.81,
+          "prefetched": 0,
+          "total": 512.81
+        }
+      },
+      "after": {
+        "viewportWidth": 480,
+        "steps": 129,
+        "decodeBurstMB": {
+          "avg": 1.41,
+          "p95": 0,
+          "max": 181.96,
+          "warmAvg": 0,
+          "warmP95": 0,
+          "warmMax": 0,
+          "stepsOver8MB": 1,
+          "warmStepsOver8MB": 0
+        },
+        "newlyVisibleSourcesPerStep": {
+          "avg": 1.57,
+          "p95": 4,
+          "max": 31,
+          "warmAvg": 1.35,
+          "warmP95": 4,
+          "warmMax": 5
+        },
+        "renderedSpritesPerStep": {
+          "avg": 34.18,
+          "p95": 52,
+          "max": 53
+        },
+        "priorityBucketsPerStep": {
+          "high": {
+            "avg": 26.09,
+            "p95": 41,
+            "max": 44
+          },
+          "eager": {
+            "avg": 30.7,
+            "p95": 47,
+            "max": 50
+          },
+          "lazy": {
+            "avg": 3.48,
+            "p95": 8,
+            "max": 10
+          }
+        },
+        "decodedMB": {
+          "onDemand": 181.96,
+          "prefetched": 330.85,
+          "total": 512.81
+        }
+      },
+      "comparison": {
+        "decodeBurstMB": {
+          "warmP95": {
+            "before": 18.25,
+            "after": 0,
+            "delta": -18.25,
+            "deltaPct": -100
+          },
+          "warmMax": {
+            "before": 32,
+            "after": 0,
+            "delta": -32,
+            "deltaPct": -100
+          },
+          "warmStepsOver8MB": {
+            "before": 13,
+            "after": 0,
+            "delta": -13
+          }
+        },
+        "priorityBucketsPerStep": {
+          "highAvg": {
+            "before": 34.18,
+            "after": 26.09,
+            "delta": -8.09,
+            "deltaPct": -23.7
+          },
+          "lazyAvg": {
+            "before": 0,
+            "after": 3.48,
+            "delta": 3.48
+          }
+        },
+        "decodedMB": {
+          "onDemand": {
+            "before": 512.81,
+            "after": 181.96,
+            "delta": -330.85,
+            "deltaPct": -64.5
+          },
+          "prefetched": {
+            "before": 0,
+            "after": 330.85
+          }
+        }
+      }
+    },
+    {
+      "profile": "desktop",
+      "viewportWidth": 1280,
+      "before": {
+        "viewportWidth": 1280,
+        "steps": 129,
+        "decodeBurstMB": {
+          "avg": 3.98,
+          "p95": 16,
+          "max": 220.38,
+          "warmAvg": 2.3,
+          "warmP95": 16,
+          "warmMax": 32,
+          "stepsOver8MB": 13,
+          "warmStepsOver8MB": 12
+        },
+        "newlyVisibleSourcesPerStep": {
+          "avg": 1.57,
+          "p95": 4,
+          "max": 37,
+          "warmAvg": 1.29,
+          "warmP95": 4,
+          "warmMax": 6
+        },
+        "renderedSpritesPerStep": {
+          "avg": 48.77,
+          "p95": 68,
+          "max": 71
+        },
+        "priorityBucketsPerStep": {
+          "high": {
+            "avg": 48.77,
+            "p95": 68,
+            "max": 71
+          },
+          "eager": {
+            "avg": 48.77,
+            "p95": 68,
+            "max": 71
+          },
+          "lazy": {
+            "avg": 0,
+            "p95": 0,
+            "max": 0
+          }
+        },
+        "decodedMB": {
+          "onDemand": 512.81,
+          "prefetched": 0,
+          "total": 512.81
+        }
+      },
+      "after": {
+        "viewportWidth": 1280,
+        "steps": 129,
+        "decodeBurstMB": {
+          "avg": 1.67,
+          "p95": 0,
+          "max": 215.93,
+          "warmAvg": 0,
+          "warmP95": 0,
+          "warmMax": 0,
+          "stepsOver8MB": 1,
+          "warmStepsOver8MB": 0
+        },
+        "newlyVisibleSourcesPerStep": {
+          "avg": 1.57,
+          "p95": 4,
+          "max": 37,
+          "warmAvg": 1.29,
+          "warmP95": 4,
+          "warmMax": 6
+        },
+        "renderedSpritesPerStep": {
+          "avg": 48.77,
+          "p95": 68,
+          "max": 71
+        },
+        "priorityBucketsPerStep": {
+          "high": {
+            "avg": 40.85,
+            "p95": 58,
+            "max": 61
+          },
+          "eager": {
+            "avg": 45.35,
+            "p95": 63,
+            "max": 66
+          },
+          "lazy": {
+            "avg": 3.42,
+            "p95": 7,
+            "max": 11
+          }
+        },
+        "decodedMB": {
+          "onDemand": 215.93,
+          "prefetched": 296.88,
+          "total": 512.81
+        }
+      },
+      "comparison": {
+        "decodeBurstMB": {
+          "warmP95": {
+            "before": 16,
+            "after": 0,
+            "delta": -16,
+            "deltaPct": -100
+          },
+          "warmMax": {
+            "before": 32,
+            "after": 0,
+            "delta": -32,
+            "deltaPct": -100
+          },
+          "warmStepsOver8MB": {
+            "before": 12,
+            "after": 0,
+            "delta": -12
+          }
+        },
+        "priorityBucketsPerStep": {
+          "highAvg": {
+            "before": 48.77,
+            "after": 40.85,
+            "delta": -7.92,
+            "deltaPct": -16.2
+          },
+          "lazyAvg": {
+            "before": 0,
+            "after": 3.42,
+            "delta": 3.42
+          }
+        },
+        "decodedMB": {
+          "onDemand": {
+            "before": 512.81,
+            "after": 215.93,
+            "delta": -296.88,
+            "deltaPct": -57.9
+          },
+          "prefetched": {
+            "before": 0,
+            "after": 296.88
+          }
+        }
+      }
+    }
+  ]
+}

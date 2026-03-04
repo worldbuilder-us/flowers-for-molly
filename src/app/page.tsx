@@ -10,9 +10,12 @@ import React, {
 } from "react";
 import Header from "./components/Header";
 import InfiniteParallaxGarden, {
+  type GardenViewport,
   type PointerDebugInfo,
 } from "./components/InfiniteParallaxGarden";
-import StoryDotsOverlay from "./components/StoryDotsOverlay";
+import StoryDotsOverlay, {
+  type ViewportStore,
+} from "./components/StoryDotsOverlay";
 import StoryModal, { StoryListItem } from "./components/StoryModal";
 import styles from "./Page.module.css";
 import { getWorldConfig } from "./garden/biomeLoader";
@@ -24,20 +27,41 @@ const BACKGROUND_MUSIC_SRC = `/sound/${encodeURIComponent(
 const BACKGROUND_MUSIC_BASE_VOLUME = 0.2;
 const BACKGROUND_MUSIC_FADE_DURATION = 4; // seconds
 
+const DEFAULT_VIEWPORT: GardenViewport = {
+  offsetX: 0,
+  logicalW: 0,
+  viewportW: 0,
+  viewportH: 0,
+};
+
+function createViewportStore(initial: GardenViewport): ViewportStore {
+  let snapshot = initial;
+  const listeners = new Set<() => void>();
+
+  return {
+    getSnapshot: () => snapshot,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    setSnapshot: (next: GardenViewport) => {
+      if (
+        snapshot.offsetX === next.offsetX &&
+        snapshot.logicalW === next.logicalW &&
+        snapshot.viewportW === next.viewportW &&
+        snapshot.viewportH === next.viewportH
+      ) {
+        return;
+      }
+      snapshot = next;
+      listeners.forEach((listener) => listener());
+    },
+  };
+}
+
 export default function Page() {
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [viewport, setViewport] = useState<{
-    offsetX: number;
-    logicalW: number;
-    viewportW: number;
-    viewportH: number;
-  }>({
-    offsetX: 0,
-    logicalW: 0,
-    viewportW: 0,
-    viewportH: 0,
-  });
   const [active, setActive] = useState<StoryListItem | null>(null);
 
   const [debugWireframesForeground, setDebugWireframesForeground] =
@@ -57,6 +81,10 @@ export default function Page() {
   const layers = worldConfig.layers;
   const activeBiome = worldConfig.layout.biomes[0];
   const activeBiomeName = activeBiome?.id ?? "meadow";
+  const viewportStore = useMemo(
+    () => createViewportStore(DEFAULT_VIEWPORT),
+    [],
+  );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasStartedRef = useRef(false);
@@ -172,20 +200,18 @@ export default function Page() {
   }, []);
 
   const onViewportChange = useCallback(
-    (v: {
-      offsetX: number;
-      logicalW: number;
-      viewportW: number;
-      viewportH: number;
-    }) => {
-      setViewport(v);
+    (v: GardenViewport) => {
+      viewportStore.setSnapshot(v);
     },
-    [],
+    [viewportStore],
   );
 
   const segmentWidth = worldConfig.layout.segmentWidth;
   const handleFirstUserScroll = useCallback(() => {
     setHasScrolled(true);
+  }, []);
+  const handleDotClick = useCallback((story: StoryListItem) => {
+    setActive(story);
   }, []);
 
   // If pointer debug is turned off, clear any lingering pointer debug info
@@ -370,8 +396,8 @@ export default function Page() {
             <StoryDotsOverlay
               stories={stories}
               segmentWidth={segmentWidth}
-              viewport={viewport}
-              onDotClick={(s) => setActive(s)}
+              viewportStore={viewportStore}
+              onDotClick={handleDotClick}
             />
           )}
 
