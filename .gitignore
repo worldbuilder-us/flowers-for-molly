@@ -41,3 +41,5 @@ yarn-error.log*
 next-env.d.ts
 public/assets/sky_transition2.psd
 blender-photoshop/sky_transition2.psd
+
+tickets.md
