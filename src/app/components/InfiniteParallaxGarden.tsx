@@ -272,6 +272,7 @@ export default function InfiniteParallaxGarden({
     const target = middleStartPx + logicalInitial * sceneScale;
 
     el.scrollLeft = target;
+    scrollLeftRef.current = target;
     setScrollLeft(target);
     lastObservedScrollLeftRef.current = target;
     hasInitializedScrollRef.current = true;
@@ -279,17 +280,18 @@ export default function InfiniteParallaxGarden({
 
   /**
    * Wrap-around scroll behavior to maintain the infinite illusion.
-   * Uses rendered segmentWidth in CSS px so it stays correct on all screens.
+   * Recenter only near the actual edges of the 3-copy strip, not at the
+   * midpoint of the world. That keeps biome seams from doubling as reset
+   * points while preserving the infinite-scroll illusion.
    */
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     let x = el.scrollLeft;
-
-    // Same wrap logic as 10d3fff: keep the viewport anchored around the
-    // middle segment, but allow it to straddle the boundary without seams.
-    const leftBoundary = middleStartPx * 0.5;
-    const rightBoundary = middleStartPx * 1.5;
+    const viewportW = el.clientWidth;
+    const recenterBufferPx = Math.max(viewportW, 256);
+    const leftBoundary = recenterBufferPx;
+    const rightBoundary = segmentWidthPx * 2 - viewportW - recenterBufferPx;
 
     if (x < leftBoundary) {
       x += segmentWidthPx;
@@ -319,7 +321,7 @@ export default function InfiniteParallaxGarden({
         setScrollLeft(scrollLeftRef.current);
       });
     }
-  }, [middleStartPx, onFirstUserScroll, segmentWidthPx]);
+  }, [onFirstUserScroll, segmentWidthPx]);
 
   /**
    * Map vertical wheel to horizontal scroll on desktop,
@@ -475,10 +477,7 @@ export default function InfiniteParallaxGarden({
    * This avoids modulo wrap for parallax so layers stay seamless
    * when the viewport straddles the world boundary.
    */
-  const worldXPx = useMemo(
-    () => scrollLeft - middleStartPx,
-    [scrollLeft, middleStartPx]
-  );
+  const worldXPx = useMemo(() => localXPx, [localXPx]);
 
   /**
    * Report viewport to consumers (e.g. StoryDotsOverlay) using:
