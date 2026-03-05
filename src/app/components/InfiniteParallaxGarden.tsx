@@ -433,6 +433,34 @@ export default function InfiniteParallaxGarden({
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const uniqueSources = Array.from(
+      new Set(
+        layers.flatMap((layer) =>
+          layer.sprites
+            .filter((sprite) => !sprite.repeatX)
+            .map((sprite) => sprite.src)
+        )
+      )
+    );
+
+    const preloaded: HTMLImageElement[] = [];
+    for (const src of uniqueSources) {
+      const img = new window.Image();
+      img.decoding = "async";
+      img.src = src;
+      preloaded.push(img);
+    }
+
+    return () => {
+      preloaded.forEach((img) => {
+        img.src = "";
+      });
+    };
+  }, [layers]);
+
   /**
    * Local X position within the middle segment, in rendered CSS px.
    */
@@ -611,10 +639,6 @@ export default function InfiniteParallaxGarden({
         : segmentWidthPx;
     const parallaxBasePx = worldXPx;
     const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
-    const viewportW = scrollRef.current?.clientWidth ?? 0;
-    const visibleLeftPx = scrollLeft;
-    const visibleRightPx = scrollLeft + viewportW;
-    const cullPadPx = 320;
     const clipLeftPx = biomeStartPxRaw;
     const clipWidthPx = biomeWidthPx;
     const segmentStyle: React.CSSProperties = {
@@ -871,13 +895,6 @@ export default function InfiniteParallaxGarden({
             const leftX = xPx - w * 0.5;
 
             const worldXpx = segmentIndex * segmentWidthPx + xPx;
-            const renderedXpx = worldXpx + parallaxShift;
-            if (
-              renderedXpx + w < visibleLeftPx - cullPadPx ||
-              renderedXpx - w > visibleRightPx + cullPadPx
-            ) {
-              return null;
-            }
             const t =
               (2 * Math.PI * periodsPerSegment * worldXpx) / segmentWidthPx +
               curvePhase;
@@ -910,7 +927,7 @@ export default function InfiniteParallaxGarden({
                   height={Math.round(h)}
                   style={spriteStyle}
                   draggable={false}
-                  priority={false}
+                  loading="eager"
                   sizes={`${Math.round(w)}px`}
                 />
                 {allowDebugWireframes && (
