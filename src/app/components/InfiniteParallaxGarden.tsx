@@ -288,17 +288,19 @@ export default function InfiniteParallaxGarden({
     const el = scrollRef.current;
     if (!el) return;
     let x = el.scrollLeft;
-    const viewportW = el.clientWidth;
-    const recenterBufferPx = Math.max(viewportW, 256);
-    const leftBoundary = recenterBufferPx;
-    const rightBoundary = segmentWidthPx * 2 - viewportW - recenterBufferPx;
+    let didRecenter = false;
+    const recenterEpsilonPx = Math.max(8, Math.min(48, segmentWidthPx * 0.01));
+    const leftBoundary = recenterEpsilonPx;
+    const rightBoundary = segmentWidthPx * 2 - recenterEpsilonPx;
 
     if (x < leftBoundary) {
       x += segmentWidthPx;
       el.scrollLeft = x;
+      didRecenter = true;
     } else if (x > rightBoundary) {
       x -= segmentWidthPx;
       el.scrollLeft = x;
+      didRecenter = true;
     }
     scrollLeftRef.current = el.scrollLeft;
     const previousScroll = lastObservedScrollLeftRef.current;
@@ -313,6 +315,15 @@ export default function InfiniteParallaxGarden({
     ) {
       hasReportedFirstScrollRef.current = true;
       onFirstUserScroll();
+    }
+
+    if (didRecenter) {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      setScrollLeft(el.scrollLeft);
+      return;
     }
 
     if (rafRef.current == null) {
