@@ -350,21 +350,6 @@ export default function Page() {
             </div>
           )}
 
-          <InfiniteParallaxGarden
-            segmentWidth={segmentWidth}
-            layers={layers}
-            debugWireframesForeground={debugWireframesForeground}
-            debugWireframesBackground={debugWireframesBackground}
-            debugWireframesPinMode={debugWireframesPinMode}
-            onViewportChange={onViewportChange}
-            initialOffsetX={activeBiome?.startOffset ?? 0}
-            // Only collect pointer debug info while pointer debug is on
-            onPointerDebugChange={
-              debugMode && debugPointer ? setPointerDebug : undefined
-            }
-            onFirstUserScroll={handleFirstUserScroll}
-          />
-
           {/* dots overlay */}
           {!loading && stories.length > 0 && (
             <StoryDotsOverlay
