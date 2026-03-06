@@ -284,9 +284,13 @@ export default function InfiniteParallaxGarden({
   );
 
   const getRenderPhasePx = useCallback(
-    (wrappedPx: number, viewportW: number) => {
+    (wrappedPx: number, viewportW: number, parallax = 1) => {
       if (segmentWidthPx === 0 || viewportW <= 0) return wrappedPx;
-      const seamWindowPx = Math.min(viewportW, segmentWidthPx * 0.5);
+      const parallaxFactor = clamp(parallax, 0.12, 1);
+      const seamWindowPx = Math.min(
+        segmentWidthPx * 0.5,
+        viewportW / parallaxFactor,
+      );
       return wrappedPx > segmentWidthPx - seamWindowPx
         ? wrappedPx - segmentWidthPx
         : wrappedPx;
@@ -337,7 +341,7 @@ export default function InfiniteParallaxGarden({
           seamDistanceLogical: Number(before.seamDistanceLogical.toFixed(2)),
           viewportTouchesWrap: before.viewportTouchesWrap,
           renderPhasePx: Number(
-            getRenderPhasePx(before.wrappedPx, viewportW).toFixed(2),
+            getRenderPhasePx(before.wrappedPx, viewportW, 1).toFixed(2),
           ),
         },
         after: {
@@ -348,7 +352,7 @@ export default function InfiniteParallaxGarden({
           seamDistanceLogical: Number(after.seamDistanceLogical.toFixed(2)),
           viewportTouchesWrap: after.viewportTouchesWrap,
           renderPhasePx: Number(
-            getRenderPhasePx(after.wrappedPx, viewportW).toFixed(2),
+            getRenderPhasePx(after.wrappedPx, viewportW, 1).toFixed(2),
           ),
         },
       };
@@ -615,16 +619,6 @@ export default function InfiniteParallaxGarden({
   }, [scrollLeft, middleStartPx, segmentWidthPx]);
 
   /**
-   * Continuous world X relative to the middle segment origin (CSS px).
-   * This avoids modulo wrap for parallax so layers stay seamless
-   * when the viewport straddles the world boundary.
-   */
-  const worldXPx = useMemo(() => {
-    const viewportW = scrollRef.current?.clientWidth ?? 0;
-    return getRenderPhasePx(localXPx, viewportW);
-  }, [getRenderPhasePx, localXPx]);
-
-  /**
    * Report viewport to consumers (e.g. StoryDotsOverlay) using:
    * - logical offsetX in [0, segmentWidth)
    * - physical viewport width/height in CSS px
@@ -779,7 +773,8 @@ export default function InfiniteParallaxGarden({
       typeof layer.biomeWidth === "number"
         ? layer.biomeWidth * sceneScale
         : segmentWidthPx;
-    const parallaxBasePx = worldXPx;
+    const viewportW = scrollRef.current?.clientWidth ?? 0;
+    const parallaxBasePx = getRenderPhasePx(localXPx, viewportW, parallax);
     const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
     const clipLeftPx = biomeStartPxRaw;
     const clipWidthPx = biomeWidthPx;
