@@ -70,8 +70,15 @@ function isActive(pathname: string, href: string): boolean {
 export default function Header() {
   const pathname = usePathname() || "/";
   const items = getNavForPath(pathname);
+  const isHome = pathname === "/";
 
-  const headerClassName = [styles.header, montserratFont.className].join(" ");
+  const headerClassName = [
+    styles.header,
+    isHome ? styles.headerHome : "",
+    montserratFont.className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <header className={headerClassName}>

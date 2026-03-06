@@ -230,3 +230,63 @@ The experience leans heavily on custom layout/animation (parallax layers, partic
 - `src/app/poem/page.tsx` is a stub with commented-out markup.
 - Moderation flow is not exposed in UI (stories are stored with `pending` status on submission, but not filtered in GET).
 - Some Roadmap items in `Roadmap.md` describe aspirational features not yet implemented.
+
+# 03/05/26
+
+We are debugging a seam/render bug in `src/app/components/InfiniteParallaxGarden.tsx` for a world that is one full repeating segment wide at `8192` logical px: `4096` meadow + `4096` forest. This segment width is
+built in `src/app/garden/worldLayout.ts` and passed from `src/app/page.tsx` into `InfiniteParallaxGarden` as `segmentWidth`. The app renders a 3-copy strip `[A][B][C]` and starts in the middle copy. The intended UX
+is: load at meadow start (`logicalX 0` at the left edge), scroll left to see the forest tail wrap in from the other side, and scroll right through the forest back into meadow without visible jumps or biome overlap.
+
+The original bug was: on load, the meadow begins correctly at `logicalX 0`, but the first wrap is wrong. Scrolling left from meadow start causes the visible meadow beginning to shift to around the blue flower at
+logical `~960` instead of `0`, while the end of the forest appears extended by about one viewport width. Scrolling right produces the same class of bug in reverse. Historically there was also a separate older bug
+where the scene jumped in the middle of the forest. After many attempts, we learned these are not the same bug.
+
+What is definitely not the root cause: biome manifests, world ordering, story dot placement, or biome offsets. `src/app/garden/biomes.ts` already flattens biome data into world-space sprite positions using
+`xOffset`, and `src/app/garden/biomeLoader.ts` builds one combined layer list for the whole world. Attempts to “solve” this in biome data or by treating the world as a single super-biome are almost certainly the
+wrong layer. The failed biome-clipping experiments proved that. We also ruled out simple recenter-threshold tuning as a complete solution: changing thresholds alone only moves the visible failure point between the
+meadow/forest seam and a midpoint jump.
+
+The biggest confirmed finding came from seam instrumentation added to `InfiniteParallaxGarden.tsx`. We logged `scrollLeft`, wrapped logical `offsetX`, `localXPx`, render phase, seam distance, viewport width, and
+whether recentering occurred. Those logs proved the original jump happened before any recentering. Example: from meadow start, a tiny left move changed wrapped logical position from `0` to near `8192` with
+`didRecenter: false`, and the renderer phase jumped with it. So the primary seam jump was not caused by `handleScroll` recenter timing. It was caused by the renderer using wrapped `localXPx` both for logical
+viewport reporting and for parallax/render phase. That meant the visual world snapped on the very first seam-adjacent step.
+
+What worked: separating logical wrapping from render phase enough to remove the obvious seam jump. The current best progress came from keeping wrapped `localXPx` / `offsetX` for viewport reporting and overlays,
+while changing the parallax basis so it no longer blindly followed wrapped `localXPx` at the seam. The first attempt used a continuous accumulator from scroll deltas; that removed the seam jump but introduced a new
+bug where the outgoing biome extended one full world length farther each loop, then doubled each loop, because render phase drifted by full segments over time. That approach is wrong long-term. The next attempt
+replaced the unbounded accumulator with a seam-local phase mapping: use wrapped `localXPx`, but remap the last seam-adjacent window to a negative equivalent so render phase stays visually continuous at the wrap.
+That got us the closest we have been: the major jump disappeared, and the app behaved more correctly in both directions.
+
+The key remaining bug in that near-fixed state is this: the outgoing biome visually persists too long past the seam, and then foreground or mid/background assets appear/disappear abruptly. Going left-to-right, the
+forest extends into the meadow longer than it should; after a certain point some foreground assets render back in even though they already appeared earlier in the forest. Going right-to-left, the forest ending
+initially looks correct, but once the seam passes the right border some assets disappear and the scene falls into an “extended forest ending.” This remaining bug is symmetrical by direction, but it is no longer a
+jump bug. Seam logs from that state show `didRecenter: false`, stable `logicalOffsetX`, and bounded `renderPhasePx`. That means the remaining problem is no longer scroll bookkeeping. It is now a pure render/
+compositing issue.
+
+What failed and should not be retried in the same form:
+
+1. Biome clipping metadata plus clip-container adjustments. Early attempts to wire `biomeStart` / `biomeWidth` into rendering and/or move clip/content containers caused meadow/forest overlap or reverse overlap.
+2. Restoring production behavior wholesale. The production version used continuous `worldXPx`, which fixes the seam snap, but its wrap window (`middleStartPx * 0.5` / `middleStartPx * 1.5`) is effectively calibrated
+   for a half-world assumption and reintroduces the old mid-forest jump now that the full world is `8192`.
+3. Using wrapped `localXPx` directly as render/parallax phase. This was the direct cause of the original seam jump and is proven wrong by logs.
+4. Using a continuous accumulator that is allowed to drift across loops. This removed the jump but caused the outgoing biome to grow by one segment each full wrap.
+5. Brute-force primitive duplication / overscan in the renderer. That created severe regressions: biome overlap, performance degradation, missing assets, white flashes, or skybox bleed, without solving the
+   underlying seam behavior.
+6. Passing `biomeStart` / `biomeWidth` into layers without fully reconciling the renderer’s clip coordinate system. One attempt made the entire forest render blank white, proving the current clip stack does not
+   simply accept world-space biome bounds as-is.
+7. The later attempt to align clip coordinates by shifting `contentStyle.left = -clipLeftPx` and widening content to `segmentWidthPx` also did not solve the remaining issue and was reverted.
+
+What the repo tells us historically: the important regression window is around commit `3a313f1` in `InfiniteParallaxGarden.tsx`. Two things changed together there: wrap behavior moved away from earlier assumptions,
+and `worldXPx` switched from continuous scroll-space to wrapped `localXPx`. Those two changes solved one symptom while creating another. The current local file also has its own uncommitted evolution on top of that.
+The app today already treats the whole world as one `8192` segment. This is not fundamentally a “two biomes clashing” problem; it is a renderer seam/compositing problem.
+
+Current best understanding of the remaining issue: the seam jump problem is mostly solved by seam-local render phase mapping, but some render layers still persist past the biome seam longer than they should. The
+likely cause is in how parallax transforms are applied to a clip-local content slab in `renderLayerSegment` inside `InfiniteParallaxGarden.tsx`. Right now the renderer computes `parallaxShift` per layer and applies
+it to a content container inside a clip region. Because layers have different parallax values, they enter/exit seam conditions at different times. That appears to be why some background or foreground assets deload/
+reload late, producing the “extended biome” effect even though logical position and seam phase are now stable. The remaining issue is probably not in `handleScroll`, not in `offsetX`, and not in world data. It is
+likely in per-layer render alignment near the seam, especially the relationship between `clipLeftPx`, `clipWidthPx`, `contentStyle`, and `parallaxShift` in `renderLayerSegment`.
+
+If starting fresh in a new chat, the best next step is not to guess another global fix. Start from the current near-fixed state and inspect `renderLayerSegment` in `src/app/components/InfiniteParallaxGarden.tsx` as
+the primary remaining suspect. Keep the seam instrumentation pattern, but focus on layer-level rendering behavior rather than scroll bookkeeping. In particular, compare how the visible outgoing biome persists after
+`renderPhasePx` is already correct, and examine whether the layer content transform itself is causing some layers to stay visible or re-enter late. Do not touch biome manifests, world layout, or overlay logic unless
+new evidence proves they are involved.

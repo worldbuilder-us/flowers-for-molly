@@ -188,26 +188,28 @@ export default function InfiniteParallaxGarden({
   onPointerDebugChange,
   onFirstUserScroll,
 }: GardenProps) {
+  const seamDebugEnabled = process.env.NEXT_PUBLIC_DEBUG_MODE === "true";
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollLeftRef = useRef(0);
   const lastObservedScrollLeftRef = useRef<number | null>(null);
   const hasInitializedScrollRef = useRef(false);
   const hasReportedFirstScrollRef = useRef(false);
+  const lastSeamDebugTsRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const keyRafRef = useRef<number | null>(null);
   const keyDirRef = useRef<-1 | 0 | 1>(0);
   const [hoveredWireframeId, setHoveredWireframeId] = useState<string | null>(
-    null
+    null,
   );
   const [pinnedWireframeId, setPinnedWireframeId] = useState<string | null>(
-    null
+    null,
   );
 
   const allowDebugForRole = useCallback(
     (role: string) =>
       (debugWireframesForeground && FOREGROUND_ROLES.has(role)) ||
       (debugWireframesBackground && BACKGROUND_ROLES.has(role)),
-    [debugWireframesForeground, debugWireframesBackground]
+    [debugWireframesForeground, debugWireframesBackground],
   );
 
   useEffect(() => {
@@ -253,6 +255,127 @@ export default function InfiniteParallaxGarden({
 
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  const getScrollMetrics = useCallback(
+    (scrollPx: number, viewportW: number) => {
+      const wrappedPx =
+        segmentWidthPx === 0
+          ? 0
+          : ((scrollPx - middleStartPx) % segmentWidthPx + segmentWidthPx) %
+            segmentWidthPx;
+      const logicalOffsetX = sceneScale === 0 ? 0 : wrappedPx / sceneScale;
+      const logicalW = sceneScale === 0 ? 0 : viewportW / sceneScale;
+      const seamDistanceLogical = Math.min(
+        logicalOffsetX,
+        Math.max(0, segmentWidth - logicalOffsetX),
+      );
+      const viewportTouchesWrap =
+        logicalOffsetX < logicalW || logicalOffsetX + logicalW > segmentWidth;
+
+      return {
+        scrollPx,
+        wrappedPx,
+        logicalOffsetX,
+        logicalW,
+        seamDistanceLogical,
+        viewportTouchesWrap,
+      };
+    },
+    [middleStartPx, sceneScale, segmentWidth, segmentWidthPx],
+  );
+
+  const getRenderPhasePx = useCallback(
+    (wrappedPx: number, viewportW: number, parallax = 1) => {
+      if (segmentWidthPx === 0 || viewportW <= 0) return wrappedPx;
+      const parallaxFactor = clamp(parallax, 0.12, 1);
+      const seamWindowPx = Math.min(
+        segmentWidthPx * 0.5,
+        viewportW / parallaxFactor,
+      );
+      return wrappedPx > segmentWidthPx - seamWindowPx
+        ? wrappedPx - segmentWidthPx
+        : wrappedPx;
+    },
+    [segmentWidthPx],
+  );
+
+  const emitSeamDebug = useCallback(
+    (
+      stage: "scroll" | "recenter",
+      before: ReturnType<typeof getScrollMetrics>,
+      after: ReturnType<typeof getScrollMetrics>,
+      previousScroll: number | null,
+      didRecenter: boolean,
+      viewportW: number,
+    ) => {
+      if (!seamDebugEnabled || typeof window === "undefined") return;
+
+      const seamWindowLogical = Math.max(before.logicalW, after.logicalW) * 1.5;
+      const nearSeam =
+        didRecenter ||
+        before.viewportTouchesWrap ||
+        after.viewportTouchesWrap ||
+        before.logicalOffsetX <= seamWindowLogical ||
+        after.logicalOffsetX <= seamWindowLogical ||
+        before.logicalOffsetX >= segmentWidth - seamWindowLogical ||
+        after.logicalOffsetX >= segmentWidth - seamWindowLogical;
+
+      if (!nearSeam) return;
+
+      const now = performance.now();
+      if (!didRecenter && now - lastSeamDebugTsRef.current < 80) return;
+      lastSeamDebugTsRef.current = now;
+
+      const event = {
+        stage,
+        ts: Number(now.toFixed(1)),
+        didRecenter,
+        viewportW,
+        segmentWidthPx,
+        middleStartPx,
+        previousScroll,
+        before: {
+          scrollPx: Number(before.scrollPx.toFixed(2)),
+          wrappedPx: Number(before.wrappedPx.toFixed(2)),
+          logicalOffsetX: Number(before.logicalOffsetX.toFixed(2)),
+          logicalW: Number(before.logicalW.toFixed(2)),
+          seamDistanceLogical: Number(before.seamDistanceLogical.toFixed(2)),
+          viewportTouchesWrap: before.viewportTouchesWrap,
+          renderPhasePx: Number(
+            getRenderPhasePx(before.wrappedPx, viewportW, 1).toFixed(2),
+          ),
+        },
+        after: {
+          scrollPx: Number(after.scrollPx.toFixed(2)),
+          wrappedPx: Number(after.wrappedPx.toFixed(2)),
+          logicalOffsetX: Number(after.logicalOffsetX.toFixed(2)),
+          logicalW: Number(after.logicalW.toFixed(2)),
+          seamDistanceLogical: Number(after.seamDistanceLogical.toFixed(2)),
+          viewportTouchesWrap: after.viewportTouchesWrap,
+          renderPhasePx: Number(
+            getRenderPhasePx(after.wrappedPx, viewportW, 1).toFixed(2),
+          ),
+        },
+      };
+
+      const debugWindow = window as typeof window & {
+        __gardenSeamDebug?: typeof event[];
+      };
+      debugWindow.__gardenSeamDebug = [
+        ...(debugWindow.__gardenSeamDebug ?? []).slice(-39),
+        event,
+      ];
+      console.debug("[GardenSeamDebug]", event);
+    },
+    [
+      getRenderPhasePx,
+      getScrollMetrics,
+      middleStartPx,
+      seamDebugEnabled,
+      segmentWidth,
+      segmentWidthPx,
+    ],
+  );
+
   /**
    * Keep track of the last logical viewport offset so pointer debug can
    * reference it without re-deriving.
@@ -272,6 +395,7 @@ export default function InfiniteParallaxGarden({
     const target = middleStartPx + logicalInitial * sceneScale;
 
     el.scrollLeft = target;
+    scrollLeftRef.current = target;
     setScrollLeft(target);
     lastObservedScrollLeftRef.current = target;
     hasInitializedScrollRef.current = true;
@@ -279,28 +403,43 @@ export default function InfiniteParallaxGarden({
 
   /**
    * Wrap-around scroll behavior to maintain the infinite illusion.
-   * Uses rendered segmentWidth in CSS px so it stays correct on all screens.
+   * Recenter only near the actual edges of the 3-copy strip, not at the
+   * midpoint of the world. That keeps biome seams from doubling as reset
+   * points while preserving the infinite-scroll illusion.
    */
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
+    const viewportW = el.clientWidth;
     let x = el.scrollLeft;
-
-    // Same wrap logic as 10d3fff: keep the viewport anchored around the
-    // middle segment, but allow it to straddle the boundary without seams.
-    const leftBoundary = middleStartPx * 0.5;
-    const rightBoundary = middleStartPx * 1.5;
+    const beforeMetrics = getScrollMetrics(x, viewportW);
+    let didRecenter = false;
+    const recenterEpsilonPx = Math.max(8, Math.min(48, segmentWidthPx * 0.01));
+    const leftBoundary = recenterEpsilonPx;
+    const rightBoundary = segmentWidthPx * 2 - recenterEpsilonPx;
 
     if (x < leftBoundary) {
       x += segmentWidthPx;
       el.scrollLeft = x;
-    } else if (x > rightBoundary) {
+      didRecenter = true;
+    } else if (x >= rightBoundary) {
       x -= segmentWidthPx;
       el.scrollLeft = x;
+      didRecenter = true;
     }
     scrollLeftRef.current = el.scrollLeft;
     const previousScroll = lastObservedScrollLeftRef.current;
     lastObservedScrollLeftRef.current = el.scrollLeft;
+    const afterMetrics = getScrollMetrics(el.scrollLeft, viewportW);
+
+    emitSeamDebug(
+      didRecenter ? "recenter" : "scroll",
+      beforeMetrics,
+      afterMetrics,
+      previousScroll,
+      didRecenter,
+      viewportW,
+    );
 
     if (
       onFirstUserScroll &&
@@ -313,13 +452,22 @@ export default function InfiniteParallaxGarden({
       onFirstUserScroll();
     }
 
+    if (didRecenter) {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      setScrollLeft(el.scrollLeft);
+      return;
+    }
+
     if (rafRef.current == null) {
       rafRef.current = window.requestAnimationFrame(() => {
         rafRef.current = null;
         setScrollLeft(scrollLeftRef.current);
       });
     }
-  }, [middleStartPx, onFirstUserScroll, segmentWidthPx]);
+  }, [emitSeamDebug, getScrollMetrics, onFirstUserScroll, segmentWidthPx]);
 
   /**
    * Map vertical wheel to horizontal scroll on desktop,
@@ -433,6 +581,34 @@ export default function InfiniteParallaxGarden({
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const uniqueSources = Array.from(
+      new Set(
+        layers.flatMap((layer) =>
+          layer.sprites
+            .filter((sprite) => !sprite.repeatX)
+            .map((sprite) => sprite.src),
+        ),
+      ),
+    );
+
+    const preloaded: HTMLImageElement[] = [];
+    for (const src of uniqueSources) {
+      const img = new window.Image();
+      img.decoding = "async";
+      img.src = src;
+      preloaded.push(img);
+    }
+
+    return () => {
+      preloaded.forEach((img) => {
+        img.src = "";
+      });
+    };
+  }, [layers]);
+
   /**
    * Local X position within the middle segment, in rendered CSS px.
    */
@@ -441,16 +617,6 @@ export default function InfiniteParallaxGarden({
     const x = (scrollLeft - middleStartPx) % segmentWidthPx;
     return x < 0 ? x + segmentWidthPx : x;
   }, [scrollLeft, middleStartPx, segmentWidthPx]);
-
-  /**
-   * Continuous world X relative to the middle segment origin (CSS px).
-   * This avoids modulo wrap for parallax so layers stay seamless
-   * when the viewport straddles the world boundary.
-   */
-  const worldXPx = useMemo(
-    () => scrollLeft - middleStartPx,
-    [scrollLeft, middleStartPx]
-  );
 
   /**
    * Report viewport to consumers (e.g. StoryDotsOverlay) using:
@@ -567,7 +733,7 @@ export default function InfiniteParallaxGarden({
       segmentWidth,
       segmentWidthPx,
       localXPx,
-    ]
+    ],
   );
 
   const handlePointerLeave = useCallback(() => {
@@ -602,19 +768,14 @@ export default function InfiniteParallaxGarden({
 
     const segmentLeftPx = segmentIndex * segmentWidthPx;
     const biomeStartPxRaw =
-      typeof layer.biomeStart === "number"
-        ? layer.biomeStart * sceneScale
-        : 0;
+      typeof layer.biomeStart === "number" ? layer.biomeStart * sceneScale : 0;
     const biomeWidthPx =
       typeof layer.biomeWidth === "number"
         ? layer.biomeWidth * sceneScale
         : segmentWidthPx;
-    const parallaxBasePx = worldXPx;
-    const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
     const viewportW = scrollRef.current?.clientWidth ?? 0;
-    const visibleLeftPx = scrollLeft;
-    const visibleRightPx = scrollLeft + viewportW;
-    const cullPadPx = 320;
+    const parallaxBasePx = getRenderPhasePx(localXPx, viewportW, parallax);
+    const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
     const clipLeftPx = biomeStartPxRaw;
     const clipWidthPx = biomeWidthPx;
     const segmentStyle: React.CSSProperties = {
@@ -678,108 +839,261 @@ export default function InfiniteParallaxGarden({
       <div key={`seg-${layer.id}-${segmentIndex}`} style={segmentStyle}>
         <div style={clipStyle}>
           <div style={contentStyle}>
-        {sprites.map((s, i) => {
-          const anchorY = s.anchorY ?? 1;
-          const logicalYOffset = s.yOffsetPx ?? 0;
-          const spriteLogicalScale = s.scale ?? 1;
+            {sprites.map((s, i) => {
+              const anchorY = s.anchorY ?? 1;
+              const logicalYOffset = s.yOffsetPx ?? 0;
+              const spriteLogicalScale = s.scale ?? 1;
 
-          // Final sprite render scale = sprite scale * scene scale.
-          const effectiveSpriteScale = spriteLogicalScale * sceneScale;
-          const h = s.height * effectiveSpriteScale;
-          const w = s.width * effectiveSpriteScale;
-          const yOffsetPx = logicalYOffset * sceneScale;
+              // Final sprite render scale = sprite scale * scene scale.
+              const effectiveSpriteScale = spriteLogicalScale * sceneScale;
+              const h = s.height * effectiveSpriteScale;
+              const w = s.width * effectiveSpriteScale;
+              const yOffsetPx = logicalYOffset * sceneScale;
 
-          if (s.repeatX) {
-            const repeatStartPx = (s.repeatStartPx ?? 0) * sceneScale;
-            const repeatWidthPx =
-              (s.repeatWidthPx ?? segmentWidth) * sceneScale;
-            const stripStartPx = repeatStartPx;
-            const stripWidthPx = repeatWidthPx;
-            const boundedRepeat = typeof s.repeatWidthPx === "number";
-            const wireId = `rep-${layer.id}-${segmentIndex}-${i}`;
-            const shouldShowWireframe =
-              allowDebugWireframes && activeWireframeId === wireId;
-            const topY = baseYpx - h * anchorY + yOffsetPx;
+              if (s.repeatX) {
+                const repeatStartPx = (s.repeatStartPx ?? 0) * sceneScale;
+                const repeatWidthPx =
+                  (s.repeatWidthPx ?? segmentWidth) * sceneScale;
+                const stripStartPx = repeatStartPx;
+                const stripWidthPx = repeatWidthPx;
+                const boundedRepeat = typeof s.repeatWidthPx === "number";
+                const wireId = `rep-${layer.id}-${segmentIndex}-${i}`;
+                const shouldShowWireframe =
+                  allowDebugWireframes && activeWireframeId === wireId;
+                const topY = baseYpx - h * anchorY + yOffsetPx;
 
-            const stripStyle: React.CSSProperties = {
-              position: "absolute",
-              left: stripStartPx,
-              top: topY,
-              width: stripWidthPx,
-              height: h,
-              backgroundImage: `url(${s.src})`,
-              backgroundRepeat: "repeat-x",
-              backgroundSize: `${w}px ${h}px`,
-              backgroundPositionX: `${-(
-                segmentIndex * segmentWidthPx +
-                stripStartPx
-              )}px`,
-              imageRendering: "auto",
-            };
+                const stripStyle: React.CSSProperties = {
+                  position: "absolute",
+                  left: stripStartPx,
+                  top: topY,
+                  width: stripWidthPx,
+                  height: h,
+                  backgroundImage: `url(${s.src})`,
+                  backgroundRepeat: "repeat-x",
+                  backgroundSize: `${w}px ${h}px`,
+                  backgroundPositionX: `${-(
+                    segmentIndex * segmentWidthPx +
+                    stripStartPx
+                  )}px`,
+                  imageRendering: "auto",
+                };
 
-            if (boundedRepeat) {
-              const innerLeft = stripStartPx - stripWidthPx;
-              const innerWidth = stripWidthPx * 3;
-              const clipStyle: React.CSSProperties = {
-                position: "absolute",
-                left: stripStartPx,
-                top: topY,
-                width: stripWidthPx,
-                height: h,
-                overflow: "hidden",
-                pointerEvents: "none",
-                transform: `translateX(${-parallaxShift}px)`,
-              };
-              const innerStyle: React.CSSProperties = {
-                position: "absolute",
-                left: innerLeft,
-                top: 0,
-                width: innerWidth,
-                height: h,
-                backgroundImage: `url(${s.src})`,
-                backgroundRepeat: "repeat-x",
-                backgroundSize: `${w}px ${h}px`,
-                backgroundPositionX: `${-(
-                  segmentIndex * segmentWidthPx +
-                  innerLeft
-                )}px`,
-                imageRendering: "auto",
-                transform: `translateX(${parallaxShift}px)`,
-              };
-              return (
-                <React.Fragment key={`rep-${i}`}>
-                  <div style={clipStyle}>
-                    <div style={innerStyle} />
-                  </div>
-                  {allowDebugWireframes && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: stripStartPx,
-                        top: topY,
-                        width: stripWidthPx,
-                        height: h,
-                        pointerEvents: "auto",
-                        background: "transparent",
-                      }}
-                      onPointerEnter={() => setHoveredWireframeId(wireId)}
-                      onPointerLeave={() => setHoveredWireframeId(null)}
-                      onClick={() => {
-                        if (!debugWireframesPinMode) return;
-                        setPinnedWireframeId((prev) =>
-                          prev === wireId ? null : wireId
-                        );
-                      }}
-                    >
-                      {shouldShowWireframe && (
+                if (boundedRepeat) {
+                  const innerLeft = stripStartPx - stripWidthPx;
+                  const innerWidth = stripWidthPx * 3;
+                  const clipStyle: React.CSSProperties = {
+                    position: "absolute",
+                    left: stripStartPx,
+                    top: topY,
+                    width: stripWidthPx,
+                    height: h,
+                    overflow: "hidden",
+                    pointerEvents: "none",
+                    transform: `translateX(${-parallaxShift}px)`,
+                  };
+                  const innerStyle: React.CSSProperties = {
+                    position: "absolute",
+                    left: innerLeft,
+                    top: 0,
+                    width: innerWidth,
+                    height: h,
+                    backgroundImage: `url(${s.src})`,
+                    backgroundRepeat: "repeat-x",
+                    backgroundSize: `${w}px ${h}px`,
+                    backgroundPositionX: `${-(
+                      segmentIndex * segmentWidthPx +
+                      innerLeft
+                    )}px`,
+                    imageRendering: "auto",
+                    transform: `translateX(${parallaxShift}px)`,
+                  };
+                  return (
+                    <React.Fragment key={`rep-${i}`}>
+                      <div style={clipStyle}>
+                        <div style={innerStyle} />
+                      </div>
+                      {allowDebugWireframes && (
                         <div
                           style={{
                             position: "absolute",
-                            inset: 0,
-                            outline: "2px dashed rgba(0, 0, 200, 0.8)",
-                            background: "rgba(255, 255, 200, 0.08)",
+                            left: stripStartPx,
+                            top: topY,
+                            width: stripWidthPx,
+                            height: h,
+                            pointerEvents: "auto",
+                            background: "transparent",
+                          }}
+                          onPointerEnter={() => setHoveredWireframeId(wireId)}
+                          onPointerLeave={() => setHoveredWireframeId(null)}
+                          onClick={() => {
+                            if (!debugWireframesPinMode) return;
+                            setPinnedWireframeId((prev) =>
+                              prev === wireId ? null : wireId,
+                            );
                           }}
                         >
+                          {shouldShowWireframe && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                inset: 0,
+                                outline: "2px dashed rgba(0, 0, 200, 0.8)",
+                                background: "rgba(255, 255, 200, 0.08)",
+                              }}
+                            >
+                              <WireLabel
+                                lines={[
+                                  `${s.debug?.name ?? "asset"}_${
+                                    s.debug?.index ?? "?"
+                                  }`,
+                                  `group: ${s.debug?.groupId ?? "unknown"} • role: ${
+                                    s.debug?.role ?? "unknown"
+                                  }`,
+                                  `layer: ${layer.id} • parallax: ${parallax}`,
+                                  `src: ${s.width}×${s.height}px • render: ${Math.round(
+                                    w,
+                                  )}×${Math.round(h)}px`,
+                                  `repeat: start=${(
+                                    s.repeatStartPx ?? 0
+                                  ).toFixed(1)} width=${(
+                                    s.repeatWidthPx ?? segmentWidth
+                                  ).toFixed(1)} (logical)`,
+                                ]}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                }
+                return (
+                  <React.Fragment key={`rep-${i}`}>
+                    <div style={stripStyle} />
+                    {allowDebugWireframes && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: stripStartPx,
+                          top: topY,
+                          width: stripWidthPx,
+                          height: h,
+                          pointerEvents: "auto",
+                          background: "transparent",
+                        }}
+                        onPointerEnter={() => setHoveredWireframeId(wireId)}
+                        onPointerLeave={() => setHoveredWireframeId(null)}
+                        onClick={() => {
+                          if (!debugWireframesPinMode) return;
+                          setPinnedWireframeId((prev) =>
+                            prev === wireId ? null : wireId,
+                          );
+                        }}
+                      >
+                        {shouldShowWireframe && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              outline: "2px dashed rgba(0, 0, 200, 0.8)",
+                              background: "rgba(255, 255, 200, 0.08)",
+                            }}
+                          >
+                            <WireLabel
+                              lines={[
+                                `${s.debug?.name ?? "asset"}_${
+                                  s.debug?.index ?? "?"
+                                }`,
+                                `group: ${s.debug?.groupId ?? "unknown"} • role: ${
+                                  s.debug?.role ?? "unknown"
+                                }`,
+                                `layer: ${layer.id} • parallax: ${parallax}`,
+                                `src: ${s.width}×${s.height}px • render: ${Math.round(
+                                  w,
+                                )}×${Math.round(h)}px`,
+                                `repeat: start=${(s.repeatStartPx ?? 0).toFixed(
+                                  1,
+                                )} width=${(
+                                  s.repeatWidthPx ?? segmentWidth
+                                ).toFixed(1)} (logical)`,
+                              ]}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              }
+
+              const xs = s.xPositions ?? [];
+              return xs.map((xLogical, j) => {
+                const xPx = xLogical * sceneScale;
+                const localX = s.debug?.xPositionsLocal?.[j];
+                const leftX = xPx - w * 0.5;
+
+                const worldXpx = segmentIndex * segmentWidthPx + xPx;
+                const t =
+                  (2 * Math.PI * periodsPerSegment * worldXpx) /
+                    segmentWidthPx +
+                  curvePhase;
+
+                const curveYOffset = curveAmplitudePx
+                  ? curveAmplitudePx * Math.sin(t)
+                  : 0;
+
+                const topY = baseYpx - h * anchorY + yOffsetPx + curveYOffset;
+
+                const wireId = `spr-${layer.id}-${segmentIndex}-${i}-${j}`;
+                const shouldShowWireframe =
+                  allowDebugWireframes && activeWireframeId === wireId;
+                const spriteStyle: React.CSSProperties = {
+                  position: "absolute",
+                  left: leftX,
+                  top: topY,
+                  width: w,
+                  height: h,
+                  pointerEvents: "none",
+                };
+
+                return (
+                  <React.Fragment key={`spr-${i}-${j}`}>
+                    <Image
+                      src={s.src}
+                      alt=""
+                      width={Math.round(w)}
+                      height={Math.round(h)}
+                      style={spriteStyle}
+                      draggable={false}
+                      loading="eager"
+                      sizes={`${Math.round(w)}px`}
+                    />
+                    {allowDebugWireframes && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: leftX,
+                          top: topY,
+                          width: w,
+                          height: h,
+                          outline: shouldShowWireframe
+                            ? "1px solid rgba(255, 180, 0, 0.9)"
+                            : "1px solid transparent",
+                          background: shouldShowWireframe
+                            ? "rgba(255, 180, 0, 0.08)"
+                            : "transparent",
+                          pointerEvents: "auto",
+                        }}
+                        onPointerEnter={() => setHoveredWireframeId(wireId)}
+                        onPointerLeave={() => setHoveredWireframeId(null)}
+                        onClick={() => {
+                          if (!debugWireframesPinMode) return;
+                          setPinnedWireframeId((prev) =>
+                            prev === wireId ? null : wireId,
+                          );
+                        }}
+                      >
+                        {shouldShowWireframe && (
                           <WireLabel
                             lines={[
                               `${s.debug?.name ?? "asset"}_${
@@ -790,184 +1104,25 @@ export default function InfiniteParallaxGarden({
                               }`,
                               `layer: ${layer.id} • parallax: ${parallax}`,
                               `src: ${s.width}×${s.height}px • render: ${Math.round(
-                                w
+                                w,
                               )}×${Math.round(h)}px`,
-                              `repeat: start=${(
-                                s.repeatStartPx ?? 0
-                              ).toFixed(1)} width=${(
-                                s.repeatWidthPx ?? segmentWidth
-                              ).toFixed(1)} (logical)`,
+                              `x local: ${
+                                typeof localX === "number"
+                                  ? localX.toFixed(1)
+                                  : "n/a"
+                              } • x world: ${xLogical.toFixed(1)}`,
+                              `segment: ${segmentIndex} • sceneScale: ${sceneScale.toFixed(
+                                3,
+                              )}`,
                             ]}
                           />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </React.Fragment>
-              );
-            }
-            return (
-              <React.Fragment key={`rep-${i}`}>
-                <div style={stripStyle} />
-                {allowDebugWireframes && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: stripStartPx,
-                      top: topY,
-                      width: stripWidthPx,
-                      height: h,
-                      pointerEvents: "auto",
-                      background: "transparent",
-                    }}
-                    onPointerEnter={() => setHoveredWireframeId(wireId)}
-                    onPointerLeave={() => setHoveredWireframeId(null)}
-                    onClick={() => {
-                      if (!debugWireframesPinMode) return;
-                      setPinnedWireframeId((prev) =>
-                        prev === wireId ? null : wireId
-                      );
-                    }}
-                  >
-                    {shouldShowWireframe && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          outline: "2px dashed rgba(0, 0, 200, 0.8)",
-                          background: "rgba(255, 255, 200, 0.08)",
-                        }}
-                      >
-                        <WireLabel
-                          lines={[
-                            `${s.debug?.name ?? "asset"}_${
-                              s.debug?.index ?? "?"
-                            }`,
-                            `group: ${s.debug?.groupId ?? "unknown"} • role: ${
-                              s.debug?.role ?? "unknown"
-                            }`,
-                            `layer: ${layer.id} • parallax: ${parallax}`,
-                            `src: ${s.width}×${s.height}px • render: ${Math.round(
-                              w
-                            )}×${Math.round(h)}px`,
-                            `repeat: start=${(
-                              s.repeatStartPx ?? 0
-                            ).toFixed(1)} width=${(
-                              s.repeatWidthPx ?? segmentWidth
-                            ).toFixed(1)} (logical)`,
-                          ]}
-                        />
+                        )}
                       </div>
                     )}
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          }
-
-          const xs = s.xPositions ?? [];
-          return xs.map((xLogical, j) => {
-            const xPx = xLogical * sceneScale;
-            const leftX = xPx - w * 0.5;
-
-            const worldXpx = segmentIndex * segmentWidthPx + xPx;
-            const renderedXpx = worldXpx + parallaxShift;
-            if (
-              renderedXpx + w < visibleLeftPx - cullPadPx ||
-              renderedXpx - w > visibleRightPx + cullPadPx
-            ) {
-              return null;
-            }
-            const t =
-              (2 * Math.PI * periodsPerSegment * worldXpx) / segmentWidthPx +
-              curvePhase;
-
-            const curveYOffset = curveAmplitudePx
-              ? curveAmplitudePx * Math.sin(t)
-              : 0;
-
-            const topY = baseYpx - h * anchorY + yOffsetPx + curveYOffset;
-
-            const wireId = `spr-${layer.id}-${segmentIndex}-${i}-${j}`;
-            const shouldShowWireframe =
-              allowDebugWireframes && activeWireframeId === wireId;
-            const localX = s.debug?.xPositionsLocal?.[j];
-            const spriteStyle: React.CSSProperties = {
-              position: "absolute",
-              left: leftX,
-              top: topY,
-              width: w,
-              height: h,
-              pointerEvents: "none",
-            };
-
-            return (
-              <React.Fragment key={`spr-${i}-${j}`}>
-                <Image
-                  src={s.src}
-                  alt=""
-                  width={Math.round(w)}
-                  height={Math.round(h)}
-                  style={spriteStyle}
-                  draggable={false}
-                  priority={false}
-                  sizes={`${Math.round(w)}px`}
-                />
-                {allowDebugWireframes && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: leftX,
-                      top: topY,
-                      width: w,
-                      height: h,
-                      outline: shouldShowWireframe
-                        ? "1px solid rgba(255, 180, 0, 0.9)"
-                        : "1px solid transparent",
-                      background: shouldShowWireframe
-                        ? "rgba(255, 180, 0, 0.08)"
-                        : "transparent",
-                      pointerEvents: "auto",
-                    }}
-                    onPointerEnter={() => setHoveredWireframeId(wireId)}
-                    onPointerLeave={() => setHoveredWireframeId(null)}
-                    onClick={() => {
-                      if (!debugWireframesPinMode) return;
-                      setPinnedWireframeId((prev) =>
-                        prev === wireId ? null : wireId
-                      );
-                    }}
-                  >
-                    {shouldShowWireframe && (
-                      <WireLabel
-                        lines={[
-                          `${s.debug?.name ?? "asset"}_${
-                            s.debug?.index ?? "?"
-                          }`,
-                          `group: ${s.debug?.groupId ?? "unknown"} • role: ${
-                            s.debug?.role ?? "unknown"
-                          }`,
-                          `layer: ${layer.id} • parallax: ${parallax}`,
-                          `src: ${s.width}×${s.height}px • render: ${Math.round(
-                            w
-                          )}×${Math.round(h)}px`,
-                          `x local: ${
-                            typeof localX === "number"
-                              ? localX.toFixed(1)
-                              : "n/a"
-                          } • x world: ${xLogical.toFixed(1)}`,
-                          `segment: ${segmentIndex} • sceneScale: ${sceneScale.toFixed(
-                            3
-                          )}`,
-                        ]}
-                      />
-                    )}
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          });
-        })}
+                  </React.Fragment>
+                );
+              });
+            })}
           </div>
         </div>
       </div>
