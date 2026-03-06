@@ -188,11 +188,13 @@ export default function InfiniteParallaxGarden({
   onPointerDebugChange,
   onFirstUserScroll,
 }: GardenProps) {
+  const seamDebugEnabled = process.env.NEXT_PUBLIC_DEBUG_MODE === "true";
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollLeftRef = useRef(0);
   const lastObservedScrollLeftRef = useRef<number | null>(null);
   const hasInitializedScrollRef = useRef(false);
   const hasReportedFirstScrollRef = useRef(false);
+  const lastSeamDebugTsRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const keyRafRef = useRef<number | null>(null);
   const keyDirRef = useRef<-1 | 0 | 1>(0);
@@ -253,6 +255,123 @@ export default function InfiniteParallaxGarden({
 
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  const getScrollMetrics = useCallback(
+    (scrollPx: number, viewportW: number) => {
+      const wrappedPx =
+        segmentWidthPx === 0
+          ? 0
+          : ((scrollPx - middleStartPx) % segmentWidthPx + segmentWidthPx) %
+            segmentWidthPx;
+      const logicalOffsetX = sceneScale === 0 ? 0 : wrappedPx / sceneScale;
+      const logicalW = sceneScale === 0 ? 0 : viewportW / sceneScale;
+      const seamDistanceLogical = Math.min(
+        logicalOffsetX,
+        Math.max(0, segmentWidth - logicalOffsetX),
+      );
+      const viewportTouchesWrap =
+        logicalOffsetX < logicalW || logicalOffsetX + logicalW > segmentWidth;
+
+      return {
+        scrollPx,
+        wrappedPx,
+        logicalOffsetX,
+        logicalW,
+        seamDistanceLogical,
+        viewportTouchesWrap,
+      };
+    },
+    [middleStartPx, sceneScale, segmentWidth, segmentWidthPx],
+  );
+
+  const getRenderPhasePx = useCallback(
+    (wrappedPx: number, viewportW: number) => {
+      if (segmentWidthPx === 0 || viewportW <= 0) return wrappedPx;
+      const seamWindowPx = Math.min(viewportW, segmentWidthPx * 0.5);
+      return wrappedPx > segmentWidthPx - seamWindowPx
+        ? wrappedPx - segmentWidthPx
+        : wrappedPx;
+    },
+    [segmentWidthPx],
+  );
+
+  const emitSeamDebug = useCallback(
+    (
+      stage: "scroll" | "recenter",
+      before: ReturnType<typeof getScrollMetrics>,
+      after: ReturnType<typeof getScrollMetrics>,
+      previousScroll: number | null,
+      didRecenter: boolean,
+      viewportW: number,
+    ) => {
+      if (!seamDebugEnabled || typeof window === "undefined") return;
+
+      const seamWindowLogical = Math.max(before.logicalW, after.logicalW) * 1.5;
+      const nearSeam =
+        didRecenter ||
+        before.viewportTouchesWrap ||
+        after.viewportTouchesWrap ||
+        before.logicalOffsetX <= seamWindowLogical ||
+        after.logicalOffsetX <= seamWindowLogical ||
+        before.logicalOffsetX >= segmentWidth - seamWindowLogical ||
+        after.logicalOffsetX >= segmentWidth - seamWindowLogical;
+
+      if (!nearSeam) return;
+
+      const now = performance.now();
+      if (!didRecenter && now - lastSeamDebugTsRef.current < 80) return;
+      lastSeamDebugTsRef.current = now;
+
+      const event = {
+        stage,
+        ts: Number(now.toFixed(1)),
+        didRecenter,
+        viewportW,
+        segmentWidthPx,
+        middleStartPx,
+        previousScroll,
+        before: {
+          scrollPx: Number(before.scrollPx.toFixed(2)),
+          wrappedPx: Number(before.wrappedPx.toFixed(2)),
+          logicalOffsetX: Number(before.logicalOffsetX.toFixed(2)),
+          logicalW: Number(before.logicalW.toFixed(2)),
+          seamDistanceLogical: Number(before.seamDistanceLogical.toFixed(2)),
+          viewportTouchesWrap: before.viewportTouchesWrap,
+          renderPhasePx: Number(
+            getRenderPhasePx(before.wrappedPx, viewportW).toFixed(2),
+          ),
+        },
+        after: {
+          scrollPx: Number(after.scrollPx.toFixed(2)),
+          wrappedPx: Number(after.wrappedPx.toFixed(2)),
+          logicalOffsetX: Number(after.logicalOffsetX.toFixed(2)),
+          logicalW: Number(after.logicalW.toFixed(2)),
+          seamDistanceLogical: Number(after.seamDistanceLogical.toFixed(2)),
+          viewportTouchesWrap: after.viewportTouchesWrap,
+          renderPhasePx: Number(
+            getRenderPhasePx(after.wrappedPx, viewportW).toFixed(2),
+          ),
+        },
+      };
+
+      const debugWindow = window as typeof window & {
+        __gardenSeamDebug?: typeof event[];
+      };
+      debugWindow.__gardenSeamDebug = [
+        ...(debugWindow.__gardenSeamDebug ?? []).slice(-39),
+        event,
+      ];
+      console.debug("[GardenSeamDebug]", event);
+    },
+    [
+      getRenderPhasePx,
+      getScrollMetrics,
+      middleStartPx,
+      seamDebugEnabled,
+      segmentWidth,
+      segmentWidthPx,
+    ],
+  );
+
   /**
    * Keep track of the last logical viewport offset so pointer debug can
    * reference it without re-deriving.
@@ -287,7 +406,9 @@ export default function InfiniteParallaxGarden({
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
+    const viewportW = el.clientWidth;
     let x = el.scrollLeft;
+    const beforeMetrics = getScrollMetrics(x, viewportW);
     let didRecenter = false;
     const recenterEpsilonPx = Math.max(8, Math.min(48, segmentWidthPx * 0.01));
     const leftBoundary = recenterEpsilonPx;
@@ -305,6 +426,16 @@ export default function InfiniteParallaxGarden({
     scrollLeftRef.current = el.scrollLeft;
     const previousScroll = lastObservedScrollLeftRef.current;
     lastObservedScrollLeftRef.current = el.scrollLeft;
+    const afterMetrics = getScrollMetrics(el.scrollLeft, viewportW);
+
+    emitSeamDebug(
+      didRecenter ? "recenter" : "scroll",
+      beforeMetrics,
+      afterMetrics,
+      previousScroll,
+      didRecenter,
+      viewportW,
+    );
 
     if (
       onFirstUserScroll &&
@@ -332,7 +463,7 @@ export default function InfiniteParallaxGarden({
         setScrollLeft(scrollLeftRef.current);
       });
     }
-  }, [onFirstUserScroll, segmentWidthPx]);
+  }, [emitSeamDebug, getScrollMetrics, onFirstUserScroll, segmentWidthPx]);
 
   /**
    * Map vertical wheel to horizontal scroll on desktop,
@@ -488,7 +619,10 @@ export default function InfiniteParallaxGarden({
    * This avoids modulo wrap for parallax so layers stay seamless
    * when the viewport straddles the world boundary.
    */
-  const worldXPx = useMemo(() => localXPx, [localXPx]);
+  const worldXPx = useMemo(() => {
+    const viewportW = scrollRef.current?.clientWidth ?? 0;
+    return getRenderPhasePx(localXPx, viewportW);
+  }, [getRenderPhasePx, localXPx]);
 
   /**
    * Report viewport to consumers (e.g. StoryDotsOverlay) using:
