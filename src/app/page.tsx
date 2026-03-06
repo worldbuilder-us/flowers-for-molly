@@ -365,16 +365,6 @@ export default function Page() {
             onFirstUserScroll={handleFirstUserScroll}
           />
 
-          {/* dots overlay */}
-          {!loading && stories.length > 0 && (
-            <StoryDotsOverlay
-              stories={stories}
-              segmentWidth={segmentWidth}
-              viewport={viewport}
-              onDotClick={(s) => setActive(s)}
-            />
-          )}
-
           {/* Pointer debug tooltip (follows pointer, mouse + touch) */}
           {debugMode && debugPointer && pointerDebug && (
             <div
