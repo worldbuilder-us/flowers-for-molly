@@ -6,11 +6,13 @@ import mongoose from "mongoose";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, ctx: unknown) {
+export async function GET(
+  _req: Request,
+  ctx: { params: Promise<{ id?: string | string[] }> },
+) {
   await dbConnect();
 
-  // Narrow the unknown `ctx` to the shape Next provides
-  const { id } = (ctx as { params?: { id?: string | string[] } }).params ?? {};
+  const { id } = await ctx.params;
   const normalizedId = Array.isArray(id) ? id[0] : id;
 
   if (!normalizedId || !mongoose.Types.ObjectId.isValid(normalizedId)) {
@@ -20,7 +22,15 @@ export async function GET(_req: Request, ctx: unknown) {
   const story = await Story.findOne({
     _id: normalizedId,
     status: "approved",
-  }).lean();
+  })
+    .select({
+      authorName: 1,
+      authorEmail: 1,
+      textPlain: 1,
+      textMarkdown: 1,
+      importedAt: 1,
+    })
+    .lean();
   if (!story) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

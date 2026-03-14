@@ -19,24 +19,62 @@
 
 /* Pulsating dot itself */
 .dotButton {
+  position: relative;
   border-radius: 999px;
-  background: #ffffa0;
-  border: 1px solid #ffffee;
-  box-shadow: 10px 10px 20px rgba(255, 255, 255, 0.8);
-  opacity: 0.98;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  opacity: 1;
   pointer-events: auto;
   cursor: pointer;
 
-  display: block;
+  display: grid;
+  place-items: center;
   padding: 0;
   outline: none;
-  border-width: 4px;
-
-  animation: storyDotPulse 2.4s ease-in-out infinite;
 }
 
-.dotButton:hover {
-  box-shadow: 0 0 26px rgba(255, 255, 255, 0.95);
+.dotButton::before {
+  content: "";
+  position: relative;
+  z-index: 1;
+  width: var(--dot-size, 12px);
+  height: var(--dot-size, 12px);
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at 35% 35%,
+    #fffef0 0%,
+    #ffffb8 38%,
+    #fff56a 72%,
+    #f1d84a 100%
+  );
+  border: 4px solid #ffffee;
+  opacity: 0.98;
+  box-shadow: 0 0 10px rgba(255, 250, 202, 0.45);
+  animation: storyDotCore 2.4s ease-in-out infinite;
+}
+
+.dotButton::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: calc(var(--dot-size, 12px) + 18px);
+  height: calc(var(--dot-size, 12px) + 18px);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 245, 0.85) 0%,
+    rgba(255, 248, 186, 0.38) 42%,
+    rgba(255, 244, 164, 0.14) 68%,
+    rgba(255, 244, 164, 0) 100%
+  );
+  opacity: 0.7;
+  animation: storyDotHalo 2.4s ease-in-out infinite;
+}
+
+.dotButton:hover::after {
+  opacity: 0.92;
 }
 
 .dotButton:focus-visible {
@@ -74,7 +112,7 @@
   height: 220px;
   pointer-events: none;
   overflow: visible;
-  contain: layout;
+  contain: layout paint;
 }
 
 /* Tiny particles; animated via keyframes using CSS vars */
@@ -83,8 +121,12 @@
   left: 0;
   top: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.8);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 248, 210, 0.72) 58%,
+    rgba(255, 248, 210, 0) 100%
+  );
 
   /* default values if JS props haven't set them yet */
   --dx: 0px;
@@ -96,7 +138,6 @@
   animation-name: storyDotParticle;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
-  will-change: transform, opacity;
 }
 
 /*
@@ -133,24 +174,40 @@
 }
 
 /* Constant pulsing for the main dots */
-@keyframes storyDotPulse {
+@keyframes storyDotCore {
   0% {
     transform: scale(1);
-    opacity: 1;
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
+    opacity: 0.96;
   }
   40% {
-    transform: scale(1.18);
-    opacity: 0.8;
-    box-shadow: 0 0 26px rgba(255, 255, 255, 0.95);
+    transform: scale(1.14);
+    opacity: 1;
   }
   70% {
-    transform: scale(1.08);
-    opacity: 0.9;
+    transform: scale(1.05);
+    opacity: 0.92;
   }
   100% {
     transform: scale(1);
-    opacity: 1;
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
+    opacity: 0.96;
+  }
+}
+
+@keyframes storyDotHalo {
+  0% {
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0.46;
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1.28);
+    opacity: 0.88;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 0.62;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0.46;
   }
 }

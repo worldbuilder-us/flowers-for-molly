@@ -21,6 +21,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, Number(searchParams.get("page") || 1));
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") || 25)));
+  const summaryOnly = searchParams.get("summary") === "1";
 
   const skip = (page - 1) * limit;
   const publicQuery = { status: "approved" };
@@ -31,13 +32,20 @@ export async function GET(req: Request) {
       .sort({ importedAt: 1, createdAt: 1, _id: 1 }) // stable order
       .skip(skip)
       .limit(limit)
-      .select({
-        authorName: 1,
-        authorEmail: 1,
-        textPlain: 1,
-        textMarkdown: 1,
-        importedAt: 1,
-      })
+      .select(
+        summaryOnly
+          ? {
+              authorName: 1,
+              importedAt: 1,
+            }
+          : {
+              authorName: 1,
+              authorEmail: 1,
+              textPlain: 1,
+              textMarkdown: 1,
+              importedAt: 1,
+            },
+      )
       .lean()
   ]);
 

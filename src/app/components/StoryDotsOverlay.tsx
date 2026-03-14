@@ -5,7 +5,7 @@ import React, { useMemo, useState, useCallback } from "react";
 import { goldenbookFont } from "../fonts";
 import styles from "./StoryDotsOverlay.module.css";
 import type { GardenViewport } from "./InfiniteParallaxGarden";
-import type { StoryListItem } from "./StoryModal";
+import type { StorySummary } from "./StoryModal";
 
 function hash32(s: string): number {
   let h = 0x811c9dc5 >>> 0;
@@ -27,7 +27,7 @@ type Dot = {
   y: number; // px within overlay
   r: number; // radius px
   author: string;
-  story: StoryListItem;
+  story: StorySummary;
   parallax: number; // 0..1 (we'll lock to 1 to stick to world)
 };
 
@@ -45,10 +45,10 @@ type Particle = {
 type BurstState = Record<string, number>;
 
 type StoryDotsOverlayProps = {
-  stories: StoryListItem[];
+  stories: StorySummary[];
   segmentWidth: number;
   viewport: GardenViewport;
-  onDotClick: (s: StoryListItem) => void;
+  onDotClick: (s: StorySummary) => void;
 };
 
 /**
@@ -212,13 +212,13 @@ export default function StoryDotsOverlay({
   const [activeBursts, setActiveBursts] = useState<BurstState>({});
   const burstTimersRef = React.useRef<Record<string, number>>({});
 
-  // Preload SFX one time on the client
   const sfxPlayersRef = React.useRef<HTMLAudioElement[] | null>(null);
   const SFX_COUNT = 6;
   const SFX_BASE_VOLUME = 0.125;
 
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
+  const ensureSfxPlayers = React.useCallback(() => {
+    if (typeof window === "undefined") return null;
+    if (sfxPlayersRef.current) return sfxPlayersRef.current;
 
     const players: HTMLAudioElement[] = [];
     for (let i = 0; i < SFX_COUNT; i++) {
@@ -227,7 +227,10 @@ export default function StoryDotsOverlay({
       players.push(audio);
     }
     sfxPlayersRef.current = players;
+    return players;
+  }, []);
 
+  React.useEffect(() => {
     return () => {
       if (!sfxPlayersRef.current) return;
       sfxPlayersRef.current.forEach((audio) => {
@@ -240,7 +243,7 @@ export default function StoryDotsOverlay({
   }, []);
 
   const playRandomSfx = React.useCallback(() => {
-    const players = sfxPlayersRef.current;
+    const players = ensureSfxPlayers();
     if (!players || players.length === 0) return;
 
     const idx = Math.floor(Math.random() * players.length);
@@ -252,7 +255,7 @@ export default function StoryDotsOverlay({
     } catch (err) {
       console.warn("SFX play blocked:", err);
     }
-  }, []);
+  }, [ensureSfxPlayers]);
 
   // Logical world offset within one segment; we use this with parallax=1
   // so dots are pinned to world coordinates across the full segment.
@@ -332,6 +335,13 @@ export default function StoryDotsOverlay({
 
             const isHover = hoverId === key;
             const burstToken = activeBursts[key];
+            const buttonStyle: React.CSSProperties & {
+              "--dot-size": string;
+            } = {
+              width: Math.max(44, d.r * 2),
+              height: Math.max(44, d.r * 2),
+              "--dot-size": `${d.r * 2}px`,
+            };
 
             return (
               <div
@@ -350,10 +360,7 @@ export default function StoryDotsOverlay({
                   onMouseEnter={() => onEnter(key)}
                   onMouseLeave={onLeave}
                   className={styles.dotButton}
-                  style={{
-                    width: d.r * 2,
-                    height: d.r * 2,
-                  }}
+                  style={buttonStyle}
                 />
 
                 {isHover && (

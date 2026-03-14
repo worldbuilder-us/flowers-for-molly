@@ -581,34 +581,6 @@ export default function InfiniteParallaxGarden({
     };
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const uniqueSources = Array.from(
-      new Set(
-        layers.flatMap((layer) =>
-          layer.sprites
-            .filter((sprite) => !sprite.repeatX)
-            .map((sprite) => sprite.src),
-        ),
-      ),
-    );
-
-    const preloaded: HTMLImageElement[] = [];
-    for (const src of uniqueSources) {
-      const img = new window.Image();
-      img.decoding = "async";
-      img.src = src;
-      preloaded.push(img);
-    }
-
-    return () => {
-      preloaded.forEach((img) => {
-        img.src = "";
-      });
-    };
-  }, [layers]);
-
   /**
    * Local X position within the middle segment, in rendered CSS px.
    */
@@ -778,6 +750,12 @@ export default function InfiniteParallaxGarden({
     const parallaxShift = -parallaxBasePx * (1 - clamp(parallax, 0, 1));
     const clipLeftPx = biomeStartPxRaw;
     const clipWidthPx = biomeWidthPx;
+    const clipWorldLeftPx = segmentLeftPx + clipLeftPx;
+    const clipWorldRightPx = clipWorldLeftPx + clipWidthPx;
+    const viewportStartPx = scrollLeft;
+    const viewportEndPx = scrollLeft + viewportW;
+    const spriteOverscanPx = Math.max(320, viewportW * 0.35);
+    const shouldCullPositionedSprites = viewportW > 0;
     const segmentStyle: React.CSSProperties = {
       position: "absolute",
       left: segmentLeftPx,
@@ -802,7 +780,6 @@ export default function InfiniteParallaxGarden({
       width: clipWidthPx,
       height: effectiveHeight,
       transform: `translateX(${parallaxShift}px)`,
-      willChange: "transform",
       opacity,
       pointerEvents: "none",
     };
@@ -1027,7 +1004,7 @@ export default function InfiniteParallaxGarden({
               }
 
               const xs = s.xPositions ?? [];
-              return xs.map((xLogical, j) => {
+              return xs.flatMap((xLogical, j) => {
                 const xPx = xLogical * sceneScale;
                 const localX = s.debug?.xPositionsLocal?.[j];
                 const leftX = xPx - w * 0.5;
@@ -1043,6 +1020,28 @@ export default function InfiniteParallaxGarden({
                   : 0;
 
                 const topY = baseYpx - h * anchorY + yOffsetPx + curveYOffset;
+                const renderLeftPx =
+                  segmentLeftPx + clipLeftPx + parallaxShift + leftX;
+                const renderRightPx = renderLeftPx + w;
+                const clippedLeftPx = Math.max(renderLeftPx, clipWorldLeftPx);
+                const clippedRightPx = Math.min(
+                  renderRightPx,
+                  clipWorldRightPx,
+                );
+
+                if (
+                  shouldCullPositionedSprites &&
+                  clippedRightPx < viewportStartPx - spriteOverscanPx
+                ) {
+                  return [];
+                }
+
+                if (
+                  shouldCullPositionedSprites &&
+                  clippedLeftPx > viewportEndPx + spriteOverscanPx
+                ) {
+                  return [];
+                }
 
                 const wireId = `spr-${layer.id}-${segmentIndex}-${i}-${j}`;
                 const shouldShowWireframe =
@@ -1056,7 +1055,7 @@ export default function InfiniteParallaxGarden({
                   pointerEvents: "none",
                 };
 
-                return (
+                return [
                   <React.Fragment key={`spr-${i}-${j}`}>
                     <Image
                       src={s.src}
@@ -1065,7 +1064,6 @@ export default function InfiniteParallaxGarden({
                       height={Math.round(h)}
                       style={spriteStyle}
                       draggable={false}
-                      loading="eager"
                       sizes={`${Math.round(w)}px`}
                     />
                     {allowDebugWireframes && (
@@ -1120,7 +1118,7 @@ export default function InfiniteParallaxGarden({
                       </div>
                     )}
                   </React.Fragment>
-                );
+                ];
               });
             })}
           </div>

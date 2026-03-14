@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "perf:baseline": "node scripts/reportGardenBaseline.mjs",
+    "perf:assets": "node scripts/auditGardenAssets.mjs",
+    "perf:assets:first-wave": "node scripts/optimizeFirstWaveAssets.mjs",
+    "perf:assets:next-wave": "node scripts/optimizeNextWaveAssets.mjs"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
