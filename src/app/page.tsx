@@ -13,7 +13,7 @@ import InfiniteParallaxGarden, {
   type PointerDebugInfo,
 } from "./components/InfiniteParallaxGarden";
 import StoryDotsOverlay from "./components/StoryDotsOverlay";
-import StoryModal, { StoryListItem } from "./components/StoryModal";
+import StoryModal, { type StorySummary } from "./components/StoryModal";
 import styles from "./Page.module.css";
 import { getWorldConfig } from "./garden/biomeLoader";
 import { goldenbookFont } from "./fonts";
@@ -25,7 +25,7 @@ const BACKGROUND_MUSIC_BASE_VOLUME = 0.2;
 const BACKGROUND_MUSIC_FADE_DURATION = 4; // seconds
 
 export default function Page() {
-  const [stories, setStories] = useState<StoryListItem[]>([]);
+  const [stories, setStories] = useState<StorySummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewport, setViewport] = useState<{
     offsetX: number;
@@ -38,7 +38,7 @@ export default function Page() {
     viewportW: 0,
     viewportH: 0,
   });
-  const [active, setActive] = useState<StoryListItem | null>(null);
+  const [active, setActive] = useState<StorySummary | null>(null);
 
   const [debugWireframesForeground, setDebugWireframesForeground] =
     useState(false);
@@ -153,7 +153,7 @@ export default function Page() {
     (async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/stories?page=1&limit=1000`, {
+        const res = await fetch(`/api/stories?page=1&limit=1000&summary=1`, {
           cache: "no-store",
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

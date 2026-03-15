@@ -1,221 +1,278 @@
-# Flowers for Molly — Application Overview
+# Flowers for Molly — Current Overview
 
 ## Purpose
 
-Flowers for Molly is a memorial, collaborative generative artwork. Visitors can:
+Flowers for Molly is a memorial, collaborative artwork built as a horizontally scrollable parallax garden.
 
-- Explore an infinite parallax “garden” scene where each story is represented as a dot.
-- Read stories in a modal or a grid index view.
-- Submit new stories that are stored in MongoDB.
+Visitors can:
+- explore the garden and interact with story dots
+- open stories in a modal from the garden
+- browse the story index view
+- submit new stories for moderation
 
-The experience leans heavily on custom layout/animation (parallax layers, particles, audio) and a data-backed story archive.
+The project combines a custom DOM-based parallax renderer, a MongoDB-backed story archive, audio, and a large hand-authored sprite asset set.
 
 ## Tech Stack
 
-- Framework: Next.js 15 (App Router)
+- Framework: Next.js 15 App Router
 - UI: React 19, CSS Modules, local fonts via `next/font/local`
 - Data: MongoDB + Mongoose
-- Generative sketch (optional): p5 (prototype in `src/p5/sketch.ts`)
-- Tooling: TypeScript, ESLint, Tailwind (imported but used minimally)
+- Language: TypeScript
+- Tooling: ESLint, Tailwind imported but used minimally
+- Art pipeline: PNG sprite delivery assets in `public/`, source artwork in `blender-photoshop/`
 
-## Project Structure (Top Level)
+## High-Level Structure
 
-- `src/app`: Next App Router pages, layout, components, CSS modules.
-- `src/app/components`: Core UI building blocks for the garden, header, modal, and story overlays.
-- `src/app/garden`: Declarative biome/layer system for the parallax scene.
-- `src/app/api`: API routes for stories.
-- `src/lib`: DB connection helpers.
-- `src/models`: Mongoose schema for stories.
-- `public`: Static assets (images, gradients, icons, fonts, audio, garden sprites).
-- `data`: Story import source (`data/stories.txt`).
-- `scripts`: Import script for ingesting stories into MongoDB.
-- `blender-photoshop`: Source assets and art pipeline files for garden sprites.
+- [`src/app`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app)
+  - routes, page components, layout, API routes
+- [`src/app/components`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/components)
+  - garden renderer, header, dots overlay, story modal, supporting UI
+- [`src/app/garden`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/garden)
+  - biome manifests, world layout, layer construction
+- [`src/models`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/models)
+  - Mongoose models
+- [`src/lib`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/lib)
+  - DB and story utilities
+- [`public/garden`](/Users/shirishsarkar/_CODE/flowers-for-molly/public/garden)
+  - runtime garden assets
+- [`public/sound`](/Users/shirishsarkar/_CODE/flowers-for-molly/public/sound)
+  - background music and SFX
+- [`scripts`](/Users/shirishsarkar/_CODE/flowers-for-molly/scripts)
+  - import and performance/audit scripts
+- [`docs`](/Users/shirishsarkar/_CODE/flowers-for-molly/docs)
+  - performance and asset-delivery planning docs
 
-## Runtime Configuration
+## Routes
 
-- Environment: `MONGODB_URI` is required. `src/lib/mongoose.ts` throws on missing value.
+### `/`
 
-## Routing Overview (App Router)
+Home is a client-rendered garden experience in [`src/app/page.tsx`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/page.tsx).
 
-### `/` (Garden)
-
-`src/app/page.tsx`
-
-- Client-only page that renders the infinite parallax garden.
-- Fetches stories from `/api/stories?page=1&limit=1000`.
-- Overlays a story dot for each story, pinned to world coordinates.
-- Displays a modal when a dot is clicked.
-- Plays background music on first user interaction; loops with fade-in/out.
-- Includes an always-on debug panel for:
-  - Wireframe sprites
-  - Pointer coordinate debug
-
-### `/submit`
-
-`src/app/submit/page.tsx`
-
-- Story submission form (name, optional email, story).
-- Auto-resizing textarea.
-- POSTs to `/api/stories`, then navigates to `/view/:id`.
+Current behavior:
+- renders the infinite parallax garden
+- fetches story summaries only, not full story bodies
+- places a deterministic dot for each story
+- fetches full story content only when a modal is opened
+- starts background music on first user interaction
 
 ### `/view`
 
-`src/app/view/page.tsx`
+The story index is implemented in [`src/app/view/page.tsx`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/view/page.tsx).
 
-- Story index grid.
-- Paginates using `/api/stories?page=X&limit=12`.
-- Clickable cards open a modal for full story text.
+Current behavior:
+- paginates through `/api/stories`
+- opens full story content in the same modal component
 
 ### `/view/[id]`
 
-`src/app/view/[id]/page.tsx`
+Single-story view in [`src/app/view/[id]/page.tsx`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/view/[id]/page.tsx).
 
-- Single story detail view fetched from `/api/stories/:id`.
-- Includes a back button and link to `/view`.
-- p5 integration is scaffolded but commented out.
+### `/submit`
+
+Story submission form in [`src/app/submit/page.tsx`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/submit/page.tsx).
 
 ### `/about`
 
-`src/app/about/page.tsx`
-
-- Static memorial copy and poem excerpt.
+Static memorial content in [`src/app/about/page.tsx`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/about/page.tsx).
 
 ### `/poem`
 
-`src/app/poem/page.tsx`
+Currently minimal / placeholder.
 
-- Placeholder page with commented-out markup.
-
-## Layout, Fonts, and Global Styling
-
-- `src/app/layout.tsx`
-  - Global metadata for title/description/icons/manifest.
-  - Uses `goldenbook` and `montserrat` local fonts (`src/app/fonts.ts`).
-  - Background color set to translucent white; gradient support commented out.
-- `src/app/globals.css`
-  - Imports Tailwind.
-  - Sets CSS variables for background/foreground.
-  - Defines base `body` font and full-height layout.
-
-## Core UI Components
-
-### `Header`
-
-`src/app/components/Header.tsx`
-
-- Navigation changes based on route context (garden, submit, about, view).
-- Applies blur styling on non-garden pages.
-
-### `StoryModal`
-
-`src/app/components/StoryModal.tsx`
-
-- Portal-based modal for displaying story text.
-- Locks body scroll and closes on backdrop click or Escape.
-- Displays author and optional import date.
-- Uses decorative frame images from `public/ornaments`.
-
-### `StoryDotsOverlay`
-
-`src/app/components/StoryDotsOverlay.tsx`
-
-- Positions a dot for each story in world space.
-- Uses deterministic hashing of story IDs for placement.
-- Generates a particle spiral effect on hover.
-- Plays a random SFX on hover (preloaded audio pool).
-
-### `InfiniteParallaxGarden`
-
-`src/app/components/InfiniteParallaxGarden.tsx`
-
-- Core renderer for the infinite parallax scene.
-- Uses three repeating segments to create seamless scrolling.
-- Maps vertical wheel input to horizontal scroll.
-- Scales assets based on a logical scene height (1024px).
-- Supports curved layers, per-sprite scaling, repeat-x layers, and debug wireframes.
-- Emits viewport and pointer debug info for overlays.
-
-## Garden System (Biome → Layers)
-
-`src/app/garden/biomes.ts` and `src/app/garden/biomeLayout.ts`
-
-- A biome defines asset groups and per-layer behavior.
-- `buildLayersFromBiome` flattens the biome into renderable layer configs.
-- Each layer supports parallax, opacity, baseline positioning, and sine-curve offsets.
-- Current biome: `meadowBiome`, composed of:
-  - Foreground flora (multiple groups, varied scales)
-  - Mid-ground scenery (stream, path, trees, bench, church)
-  - Background hills/clouds
-  - Repeating skybox
-
-## Data Model (MongoDB)
-
-`src/models/Story.ts`
-
-- Key fields: `authorName`, `authorEmail`, `textMarkdown`, `textPlain`
-- Derived metrics: `storyLines`, `paragraphCount`, `wordCount`, `charCount`, `hasSalutation`
-- Status: `pending | approved | rejected` (default `approved` in schema)
-- Uniqueness: `uniqueKey` and compound index on `authorName + textHash32`
-- Timestamps: `createdAt`, `updatedAt`
-
-## API Routes
+## API
 
 ### `GET /api/stories`
 
-`src/app/api/stories/route.ts`
+Implemented in [`src/app/api/stories/route.ts`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/api/stories/route.ts).
 
-- Accepts `page` and `limit` query params (limit capped at 100).
-- Sorts by `importedAt`, `createdAt`, `_id` for stable order.
-- Returns pagination metadata plus story list (lean documents).
+Current behavior:
+- supports pagination via `page` and `limit`
+- supports `summary=1` for lightweight home-page fetches
+- returns stable ordering by `importedAt`, `createdAt`, `_id`
+
+### `GET /api/stories/[id]`
+
+Implemented in [`src/app/api/stories/[id]/route.ts`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/api/stories/[id]/route.ts).
+
+Current behavior:
+- awaits dynamic route params correctly for Next 15
+- validates MongoDB ObjectId
+- returns only full-story fields needed by the modal/detail view
 
 ### `POST /api/stories`
 
-`src/app/api/stories/route.ts`
+Implemented in [`src/app/api/stories/route.ts`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/api/stories/route.ts).
 
-- Validates required fields and email format.
-- Normalizes Markdown → plain text.
-- Computes hashes and story metrics.
-- Upserts by `uniqueKey` (author + content hash).
-- Sets status to `pending` in the submitted doc.
+Current behavior:
+- validates input
+- derives text metrics
+- hashes content for dedupe
+- stores submissions as `pending`
 
-### `GET /api/stories/:id`
+## Story Model
 
-`src/app/api/stories/[id]/route.ts`
+Defined in [`src/models/Story.ts`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/models/Story.ts).
 
-- Validates ObjectId, returns 400 if invalid.
-- Returns 404 if not found.
+Important fields:
+- `authorName`
+- `authorEmail`
+- `textMarkdown`
+- `textPlain`
+- `storyLines`
+- `paragraphCount`
+- `wordCount`
+- `charCount`
+- `hasSalutation`
+- `status`
+- `importedAt`
+- `uniqueKey`
 
-## Story Import Pipeline
+## Garden Renderer
 
-`scripts/importStories.ts`
+The core renderer is [`src/app/components/InfiniteParallaxGarden.tsx`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/components/InfiniteParallaxGarden.tsx).
 
-- Reads `data/stories.txt`.
-- Parses by `### Name` headings.
-- Detects and strips email lines.
-- Derives text metrics and hashes, then bulk upserts into MongoDB.
-- Uses `dotenv/config`; run via `npx tsx scripts/importStories.ts`.
+Important characteristics:
+- DOM-based layered renderer, not canvas/WebGL
+- logical scene height of `1024`
+- world width of `8192` logical px
+- world composition is currently `4096` meadow + `4096` forest
+- uses a 3-copy strip to support infinite horizontal scrolling
+- supports repeat strips, positioned sprites, parallax, curved layers, and debug wireframes
+
+The garden content is built from manifests in:
+- [`src/app/garden/manifests/meadow.json`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/garden/manifests/meadow.json)
+- [`src/app/garden/manifests/forest.json`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/garden/manifests/forest.json)
+
+Layer construction lives in:
+- [`src/app/garden/biomeLoader.ts`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/garden/biomeLoader.ts)
+- [`src/app/garden/biomes.ts`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/garden/biomes.ts)
+- [`src/app/garden/worldLayout.ts`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/garden/worldLayout.ts)
+
+## Story Overlay and Modal
+
+### `StoryDotsOverlay`
+
+Implemented in [`src/app/components/StoryDotsOverlay.tsx`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/components/StoryDotsOverlay.tsx) and [`src/app/components/StoryDotsOverlay.module.css`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/components/StoryDotsOverlay.module.css).
+
+Current behavior:
+- deterministic dot placement from story IDs
+- enlarged minimum hit target for mobile interaction
+- lazy SFX initialization
+- hover/tap burst effect
+- pulse and burst styling optimized to reduce paint-heavy shadow animation
+
+### `StoryModal`
+
+Implemented in [`src/app/components/StoryModal.tsx`](/Users/shirishsarkar/_CODE/flowers-for-molly/src/app/components/StoryModal.tsx).
+
+Current behavior:
+- portal-based modal
+- closes on backdrop or Escape
+- locks body scroll
+- resolves full story content on demand when invoked from summary-only contexts
+
+## Performance Work Completed
+
+The repository now includes a phased performance investigation and optimization workflow.
+
+Primary control docs:
+- [`AGENTS.md`](/Users/shirishsarkar/_CODE/flowers-for-molly/AGENTS.md)
+- [`docs/performance-baseline.md`](/Users/shirishsarkar/_CODE/flowers-for-molly/docs/performance-baseline.md)
+- [`docs/asset-delivery-plan.md`](/Users/shirishsarkar/_CODE/flowers-for-molly/docs/asset-delivery-plan.md)
+
+Added scripts:
+- `npm run perf:baseline`
+- `npm run perf:assets`
+- `npm run perf:assets:first-wave`
+- `npm run perf:assets:next-wave`
+
+### Phase Summary
+
+#### Phase 0
+
+Baseline instrumentation added:
+- repo-local asset and scene baseline reporting
+- documented real-device profiling checklist
+
+#### Phase 1
+
+Startup memory pressure reduced by:
+- removing full-scene image preloading
+- removing blanket eager loading for positioned sprites
+- fetching story summaries on home instead of full story bodies
+- fetching full story text only when modal/detail view needs it
+- lazy-loading SFX players
+
+#### Phase 2
+
+Viewport-based virtualization added:
+- positioned sprites are mounted only when they intersect the viewport plus overscan
+- repeat strips and seam logic were left unchanged
+
+#### Phase 3
+
+Compositor cleanup:
+- removed blanket `will-change: transform` on parallax layer content
+- removed blanket `will-change` from particles
+
+#### Phase 4
+
+Asset delivery optimization:
+- asset audit tooling added
+- first-wave and next-wave delivery asset downsizing completed
+- optimization focused on high-oversupply, low-risk small/midground assets
+
+#### Phase 5
+
+Overlay paint optimization:
+- dot pulse changed from animated shadow-heavy styling to transform/opacity-first layered glow
+- particle visuals simplified to flatter radial-gradient styling
+
+## Current Measured Status
+
+These are the current local measurements after the completed work above.
+
+From `npm run build`:
+- `/` route size: about `17.7 kB`
+- `/` first-load JS: about `121 kB`
+
+From `npm run perf:baseline`:
+- referenced garden sources: `82`
+- referenced compressed garden payload: about `170 MB`
+- modeled decoded RGBA footprint: about `689 MB`
+- `public/garden` total compressed footprint: about `282 MB`
+- positioned sprite instances per world: `145`
+- non-repeating positioned instances across 3 segments before runtime culling: `435`
+
+From the viewport-culling model used during Phase 2:
+- mobile viewport expected positioned mounted nodes: about `18-51`
+- desktop viewport expected positioned mounted nodes: about `38-87`
+
+From `npm run perf:assets`:
+- `midground-small` bucket: `12.75 MB`, oversupply `17.36`
+- `foreground-small` bucket: `3.46 MB`, oversupply `34.67`
+- `MIDDLEGROUND` role total: `26.61 MB`, oversupply `6.09`
+
+## Remaining Highest-Value Performance Opportunities
+
+The largest remaining asset/runtime opportunities now are:
+- `foreground-medium` assets such as meadow foreground flowers and peonies
+- `FOREGROUND_2` assets, still oversupplied overall
+- selected `midground-medium` assets like `stone_path_0.png` and `stormking_0.png`
+- real-device verification on iPhone Safari and Android Chrome for actual tab-memory and FPS outcomes
+
+Examples of current top asset candidates from the audit:
+- [`public/garden/meadow_foreground/flora_group_3/cornflower_0.png`](/Users/shirishsarkar/_CODE/flowers-for-molly/public/garden/meadow_foreground/flora_group_3/cornflower_0.png)
+- [`public/garden/meadow_foreground/flora_group_5/blazingstar_0.png`](/Users/shirishsarkar/_CODE/flowers-for-molly/public/garden/meadow_foreground/flora_group_5/blazingstar_0.png)
+- [`public/garden/meadow_background/scenery/stormking_0.png`](/Users/shirishsarkar/_CODE/flowers-for-molly/public/garden/meadow_background/scenery/stormking_0.png)
+- [`public/garden/meadow_background/scenery/stone_path_0.png`](/Users/shirishsarkar/_CODE/flowers-for-molly/public/garden/meadow_background/scenery/stone_path_0.png)
 
 ## Audio
 
-- Background music: `public/sound/flowers for molly theme.mp3`
-- Hover SFX: `public/sound/sfx/sfx_0.mp3` ... `sfx_5.mp3`
-- Audio auto-play is gated by first user interaction.
+- Background music: [`public/sound/flowers for molly theme.mp3`](/Users/shirishsarkar/_CODE/flowers-for-molly/public/sound/flowers%20for%20molly%20theme.mp3)
+- Hover/tap SFX: [`public/sound/sfx`](/Users/shirishsarkar/_CODE/flowers-for-molly/public/sound/sfx)
 
-## Visual Assets
-
-- `public/garden`: All runtime sprite assets for the meadow scene.
-- `public/gradients`: Optional background gradients (currently commented out).
-- `public/ornaments`: Modal frame UI elements.
-- `public/fonts`: Local typefaces.
-- `blender-photoshop`: Source art files (Blender, PSD, stock references).
-
-## Notable Implementation Details
-
-- The garden is rendered as three segments (`[A][B][C]`) and scroll wraps around the middle segment to simulate infinity.
-- Dot positioning is deterministic: same story ID always maps to the same point.
-- Modal scroll locking is implemented by mutating `document.body.style.overflow`.
-- `/view/[id]` page uses inline styles, while most other pages rely on CSS Modules.
-- The p5 sketch is currently unused in production, but provides a baseline generative flower algorithm prototype.
+Audio remains interaction-gated.
 
 ## Local Development
 
@@ -224,69 +281,11 @@ The experience leans heavily on custom layout/animation (parallax layers, partic
 - Build: `npm run build`
 - Start: `npm run start`
 - Lint: `npm run lint`
+- Baseline: `npm run perf:baseline`
+- Asset audit: `npm run perf:assets`
 
-## Known Gaps / Placeholders
+## Notes
 
-- `src/app/poem/page.tsx` is a stub with commented-out markup.
-- Moderation flow is not exposed in UI (stories are stored with `pending` status on submission, but not filtered in GET).
-- Some Roadmap items in `Roadmap.md` describe aspirational features not yet implemented.
-
-# 03/05/26
-
-We are debugging a seam/render bug in `src/app/components/InfiniteParallaxGarden.tsx` for a world that is one full repeating segment wide at `8192` logical px: `4096` meadow + `4096` forest. This segment width is
-built in `src/app/garden/worldLayout.ts` and passed from `src/app/page.tsx` into `InfiniteParallaxGarden` as `segmentWidth`. The app renders a 3-copy strip `[A][B][C]` and starts in the middle copy. The intended UX
-is: load at meadow start (`logicalX 0` at the left edge), scroll left to see the forest tail wrap in from the other side, and scroll right through the forest back into meadow without visible jumps or biome overlap.
-
-The original bug was: on load, the meadow begins correctly at `logicalX 0`, but the first wrap is wrong. Scrolling left from meadow start causes the visible meadow beginning to shift to around the blue flower at
-logical `~960` instead of `0`, while the end of the forest appears extended by about one viewport width. Scrolling right produces the same class of bug in reverse. Historically there was also a separate older bug
-where the scene jumped in the middle of the forest. After many attempts, we learned these are not the same bug.
-
-What is definitely not the root cause: biome manifests, world ordering, story dot placement, or biome offsets. `src/app/garden/biomes.ts` already flattens biome data into world-space sprite positions using
-`xOffset`, and `src/app/garden/biomeLoader.ts` builds one combined layer list for the whole world. Attempts to “solve” this in biome data or by treating the world as a single super-biome are almost certainly the
-wrong layer. The failed biome-clipping experiments proved that. We also ruled out simple recenter-threshold tuning as a complete solution: changing thresholds alone only moves the visible failure point between the
-meadow/forest seam and a midpoint jump.
-
-The biggest confirmed finding came from seam instrumentation added to `InfiniteParallaxGarden.tsx`. We logged `scrollLeft`, wrapped logical `offsetX`, `localXPx`, render phase, seam distance, viewport width, and
-whether recentering occurred. Those logs proved the original jump happened before any recentering. Example: from meadow start, a tiny left move changed wrapped logical position from `0` to near `8192` with
-`didRecenter: false`, and the renderer phase jumped with it. So the primary seam jump was not caused by `handleScroll` recenter timing. It was caused by the renderer using wrapped `localXPx` both for logical
-viewport reporting and for parallax/render phase. That meant the visual world snapped on the very first seam-adjacent step.
-
-What worked: separating logical wrapping from render phase enough to remove the obvious seam jump. The current best progress came from keeping wrapped `localXPx` / `offsetX` for viewport reporting and overlays,
-while changing the parallax basis so it no longer blindly followed wrapped `localXPx` at the seam. The first attempt used a continuous accumulator from scroll deltas; that removed the seam jump but introduced a new
-bug where the outgoing biome extended one full world length farther each loop, then doubled each loop, because render phase drifted by full segments over time. That approach is wrong long-term. The next attempt
-replaced the unbounded accumulator with a seam-local phase mapping: use wrapped `localXPx`, but remap the last seam-adjacent window to a negative equivalent so render phase stays visually continuous at the wrap.
-That got us the closest we have been: the major jump disappeared, and the app behaved more correctly in both directions.
-
-The key remaining bug in that near-fixed state is this: the outgoing biome visually persists too long past the seam, and then foreground or mid/background assets appear/disappear abruptly. Going left-to-right, the
-forest extends into the meadow longer than it should; after a certain point some foreground assets render back in even though they already appeared earlier in the forest. Going right-to-left, the forest ending
-initially looks correct, but once the seam passes the right border some assets disappear and the scene falls into an “extended forest ending.” This remaining bug is symmetrical by direction, but it is no longer a
-jump bug. Seam logs from that state show `didRecenter: false`, stable `logicalOffsetX`, and bounded `renderPhasePx`. That means the remaining problem is no longer scroll bookkeeping. It is now a pure render/
-compositing issue.
-
-What failed and should not be retried in the same form:
-
-1. Biome clipping metadata plus clip-container adjustments. Early attempts to wire `biomeStart` / `biomeWidth` into rendering and/or move clip/content containers caused meadow/forest overlap or reverse overlap.
-2. Restoring production behavior wholesale. The production version used continuous `worldXPx`, which fixes the seam snap, but its wrap window (`middleStartPx * 0.5` / `middleStartPx * 1.5`) is effectively calibrated
-   for a half-world assumption and reintroduces the old mid-forest jump now that the full world is `8192`.
-3. Using wrapped `localXPx` directly as render/parallax phase. This was the direct cause of the original seam jump and is proven wrong by logs.
-4. Using a continuous accumulator that is allowed to drift across loops. This removed the jump but caused the outgoing biome to grow by one segment each full wrap.
-5. Brute-force primitive duplication / overscan in the renderer. That created severe regressions: biome overlap, performance degradation, missing assets, white flashes, or skybox bleed, without solving the
-   underlying seam behavior.
-6. Passing `biomeStart` / `biomeWidth` into layers without fully reconciling the renderer’s clip coordinate system. One attempt made the entire forest render blank white, proving the current clip stack does not
-   simply accept world-space biome bounds as-is.
-7. The later attempt to align clip coordinates by shifting `contentStyle.left = -clipLeftPx` and widening content to `segmentWidthPx` also did not solve the remaining issue and was reverted.
-
-What the repo tells us historically: the important regression window is around commit `3a313f1` in `InfiniteParallaxGarden.tsx`. Two things changed together there: wrap behavior moved away from earlier assumptions,
-and `worldXPx` switched from continuous scroll-space to wrapped `localXPx`. Those two changes solved one symptom while creating another. The current local file also has its own uncommitted evolution on top of that.
-The app today already treats the whole world as one `8192` segment. This is not fundamentally a “two biomes clashing” problem; it is a renderer seam/compositing problem.
-
-Current best understanding of the remaining issue: the seam jump problem is mostly solved by seam-local render phase mapping, but some render layers still persist past the biome seam longer than they should. The
-likely cause is in how parallax transforms are applied to a clip-local content slab in `renderLayerSegment` inside `InfiniteParallaxGarden.tsx`. Right now the renderer computes `parallaxShift` per layer and applies
-it to a content container inside a clip region. Because layers have different parallax values, they enter/exit seam conditions at different times. That appears to be why some background or foreground assets deload/
-reload late, producing the “extended biome” effect even though logical position and seam phase are now stable. The remaining issue is probably not in `handleScroll`, not in `offsetX`, and not in world data. It is
-likely in per-layer render alignment near the seam, especially the relationship between `clipLeftPx`, `clipWidthPx`, `contentStyle`, and `parallaxShift` in `renderLayerSegment`.
-
-If starting fresh in a new chat, the best next step is not to guess another global fix. Start from the current near-fixed state and inspect `renderLayerSegment` in `src/app/components/InfiniteParallaxGarden.tsx` as
-the primary remaining suspect. Keep the seam instrumentation pattern, but focus on layer-level rendering behavior rather than scroll bookkeeping. In particular, compare how the visible outgoing biome persists after
-`renderPhasePx` is already correct, and examine whether the layer content transform itself is causing some layers to stay visible or re-enter late. Do not touch biome manifests, world layout, or overlay logic unless
-new evidence proves they are involved.
+- This environment still does not provide authoritative mobile browser memory traces.
+- Local performance conclusions are strongest for asset footprint, decoded-memory modeling, runtime loading strategy, and DOM/render structure.
+- Final confirmation for crash reduction still needs real-device profiling.

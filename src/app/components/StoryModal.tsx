@@ -6,14 +6,19 @@ import ReactDOM from "react-dom";
 import { goldenbookFont } from "../fonts";
 import styles from "./StoryModal.module.css";
 
-export type StoryListItem = {
+export type StorySummary = {
   _id: string;
   authorName: string;
+  importedAt?: string;
+};
+
+export type StoryListItem = StorySummary & {
   authorEmail?: string;
   textPlain: string;
   textMarkdown: string;
-  importedAt?: string;
 };
+
+export type StoryModalStory = StorySummary | StoryListItem;
 
 type OrnamentSide = "top" | "bottom" | "left" | "right";
 
@@ -120,9 +125,57 @@ export default function StoryModal({
   story,
   onClose,
 }: {
-  story: StoryListItem | null;
+  story: StoryModalStory | null;
   onClose: () => void;
 }) {
+  const [resolvedStory, setResolvedStory] = React.useState<StoryListItem | null>(
+    null,
+  );
+  const [isLoadingStory, setIsLoadingStory] = React.useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!story) {
+      setResolvedStory(null);
+      setIsLoadingStory(false);
+      return;
+    }
+
+    if ("textPlain" in story && "textMarkdown" in story) {
+      setResolvedStory(story);
+      setIsLoadingStory(false);
+      return;
+    }
+
+    setResolvedStory(null);
+    setIsLoadingStory(true);
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/stories/${story._id}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as StoryListItem;
+        if (!cancelled) {
+          setResolvedStory(json);
+          setIsLoadingStory(false);
+        }
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setResolvedStory(null);
+          setIsLoadingStory(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [story]);
+
   useEffect(() => {
     if (!story) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -142,7 +195,9 @@ export default function StoryModal({
     () => (storyId ? buildOrnaments() : []),
     [storyId],
   );
-  const seasonYear = formatSeasonYear(story?.importedAt);
+  const seasonYear = formatSeasonYear(
+    resolvedStory?.importedAt ?? story?.importedAt,
+  );
 
   if (!story) return null;
 
@@ -205,11 +260,19 @@ export default function StoryModal({
           </header>
 
           <div className={styles.body}>
-            {story.textPlain.split(/\n{2,}/).map((p, i) => (
-              <p key={i} className={styles.paragraph}>
-                {p}
+            {resolvedStory ? (
+              resolvedStory.textPlain.split(/\n{2,}/).map((p, i) => (
+                <p key={i} className={styles.paragraph}>
+                  {p}
+                </p>
+              ))
+            ) : isLoadingStory ? (
+              <p className={styles.paragraph}>Loading story...</p>
+            ) : (
+              <p className={styles.paragraph}>
+                This story could not be loaded right now.
               </p>
-            ))}
+            )}
           </div>
         </div>
       </div>
