@@ -14,6 +14,7 @@ import Image from "next/image";
 const BASE_SCENE_HEIGHT = 1024; // logical reference height
 const SCROLL_SPEED = 0.15;
 const KEY_SCROLL_PX_PER_S = 900;
+const USER_SCROLL_INTENT_WINDOW_MS = 1200;
 
 // -----------------------------
 // Types
@@ -198,6 +199,10 @@ export default function InfiniteParallaxGarden({
   const rafRef = useRef<number | null>(null);
   const keyRafRef = useRef<number | null>(null);
   const keyDirRef = useRef<-1 | 0 | 1>(0);
+  const lastUserScrollIntentRef = useRef<{
+    source: "pointer" | "wheel" | "keyboard";
+    ts: number;
+  } | null>(null);
   const [hoveredWireframeId, setHoveredWireframeId] = useState<string | null>(
     null,
   );
@@ -220,6 +225,16 @@ export default function InfiniteParallaxGarden({
   }, [debugWireframesForeground, debugWireframesBackground]);
 
   const activeWireframeId = pinnedWireframeId ?? hoveredWireframeId;
+
+  const markUserScrollIntent = useCallback(
+    (source: "pointer" | "wheel" | "keyboard") => {
+      lastUserScrollIntentRef.current = {
+        source,
+        ts: performance.now(),
+      };
+    },
+    [],
+  );
 
   /**
    * If segmentHeight is not provided, we fill the parent (height: 100%)
@@ -448,8 +463,16 @@ export default function InfiniteParallaxGarden({
       typeof previousScroll === "number" &&
       Math.abs(el.scrollLeft - previousScroll) > 0.5
     ) {
-      hasReportedFirstScrollRef.current = true;
-      onFirstUserScroll();
+      const recentIntent = lastUserScrollIntentRef.current;
+      const now = performance.now();
+      const hasRecentUserIntent =
+        recentIntent != null &&
+        now - recentIntent.ts <= USER_SCROLL_INTENT_WINDOW_MS;
+
+      if (hasRecentUserIntent) {
+        hasReportedFirstScrollRef.current = true;
+        onFirstUserScroll();
+      }
     }
 
     if (didRecenter) {
@@ -495,13 +518,14 @@ export default function InfiniteParallaxGarden({
 
       e.preventDefault();
 
+      markUserScrollIntent("wheel");
       scrollRef.current.scrollLeft += delta;
       handleScroll();
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [wheelToHorizontal, handleScroll]);
+  }, [wheelToHorizontal, handleScroll, markUserScrollIntent]);
 
   useEffect(() => {
     const isTypingTarget = (el: EventTarget | null) => {
@@ -546,10 +570,12 @@ export default function InfiniteParallaxGarden({
       if (isTypingTarget(e.target)) return;
       if (e.key === "ArrowLeft") {
         e.preventDefault();
+        markUserScrollIntent("keyboard");
         keyDirRef.current = -1;
         startLoop();
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
+        markUserScrollIntent("keyboard");
         keyDirRef.current = 1;
         startLoop();
       }
@@ -570,7 +596,7 @@ export default function InfiniteParallaxGarden({
       keyDirRef.current = 0;
       stopLoop();
     };
-  }, [handleScroll]);
+  }, [handleScroll, markUserScrollIntent]);
 
   useEffect(() => {
     return () => {
@@ -713,6 +739,18 @@ export default function InfiniteParallaxGarden({
       onPointerDebugChange(null);
     }
   }, [onPointerDebugChange]);
+
+  const handlePointerDown = useCallback(
+    (ev: React.PointerEvent<HTMLDivElement>) => {
+      if (ev.pointerType === "mouse" && ev.button !== 0) return;
+      markUserScrollIntent("pointer");
+    },
+    [markUserScrollIntent],
+  );
+
+  const handleTouchStart = useCallback(() => {
+    markUserScrollIntent("pointer");
+  }, [markUserScrollIntent]);
 
   /**
    * Render a single segment of a layer.
@@ -1167,6 +1205,8 @@ export default function InfiniteParallaxGarden({
       className={className}
       style={containerStyle}
       onScroll={handleScroll}
+      onPointerDown={handlePointerDown}
+      onTouchStart={handleTouchStart}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
