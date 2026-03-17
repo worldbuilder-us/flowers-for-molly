@@ -39,7 +39,7 @@ export default function AboutPage() {
             <p>
               The realization of this project would not be possible without the
               help of my creative partners Shirish Sarkar and Conor Behrens at
-              Marchen Studio.
+              <a href="https://marchen.studio">Marchen Studio</a>.
             </p>
           </section>
 
