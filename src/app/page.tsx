@@ -420,7 +420,6 @@ export default function Page() {
               stories={stories}
               segmentWidth={segmentWidth}
               viewport={viewport}
-              isWelcomeVisible={!hasScrolled}
               onDotClick={(s) => setActive(s)}
             />
           )}
