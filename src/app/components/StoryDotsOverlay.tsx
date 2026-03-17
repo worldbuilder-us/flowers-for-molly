@@ -49,6 +49,7 @@ type StoryDotsOverlayProps = {
   segmentWidth: number;
   viewport: GardenViewport;
   onDotClick: (s: StorySummary) => void;
+  isWelcomeVisible?: boolean;
 };
 
 /**
@@ -186,14 +187,28 @@ export default function StoryDotsOverlay({
   segmentWidth,
   viewport,
   onDotClick,
+  isWelcomeVisible = false,
 }: StoryDotsOverlayProps) {
   const BURST_TTL_MS = 12000;
   const OFFSCREEN_CULL_PAD = 220;
 
   const dots = useMemo<Dot[]>(() => {
     const vh = Math.max(300, viewport.viewportH || 700);
-    const topPad = Math.max(40, Math.round(vh * 0.08));
-    const usableH = Math.max(120, Math.round(vh * 0.55));
+    const isMobile = viewport.viewportW <= 768;
+    const headerClearance = isMobile ? 88 : 102;
+    const titleClearance = isWelcomeVisible
+      ? Math.round(vh * (isMobile ? 0.34 : 0.32))
+      : headerClearance;
+
+    const topPad = Math.max(
+      headerClearance + 16,
+      titleClearance,
+      isWelcomeVisible ? Math.round(vh * 0.35) : Math.round(vh * 0.08),
+    );
+    const usableH = Math.max(
+      120,
+      Math.round(vh * (isWelcomeVisible ? 0.38 : 0.55)),
+    );
 
     return stories.map((s) => {
       const h = hash32(s._id);
