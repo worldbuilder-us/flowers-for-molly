@@ -38,8 +38,16 @@ export default function AboutPage() {
 
             <p>
               The realization of this project would not be possible without the
-              help of my creative partners Shirish Sarkar and Conor Behrens at
-              <a href="https://marchen.studio">Marchen Studio</a>.
+              help of my creative partners Shirish Sarkar and Conor Behrens at{" "}
+              <a
+                className={styles.aboutPartnerLink}
+                href="https://marchen.studio"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Märchen
+              </a>
+              .
             </p>
           </section>
 

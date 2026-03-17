@@ -53,6 +53,12 @@
   font-weight: 700;
 }
 
+.aboutPartnerLink {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+
 .descriptionSection p {
   margin: 0 0 1rem 0;
 }
