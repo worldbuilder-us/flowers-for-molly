@@ -186,7 +186,15 @@
           "index": 1,
           "width": 1948,
           "height": 1948,
-          "xPositions": [3000, 13, 2200]
+          "xPositions": [3000, 13]
+        },
+        {
+          "name": "treetrunk",
+          "index": 0,
+          "width": 1200,
+          "height": 1200,
+          "xPositions": [2000],
+          "yOffset": 200
         },
         {
           "name": "rocksmoss",
@@ -254,12 +262,12 @@
       "opacity": 1,
       "assets": [
         {
-          "name": "treetrunk",
-          "index": 0,
-          "width": 2800,
-          "height": 2800,
-          "xPositions": [1680],
-          "yOffset": -480
+          "name": "elm_tree",
+          "index": 1,
+          "width": 3600,
+          "height": 3600,
+          "xPositions": [1780],
+          "yOffset": -1080
         },
         {
           "name": "ferns",

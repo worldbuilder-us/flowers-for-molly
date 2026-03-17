@@ -192,8 +192,8 @@ export default function StoryDotsOverlay({
 
   const dots = useMemo<Dot[]>(() => {
     const vh = Math.max(300, viewport.viewportH || 700);
-    const topPad = Math.max(40, Math.round(vh * 0.08));
-    const usableH = Math.max(120, Math.round(vh * 0.55));
+    const topPad = Math.round(vh * 0.25);
+    const usableH = Math.round(vh * 0.5);
 
     return stories.map((s) => {
       const h = hash32(s._id);

@@ -51,6 +51,7 @@ export default function Page() {
   );
   const debugMode = process.env.NEXT_PUBLIC_DEBUG_MODE === "true";
   const [isMuted, setIsMuted] = useState(false);
+  const [mobileToolbarOffset, setMobileToolbarOffset] = useState(0);
   const [hasScrolled, setHasScrolled] = useState(false);
 
   const worldConfig = useMemo(() => getWorldConfig(), []);
@@ -60,6 +61,49 @@ export default function Page() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const mobileMediaQuery = window.matchMedia("(max-width: 768px)");
+    const vv = window.visualViewport;
+
+    const updateToolbarOffset = () => {
+      if (!mobileMediaQuery.matches) {
+        setMobileToolbarOffset(0);
+        return;
+      }
+
+      const visualDelta = Math.round(window.innerHeight - vv.height - vv.offsetTop);
+      const nextOffset = visualDelta >= 24 && visualDelta <= 180 ? visualDelta : 0;
+      setMobileToolbarOffset(nextOffset);
+    };
+
+    const onMediaChange = () => updateToolbarOffset();
+
+    if (mobileMediaQuery.addEventListener) {
+      mobileMediaQuery.addEventListener("change", onMediaChange);
+    } else {
+      // Fallback for older Safari.
+      mobileMediaQuery.addListener(onMediaChange);
+    }
+
+    vv.addEventListener("resize", updateToolbarOffset);
+    vv.addEventListener("scroll", updateToolbarOffset);
+
+    updateToolbarOffset();
+
+    return () => {
+      if (mobileMediaQuery.removeEventListener) {
+        mobileMediaQuery.removeEventListener("change", onMediaChange);
+      } else {
+        // Fallback for older Safari.
+        mobileMediaQuery.removeListener(onMediaChange);
+      }
+      vv.removeEventListener("resize", updateToolbarOffset);
+      vv.removeEventListener("scroll", updateToolbarOffset);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -242,6 +286,11 @@ export default function Page() {
             onClick={() => setIsMuted((prev) => !prev)}
             aria-label={isMuted ? "Unmute music" : "Mute music"}
             title={isMuted ? "Unmute music" : "Mute music"}
+            style={
+              mobileToolbarOffset > 0
+                ? { bottom: `${16 + mobileToolbarOffset}px` }
+                : undefined
+            }
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               {isMuted ? (
