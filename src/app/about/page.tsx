@@ -35,6 +35,12 @@ export default function AboutPage() {
               which becomes part of a larger, evolving body of work—an
               ever-growing tribute to her life.
             </p>
+
+            <p>
+              The realization of this project would not be possible without the
+              help of my creative partners Shirish Sarkar and Conor Behrens at
+              Marchen Studio.
+            </p>
           </section>
 
           <div className={styles.divider} aria-hidden="true">
