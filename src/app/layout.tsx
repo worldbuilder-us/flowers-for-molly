@@ -6,7 +6,7 @@ import { goldenbookFont, montserratFont } from "./fonts";
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.APP_BASE_URL ||
-  "https://flowers-for-molly.vercel.app";
+  "https://flowersformolly.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
