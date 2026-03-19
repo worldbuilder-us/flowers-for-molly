@@ -3,9 +3,36 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { goldenbookFont, montserratFont } from "./fonts";
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.APP_BASE_URL ||
+  "https://flowersformolly.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "flowers for molly",
-  description: "a generative memoriam.",
+  description: "a memorial garden.",
+  openGraph: {
+    title: "flowers for molly",
+    description: "a memorial garden.",
+    url: "/",
+    siteName: "flowers for molly",
+    images: [
+      {
+        url: "/preview/hero.png",
+        width: 1400,
+        height: 922,
+        alt: "flowers for molly preview image",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "flowers for molly",
+    description: "a memorial garden.",
+    images: ["/preview/hero.png"],
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
